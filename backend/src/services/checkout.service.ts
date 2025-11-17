@@ -212,7 +212,7 @@ export async function getCheckoutSummary(
       return null
     }
 
-    const totalPrice = participant.orders.reduce((sum, order) => {
+    const totalPrice = participant.orders.reduce((sum: number, order: any) => {
       return sum + order.totalPrice
     }, 0)
 
@@ -224,7 +224,7 @@ export async function getCheckoutSummary(
         email: participant.email,
         address: participant.address,
       },
-      orders: participant.orders.map((order) => ({
+      orders: participant.orders.map((order: any) => ({
         id: order.id,
         productTitle: order.product.title,
         quantity: order.quantity,
@@ -234,7 +234,7 @@ export async function getCheckoutSummary(
       })),
       summary: {
         totalItems: participant.orders.reduce(
-          (sum, order) => sum + order.quantity,
+          (sum: number, order: any) => sum + order.quantity,
           0
         ),
         totalOrders: participant.orders.length,

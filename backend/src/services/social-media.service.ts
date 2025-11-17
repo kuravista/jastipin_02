@@ -66,7 +66,7 @@ export class SocialMediaService {
       orderBy: { createdAt: 'asc' },
     })
 
-    return socialMedias.map((sm) => this.mapToDTO(sm))
+    return socialMedias.map((sm: any) => this.mapToDTO(sm))
   }
 
   /**

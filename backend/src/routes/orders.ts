@@ -8,7 +8,7 @@
  * DELETE /trips/:tripId/orders/:orderId - Cancel order
  */
 
-import { Router, Response } from 'express'
+import { Router, Response, Router as ExpressRouter } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { authMiddleware } from '../middleware/auth.js'
 import { validate } from '../middleware/validate.js'
@@ -24,7 +24,7 @@ import {
   validateParticipantCheckout,
 } from '../services/checkout.service.js'
 
-const router = Router()
+const router: ExpressRouter = Router()
 const db = new PrismaClient()
 
 /**

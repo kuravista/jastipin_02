@@ -4,7 +4,7 @@
  */
 
 import 'dotenv/config'
-import express from 'express'
+import express, { Express } from 'express'
 import cors from 'cors'
 
 import authRoutes from './routes/auth.js'
@@ -15,9 +15,10 @@ import participantRoutes from './routes/participants.js'
 import orderRoutes from './routes/orders.js'
 import socialMediaRoutes from './routes/social-media.js'
 import shippingRoutes from './routes/shipping.js'
+import healthRoutes from './routes/health.js'
 import { errorHandler } from './middleware/errorHandler.js'
 
-const app = express()
+const app: Express = express()
 const PORT = process.env.API_PORT || 4000
 
 // Middleware
@@ -38,6 +39,22 @@ app.use(
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
+
+// Root endpoint
+app.get('/', (_req, res) => {
+  res.json({
+    message: 'Jastipin.me Backend API',
+    version: '1.0.0',
+    status: 'running',
+    timestamp: new Date().toISOString(),
+    health: '/health',
+    health_status: '/health/status',
+    docs: 'See README.md for API documentation',
+  })
+})
+
+// Health routes
+app.use('/health', healthRoutes)
 
 // API routes
 app.use('/api/auth', authRoutes)

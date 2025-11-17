@@ -277,7 +277,7 @@ export class AuthService {
         stats,
         socialMedia: socialMedias,
       },
-      trips: trips.map((trip) => ({
+      trips: trips.map((trip: any) => ({
         id: trip.id,
         title: trip.title,
         description: trip.description,
@@ -286,7 +286,7 @@ export class AuthService {
         status: trip.isActive ? 'Buka' : 'Tutup',
         spotsLeft: Math.floor(Math.random() * 15) + 1,
       })),
-      catalog: products.map((product) => ({
+      catalog: products.map((product: any) => ({
         id: product.id,
         title: product.title,
         price: product.price,

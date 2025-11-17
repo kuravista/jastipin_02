@@ -7,7 +7,7 @@
  * DELETE /trips/:id - Delete trip
  */
 
-import { Router, Response } from 'express'
+import { Router, Response, Router as ExpressRouter } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { TripService } from '../services/trip.service.js'
 import { authMiddleware } from '../middleware/auth.js'
@@ -19,7 +19,7 @@ import {
 import { getRandomTripImage } from '../utils/image.utils.js'
 import { AuthRequest } from '../types/index.js'
 
-const router = Router()
+const router: ExpressRouter = Router()
 const db = new PrismaClient()
 const tripService = new TripService(db)
 

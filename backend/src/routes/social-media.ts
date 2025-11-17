@@ -6,7 +6,7 @@
  * DELETE /social-media/:id - Delete social media account
  */
 
-import { Router, Response } from 'express'
+import { Router, Response, Router as ExpressRouter } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { SocialMediaService } from '../services/social-media.service.js'
 import { authMiddleware } from '../middleware/auth.js'
@@ -14,7 +14,7 @@ import { validate } from '../middleware/validate.js'
 import { createSocialMediaSchema, updateSocialMediaSchema } from '../utils/validators.js'
 import { AuthRequest } from '../types/index.js'
 
-const router = Router()
+const router: ExpressRouter = Router()
 const db = new PrismaClient()
 const socialMediaService = new SocialMediaService(db)
 

@@ -33,6 +33,12 @@ Server runs on `http://localhost:4000`
 
 ## API Endpoints
 
+### Health Check
+- `GET /` - API info and available endpoints
+- `GET /health` - Basic health check
+- `GET /health/quick` - Quick status with uptime
+- `GET /health/status` - Comprehensive health check (database, memory, environment)
+
 ### Authentication
 - `POST /api/auth/register` - Register new user
 - `POST /api/auth/login` - Login user

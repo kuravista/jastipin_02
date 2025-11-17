@@ -4,10 +4,10 @@
  * POST /shipping/calculate - Calculate shipping cost
  */
 
-import { Router, Response, Request } from 'express'
+import { Router, Response, Request, Router as ExpressRouter } from 'express'
 import { searchDestinations, calculateShippingCost } from '../services/rajaongkir.service.js'
 
-const router = Router()
+const router: ExpressRouter = Router()
 
 /**
  * GET /shipping/search
