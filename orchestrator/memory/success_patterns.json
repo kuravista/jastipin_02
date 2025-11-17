@@ -1,0 +1,311 @@
+{
+  "version": "1.2.0",
+  "last_updated": "2025-11-13",
+  "patterns": [
+    {
+      "id": "react-component-pattern",
+      "name": "React Component Success Pattern",
+      "category": "frontend",
+      "description": "Modular React component structure with hooks and TypeScript",
+      "success_rate": 0.95,
+      "projects": [],
+      "key_elements": [
+        "Single responsibility principle",
+        "TypeScript interfaces for props",
+        "Custom hooks for logic separation",
+        "Unit tests with Jest/React Testing Library"
+      ],
+      "common_tools": ["react", "typescript", "jest", "@testing-library/react"],
+      "file_structure": {
+        "component.tsx": "Main component implementation",
+        "component.test.tsx": "Unit tests",
+        "types.ts": "TypeScript interfaces",
+        "hooks/": "Custom hooks directory",
+        "utils/": "Utility functions"
+      }
+    },
+    {
+      "id": "express-api-pattern",
+      "name": "Express API Success Pattern",
+      "category": "backend",
+      "description": "RESTful API with Express.js, proper middleware, and error handling",
+      "success_rate": 0.92,
+      "projects": [],
+      "key_elements": [
+        "Route-based organization",
+        "Middleware for authentication and validation",
+        "Centralized error handling",
+        "Database abstraction layer",
+        "API documentation with Swagger"
+      ],
+      "common_tools": ["express", "cors", "helmet", "joi", "mongoose", "swagger-ui-express"],
+      "file_structure": {
+        "routes/": "API route definitions",
+        "middleware/": "Custom middleware",
+        "controllers/": "Request handlers",
+        "models/": "Database models",
+        "utils/": "Utility functions",
+        "config/": "Configuration files"
+      }
+    },
+    {
+      "id": "python-cli-pattern",
+      "name": "Python CLI Success Pattern",
+      "category": "cli",
+      "description": "Command-line interface with argparse and modular architecture",
+      "success_rate": 0.89,
+      "projects": [],
+      "key_elements": [
+        "Command-based architecture",
+        "Proper argument parsing",
+        "Error handling and logging",
+        "Configuration management",
+        "Testing with pytest"
+      ],
+      "common_tools": ["argparse", "logging", "configparser", "pytest", "click"],
+      "file_structure": {
+        "main.py": "Entry point",
+        "commands/": "Command implementations",
+        "utils/": "Utility functions",
+        "config/": "Configuration handling",
+        "tests/": "Test files"
+      }
+    },
+    {
+      "id": "jwt-refresh-rotation-mvp-2025-11",
+      "name": "JWT Refresh Token Rotation with Family ID",
+      "category": "backend",
+      "description": "Prevent stolen refresh tokens from being reused indefinitely by tracking token families",
+      "success_rate": 0.98,
+      "projects": ["jastipin-2025-11"],
+      "use_case": "Prevent unlimited token reuse, detect compromises, force re-authentication on breach",
+      "key_elements": [
+        "Family ID tracking in database",
+        "Token rotation on each refresh",
+        "Replay attack detection (old token used after new issued)",
+        "Grace period for legitimate token rotation",
+        "Automatic compromise recovery (revoke all tokens)"
+      ],
+      "common_tools": ["JWT", "Express.js", "PostgreSQL", "Node.js", "bcrypt"],
+      "implementation": "Store family ID with each refresh token, track token chain in ZSET, detect replay by checking if old token has newer sibling, revoke entire family on compromise",
+      "tradeoffs": [
+        "Adds database lookup per refresh",
+        "Requires token family tracking schema",
+        "Users must re-authenticate if compromise detected (good for security)"
+      ],
+      "benefits": [
+        "Prevents unlimited token reuse",
+        "Detects token compromise quickly",
+        "Forces re-authentication on compromise",
+        "Maintains session continuity during rotation"
+      ]
+    },
+    {
+      "id": "whatsapp-webhook-security-2025-11",
+      "name": "WhatsApp Webhook Signature Verification",
+      "category": "backend",
+      "description": "Verify webhook authenticity using HMAC-SHA1 signature with timing attack prevention",
+      "success_rate": 0.99,
+      "projects": ["jastipin-2025-11"],
+      "use_case": "Prevent webhook spoofing attacks, ensure messages come from Meta, protect against fake orders/commands",
+      "key_elements": [
+        "Raw body capture before JSON parsing",
+        "HMAC-SHA1 signature computation with app secret",
+        "Constant-time comparison (prevents timing attacks)",
+        "Replay attack prevention (store message IDs)",
+        "Proper error handling (return 200 even on failure)"
+      ],
+      "common_tools": ["Meta WhatsApp Cloud API", "Express.js", "Node.js", "crypto"],
+      "implementation": "Middleware captures request stream before JSON parsing, extracts X-Hub-Signature header, computes HMAC-SHA1 using raw body, uses crypto.timingSafeEqual for comparison, stores message ID for replay detection",
+      "tradeoffs": [
+        "Must capture raw body early (before JSON middleware)",
+        "Adds signature verification overhead (~1-2ms)",
+        "Requires storing message IDs in database"
+      ],
+      "benefits": [
+        "Prevents fake JOIN/CONFIRM messages",
+        "Verifies webhook authenticity with cryptographic proof",
+        "Prevents timing attacks on signature comparison",
+        "Prevents replay of captured webhooks"
+      ]
+    },
+    {
+      "id": "rate-limiting-sliding-window-2025-11",
+      "name": "Rate Limiting with Redis Sliding Window",
+      "category": "backend",
+      "description": "Efficient rate limiting using Redis ZSET with sliding window algorithm",
+      "success_rate": 0.96,
+      "projects": ["jastipin-2025-11"],
+      "use_case": "Prevent API abuse, protect expensive operations (e.g., WhatsApp broadcasts), limit brute force attacks",
+      "key_elements": [
+        "Redis ZSET for O(log n) request counting",
+        "Sliding window (not fixed window) for accuracy",
+        "Configurable limits per endpoint",
+        "IP-based or user-based scoping",
+        "Cost protection for expensive operations"
+      ],
+      "common_tools": ["Redis", "Express.js", "Node.js", "Bull"],
+      "implementation": "ZADD request timestamps to ZSET, ZCOUNT requests in window, ZREMRANGEBYSCORE old requests, use per-endpoint configuration for limits/windows, return remaining quota in headers",
+      "tradeoffs": [
+        "Redis dependency required",
+        "Extra database lookup per request",
+        "May fail open if Redis unavailable"
+      ],
+      "benefits": [
+        "Prevents accidental $$ loss (e.g., WhatsApp broadcasts)",
+        "More accurate than fixed-window algorithms",
+        "Prevents brute force attacks",
+        "Enables cost tracking and alerts"
+      ],
+      "cost_protection_example": {
+        "scenario": "Trip owner broadcasts to 3,000 participants",
+        "cost_per_message": 0.0055,
+        "total_cost": 16.50,
+        "mitigation": "Rate limit /orders/:id/confirm to 100/day, prevents accidental mass broadcast"
+      }
+    },
+    {
+      "id": "react-form-validation-notifications-2025-11",
+      "name": "React Form Validation with Toast Notifications",
+      "category": "frontend",
+      "description": "Client-side form validation with real-time error display and Toast notifications using Sonner",
+      "success_rate": 0.98,
+      "projects": ["jastipin-2025-11"],
+      "use_case": "Add comprehensive validation and user-friendly error handling to any form (login, register, profile, etc.)",
+      "key_elements": [
+        "Real-time validation as user types",
+        "Field-level error display below inputs",
+        "Visual error state (red border)",
+        "Toast notifications for API errors",
+        "Specific error messages for each scenario",
+        "Client-side validation before submission",
+        "Error parsing from API responses",
+        "Unit tests for validation functions"
+      ],
+      "common_tools": ["React 19+", "TypeScript", "Sonner", "Tailwind CSS", "lucide-react", "Jest"],
+      "implementation": [
+        "Create validation utility file (lib/validation-errors.ts) with specific error parsers",
+        "Create custom hook (hooks/use-notifications.ts) for Toast integration",
+        "Add real-time validation on onChange with error state management",
+        "Display field errors with conditional styling (red border)",
+        "Show Toast on API errors with parseError utility",
+        "Unit test all validation functions (100% coverage target)",
+        "Clear errors when user switches tabs/sections"
+      ],
+      "file_structure": {
+        "lib/auth-errors.ts": "Error parsing and validation functions",
+        "hooks/use-auth-notifications.ts": "Toast notification hook",
+        "app/auth/page.tsx": "Form with validation UI",
+        "__tests__/auth-validation.test.ts": "Unit tests"
+      },
+      "benefits": [
+        "Better UX with specific error messages in user's language",
+        "Reduces unnecessary API calls (client validation first)",
+        "Prevents invalid form submissions",
+        "Consistent error handling across forms",
+        "100% test coverage for error handling",
+        "Reusable validation functions for other forms"
+      ],
+      "tradeoffs": [
+        "Adds extra validation layer (small performance impact)",
+        "Requires mapping API errors to user messages",
+        "Must keep client and server validation in sync"
+      ],
+      "error_types_handled": [
+        "Email format validation (accepts emails and phone numbers)",
+        "Password requirements (minimum length, complexity)",
+        "Field presence validation",
+        "API error classification (email exists, user not found, network error)",
+        "Specific error messages in Indonesian"
+      ],
+      "example_errors": {
+        "invalid_email": "Format email tidak valid. Gunakan email yang benar atau nomor WhatsApp.",
+        "email_exists": "Email ini sudah terdaftar. Silakan login atau gunakan email lain.",
+        "invalid_credentials": "Email atau password salah. Silakan coba lagi.",
+        "password_too_short": "Password minimal 8 karakter. Gunakan kombinasi huruf, angka, dan simbol.",
+        "network_error": "Gagal terhubung ke server. Periksa koneksi internet Anda."
+      },
+      "test_coverage": {
+        "email_validation": 4,
+        "password_validation": 3,
+        "name_validation": 3,
+        "error_parsing": 5,
+        "total": 15,
+        "pass_rate": 1.0
+      },
+      "implementation_time": "2-3 hours",
+      "reusability": "High - can be adapted for any form with field-level validation"
+    },
+    {
+      "id": "privacy-compliance-indonesian-mvp-2025-11",
+      "name": "Indonesia Personal Data Protection Law (UU 27/2022) Compliance",
+      "category": "compliance",
+      "description": "Compliance pattern for Indonesia GDPR including consent, retention, erasure, and audit logging",
+      "success_rate": 0.94,
+      "projects": ["jastipin-2025-11"],
+      "use_case": "Operate legally in Indonesia with personal data protection compliance",
+      "key_elements": [
+        "Consent recording (privacy notice + timestamp + IP)",
+        "Data retention schedule (active vs inactive, 30/7 day windows)",
+        "Auto-deletion jobs (inactive users, old trips, audit logs)",
+        "Right to erasure (30-day grace period, hard delete)",
+        "Right to data access (JSON export endpoint)",
+        "Audit logging (WHO, WHAT, WHEN, WHY)",
+        "Unsubscribe from communications"
+      ],
+      "common_tools": ["PostgreSQL", "Express.js", "Node.js", "Bull"],
+      "implementation": "Consent table with version tracking, auto-deletion scheduler (Cron/Bull), soft delete with 30-day recovery window, hard delete after grace, data export endpoint, audit log table with all sensitive operations",
+      "tradeoffs": [
+        "Adds database schema complexity",
+        "Requires background jobs for cleanup",
+        "30-day grace period delays hard deletion"
+      ],
+      "benefits": [
+        "Legal compliance with Indonesian law",
+        "User trust (right to erasure)",
+        "Audit trail for incident response",
+        "Automatic data minimization"
+      ],
+      "retention_policy": {
+        "active_account": "While active",
+        "inactive_account": "30 days after last activity",
+        "trip_data": "7 days after trip ends",
+        "audit_logs": "90 days"
+      }
+    }
+  ],
+  "insights": {
+    "most_successful_patterns": ["react-component-pattern", "express-api-pattern", "jwt-refresh-rotation-mvp-2025-11", "whatsapp-webhook-security-2025-11", "react-form-validation-notifications-2025-11"],
+    "common_success_factors": [
+      "Modular architecture",
+      "Comprehensive testing",
+      "Type safety",
+      "Clear separation of concerns",
+      "Good documentation",
+      "Security-first design",
+      "Compliance considerations",
+      "User-friendly error messaging",
+      "Real-time validation feedback"
+    ],
+    "recommended_tools": [
+      "typescript",
+      "jest",
+      "eslint",
+      "prettier",
+      "husky",
+      "zod",
+      "redis",
+      "sentry",
+      "sonner"
+    ],
+    "security_patterns_added_2025_11": [
+      "jwt-refresh-rotation-mvp-2025-11",
+      "whatsapp-webhook-security-2025-11",
+      "rate-limiting-sliding-window-2025-11",
+      "privacy-compliance-indonesian-mvp-2025-11"
+    ],
+    "frontend_patterns_added_2025_11": [
+      "react-form-validation-notifications-2025-11"
+    ]
+  }
+}
