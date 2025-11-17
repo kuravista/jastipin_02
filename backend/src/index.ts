@@ -1,0 +1,80 @@
+/**
+ * Express App Entry Point
+ * Initializes Express server with middleware and routes
+ */
+
+import 'dotenv/config'
+import express from 'express'
+import cors from 'cors'
+
+import authRoutes from './routes/auth.js'
+import profileRoutes from './routes/profile.js'
+import tripRoutes from './routes/trips.js'
+import productRoutes from './routes/products.js'
+import participantRoutes from './routes/participants.js'
+import orderRoutes from './routes/orders.js'
+import socialMediaRoutes from './routes/social-media.js'
+import shippingRoutes from './routes/shipping.js'
+import { errorHandler } from './middleware/errorHandler.js'
+
+const app = express()
+const PORT = process.env.API_PORT || 4000
+
+// Middleware
+app.use(
+  express.json({
+    limit: '10mb',
+  })
+)
+
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true,
+  })
+)
+
+// Health check endpoint
+app.get('/health', (_req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() })
+})
+
+// API routes
+app.use('/api/auth', authRoutes)
+app.use('/api', profileRoutes)
+app.use('/api', tripRoutes)
+app.use('/api', productRoutes)
+app.use('/api', participantRoutes)
+app.use('/api', orderRoutes)
+app.use('/api', socialMediaRoutes)
+app.use('/api', shippingRoutes)
+
+// 404 handler
+app.use((_req, res) => {
+  res.status(404).json({
+    error: 'Route not found',
+    path: _req.path,
+    method: _req.method,
+  })
+})
+
+// Error handler (must be last)
+app.use(errorHandler)
+
+// Start server
+const server = app.listen(PORT, () => {
+  console.log(
+    `Server running on port ${PORT} in ${process.env.NODE_ENV} mode`
+  )
+})
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully')
+  server.close(() => {
+    console.log('Server closed')
+    process.exit(0)
+  })
+})
+
+export default app

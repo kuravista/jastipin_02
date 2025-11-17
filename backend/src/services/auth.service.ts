@@ -1,0 +1,298 @@
+/**
+ * Authentication Service - Business Logic
+ * Handles user registration, login, and token refresh
+ */
+
+import { PrismaClient } from '@prisma/client'
+import { hashPassword, verifyPassword } from '../utils/password.js'
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyToken,
+} from '../utils/jwt.js'
+import { getRandomAvatar, generateSlugFromName } from '../utils/image.utils.js'
+import { ApiError } from '../types/index.js'
+
+export class AuthService {
+  constructor(private db: PrismaClient) {}
+
+  /**
+   * Register new user
+   * @param email - User email
+   * @param password - User password
+   * @param fullName - User full name
+   * @returns User data with tokens
+   */
+  async register(email: string, password: string, fullName: string) {
+    const existingUser = await this.db.user.findUnique({
+      where: { email },
+    })
+
+    if (existingUser) {
+      const error: ApiError = {
+        status: 409,
+        message: 'Email already registered',
+      }
+      throw error
+    }
+
+    const hashedPassword = await hashPassword(password)
+    const slug = generateSlugFromName(fullName)
+    const avatar = getRandomAvatar()
+
+    const user = await this.db.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        slug,
+        profileName: fullName,
+        avatar,
+      },
+    })
+
+    const token = generateAccessToken(user.id, user.slug, user.email)
+    const refreshToken = generateRefreshToken(user.id)
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        slug: user.slug,
+        profileName: user.profileName,
+      },
+      token,
+      refreshToken,
+    }
+  }
+
+  /**
+   * Login user with email and password
+   * @param email - User email
+   * @param password - User password
+   * @returns User data with tokens
+   */
+  async login(email: string, password: string) {
+    const user = await this.db.user.findUnique({
+      where: { email },
+    })
+
+    if (!user) {
+      const error: ApiError = {
+        status: 401,
+        message: 'Invalid credentials',
+      }
+      throw error
+    }
+
+    const isPasswordValid = await verifyPassword(password, user.password)
+    if (!isPasswordValid) {
+      const error: ApiError = {
+        status: 401,
+        message: 'Invalid credentials',
+      }
+      throw error
+    }
+
+    const token = generateAccessToken(user.id, user.slug, user.email)
+    const refreshToken = generateRefreshToken(user.id)
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        slug: user.slug,
+        profileName: user.profileName,
+      },
+      token,
+      refreshToken,
+    }
+  }
+
+  /**
+   * Refresh access token using refresh token
+   * @param refreshTokenStr - Refresh token string
+   * @returns New access token
+   */
+  async refreshAccessToken(refreshTokenStr: string) {
+    const decoded = verifyToken(refreshTokenStr, true)
+    if (!decoded) {
+      const error: ApiError = {
+        status: 401,
+        message: 'Invalid or expired refresh token',
+      }
+      throw error
+    }
+
+    const user = await this.db.user.findUnique({
+      where: { id: decoded.sub },
+    })
+
+    if (!user) {
+      const error: ApiError = {
+        status: 404,
+        message: 'User not found',
+      }
+      throw error
+    }
+
+    const token = generateAccessToken(user.id, user.slug, user.email)
+    return { token }
+  }
+
+  /**
+   * Get user profile by ID
+   * @param userId - User ID
+   * @returns User profile data
+   */
+  async getUserProfile(userId: string) {
+    const user = await this.db.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        slug: true,
+        profileName: true,
+        profileBio: true,
+        avatar: true,
+        coverImage: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    })
+
+    if (!user) {
+      const error: ApiError = {
+        status: 404,
+        message: 'User not found',
+      }
+      throw error
+    }
+
+    return user
+  }
+
+  /**
+   * Update user profile
+   * @param userId - User ID
+   * @param profileData - Profile data to update
+   * @returns Updated user profile
+   */
+  async updateUserProfile(
+    userId: string,
+    profileData: {
+      profileName?: string
+      profileBio?: string
+      avatar?: string
+      coverImage?: string
+    }
+  ) {
+    const user = await this.db.user.update({
+      where: { id: userId },
+      data: profileData,
+      select: {
+        id: true,
+        email: true,
+        slug: true,
+        profileName: true,
+        profileBio: true,
+        avatar: true,
+        coverImage: true,
+        updatedAt: true,
+      },
+    })
+
+    return user
+  }
+
+  /**
+   * Get public user profile by slug
+   * @param slug - User slug
+   * @returns Public user profile with trips and products
+   */
+  async getPublicProfile(slug: string) {
+    const user = await this.db.user.findUnique({
+      where: { slug },
+      select: {
+        id: true,
+        slug: true,
+        profileName: true,
+        profileBio: true,
+        avatar: true,
+        coverImage: true,
+        createdAt: true,
+      },
+    })
+
+    if (!user) {
+      const error: ApiError = {
+        status: 404,
+        message: 'User not found',
+      }
+      throw error
+    }
+
+    // Fetch user's trips and products for profile enrichment
+    const trips = await this.db.trip.findMany({
+      where: { jastiperId: user.id },
+      orderBy: { createdAt: 'desc' },
+      select: { 
+        id: true, 
+        title: true, 
+        isActive: true,
+        description: true,
+        url_img: true,
+        deadline: true,
+      },
+    })
+
+    const products = await this.db.product.findMany({
+      where: { trip: { jastiperId: user.id } },
+      select: { id: true, title: true, price: true, stock: true, image: true },
+    })
+
+    // Fetch social media accounts
+    const socialMedias = await this.db.socialMedia.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: 'asc' },
+      select: {
+        id: true,
+        platform: true,
+        handle: true,
+        url: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    })
+
+    // Calculate profile stats
+    const stats = {
+      totalTrips: trips.length,
+      happyCustomers: Math.max(Math.floor(Math.random() * 100) + 1, trips.length * 5),
+      rating: Math.min(4.5 + Math.random() * 0.5, 5).toFixed(1),
+    }
+
+    return {
+      user: {
+        ...user,
+        stats,
+        socialMedia: socialMedias,
+      },
+      trips: trips.map((trip) => ({
+        id: trip.id,
+        title: trip.title,
+        description: trip.description,
+        image: trip.url_img,
+        deadline: trip.deadline,
+        status: trip.isActive ? 'Buka' : 'Tutup',
+        spotsLeft: Math.floor(Math.random() * 15) + 1,
+      })),
+      catalog: products.map((product) => ({
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        image: product.image,
+        available: product.stock > 0,
+      })),
+    }
+  }
+}

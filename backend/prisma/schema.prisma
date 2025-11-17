@@ -1,0 +1,135 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  slug          String    @unique
+  profileName   String?
+  profileBio    String?
+  avatar        String?
+  coverImage    String?
+  
+  trips         Trip[]
+  socialMedia   SocialMedia[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([email])
+  @@index([slug])
+}
+
+model SocialMedia {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  platform      String    // INSTAGRAM, YOUTUBE, TIKTOK, SHOPEE, WHATSAPP, etc
+  handle        String    // username or phone number
+  url           String?   // full URL if different from generated
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@unique([userId, platform])
+  @@index([userId])
+  @@index([platform])
+}
+
+model Trip {
+  id            String    @id @default(cuid())
+  jastiperId    String
+  jastiper      User      @relation(fields: [jastiperId], references: [id], onDelete: Cascade)
+  
+  slug          String
+  title         String
+  description   String?
+  url_img       String?
+  startDate     DateTime?
+  deadline      DateTime?
+  isActive      Boolean   @default(false)
+  
+  participants  Participant[]
+  products      Product[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@unique([jastiperId, slug])
+  @@index([jastiperId])
+}
+
+model Participant {
+  id            String    @id @default(cuid())
+  tripId        String
+  trip          Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  
+  phone         String
+  name          String
+  email         String?
+  address       String?
+  cityId        String?
+  cityName      String?
+  provinceId    String?
+  provinceName  String?
+  postalCode    String?
+  shippingCost  Int?
+  courier       String?
+  
+  orders        Order[]
+  
+  createdAt     DateTime  @default(now())
+  
+  @@unique([tripId, phone])
+  @@index([tripId])
+}
+
+model Product {
+  id            String    @id @default(cuid())
+  tripId        String
+  trip          Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  
+  slug          String
+  title         String
+  price         Int
+  stock         Int
+  image         String?
+  description   String?
+  status        String    @default("active")
+  
+  orders        Order[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@unique([tripId, slug])
+  @@index([tripId])
+}
+
+model Order {
+  id            String    @id @default(cuid())
+  participantId String
+  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  
+  productId     String
+  product       Product   @relation(fields: [productId], references: [id])
+  
+  quantity      Int
+  totalPrice    Int
+  proofUrl      String?
+  status        String    @default("pending")
+  notes         String?
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([participantId])
+  @@index([productId])
+}
