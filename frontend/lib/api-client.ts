@@ -3,7 +3,12 @@
  * Handles HTTP requests, token attachment, and automatic refresh on 401
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
+import { getApiUrl } from './config'
+
+// Get API URL at runtime, which will use the current domain's /api proxy
+function API_URL(): string {
+  return getApiUrl()
+}
 
 interface FetchOptions extends RequestInit {
   params?: Record<string, any>
@@ -20,7 +25,7 @@ export async function apiCall<T>(
   const { params, ...fetchOptions } = options
 
   // Build URL with query params
-  const url = new URL(`${API_URL}${endpoint}`)
+  const url = new URL(`${API_URL()}${endpoint}`)
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       url.searchParams.append(key, String(value))
@@ -186,7 +191,7 @@ export function clearAuthToken() {
  */
 async function refreshToken(): Promise<boolean> {
   try {
-    const response = await fetch(`${API_URL}/auth/refresh`, {
+    const response = await fetch(`${API_URL()}/auth/refresh`, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
