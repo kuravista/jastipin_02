@@ -1,0 +1,47 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <defs>
+    <linearGradient id="grad9" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00D2D3;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00A0A0;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="100" fill="url(#grad9)"/>
+  
+  <!-- Sports headband -->
+  <ellipse cx="100" cy="58" rx="38" ry="8" fill="#FF6B6B"/>
+  <ellipse cx="100" cy="56" rx="35" ry="5" fill="#FF8E72"/>
+  
+  <!-- Head -->
+  <circle cx="100" cy="72" r="32" fill="#FDBCB4"/>
+  
+  <!-- Hair - athletic -->
+  <path d="M 75 50 Q 70 65 75 80" stroke="#8B4513" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <path d="M 125 50 Q 130 65 125 80" stroke="#8B4513" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <ellipse cx="100" cy="42" rx="28" ry="12" fill="#8B4513"/>
+  
+  <!-- Athletic eyes with intensity -->
+  <circle cx="86" cy="70" r="4.5" fill="#333"/>
+  <circle cx="114" cy="70" r="4.5" fill="#333"/>
+  <line x1="82" y1="70" x2="78" y2="68" stroke="#333" stroke-width="1.5"/>
+  <line x1="118" y1="70" x2="122" y2="68" stroke="#333" stroke-width="1.5"/>
+  
+  <!-- Determined expression -->
+  <path d="M 86 82 L 114 82" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+  
+  <!-- Nose -->
+  <line x1="100" y1="68" x2="100" y2="78" stroke="#E6C8A4" stroke-width="1.5"/>
+  
+  <!-- Body - athletic shirt -->
+  <ellipse cx="100" cy="135" rx="40" ry="52" fill="#FDBCB4"/>
+  
+  <!-- Sports jersey -->
+  <polygon points="60,100 140,100 135,160 65,160" fill="#FF6B6B"/>
+  
+  <!-- Jersey number "5" -->
+  <text x="100" y="145" font-size="40" font-weight="bold" fill="white" text-anchor="middle">5</text>
+  
+  <!-- Muscle definition -->
+  <line x1="75" y1="115" x2="75" y2="135" stroke="#FF8E72" stroke-width="2" opacity="0.6"/>
+  <line x1="125" y1="115" x2="125" y2="135" stroke="#FF8E72" stroke-width="2" opacity="0.6"/>
+</svg>

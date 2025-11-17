@@ -1,0 +1,48 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <defs>
+    <linearGradient id="grad10" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667EEA;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764BA2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="100" fill="url(#grad10)"/>
+  
+  <!-- Geometric shapes background -->
+  <circle cx="130" cy="40" r="15" fill="#FFD93D" opacity="0.3"/>
+  <rect x="50" y="150" width="30" height="30" fill="#6BCB77" opacity="0.3" transform="rotate(45 65 165)"/>
+  <polygon points="180,120 190,140 170,140" fill="#FF6B9D" opacity="0.3"/>
+  
+  <!-- Head - minimalist -->
+  <circle cx="100" cy="72" r="31" fill="#E8D5C4"/>
+  
+  <!-- Simple geometric hair -->
+  <rect x="70" y="45" width="60" height="15" fill="#2C3E50" rx="5"/>
+  
+  <!-- Minimalist eyes - just dots -->
+  <circle cx="88" cy="70" r="3" fill="#333"/>
+  <circle cx="112" cy="70" r="3" fill="#333"/>
+  
+  <!-- Subtle expression lines -->
+  <path d="M 85 78 Q 100 82 115 78" stroke="#D4A574" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  
+  <!-- Body -->
+  <ellipse cx="100" cy="138" rx="39" ry="52" fill="#E8D5C4"/>
+  
+  <!-- Minimalist clothing -->
+  <rect x="65" y="105" width="70" height="15" fill="#667EEA" rx="4"/>
+  <rect x="65" y="125" width="70" height="35" fill="#764BA2" rx="4"/>
+  
+  <!-- Accent elements -->
+  <circle cx="75" cy="112" r="2.5" fill="#FFD93D"/>
+  <circle cx="100" cy="112" r="2.5" fill="#FFD93D"/>
+  <circle cx="125" cy="112" r="2.5" fill="#FFD93D"/>
+  
+  <!-- Minimalist details -->
+  <line x1="70" y1="130" x2="80" y2="130" stroke="#E8D5C4" stroke-width="1"/>
+  <line x1="120" y1="130" x2="130" y2="130" stroke="#E8D5C4" stroke-width="1"/>
+  
+  <!-- Geometric pattern on shirt -->
+  <path d="M 100 125 L 105 135 L 95 135 Z" fill="#FFD93D"/>
+  <path d="M 100 140 L 107 150 L 93 150 Z" fill="#6BCB77"/>
+</svg>

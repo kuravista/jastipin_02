@@ -1,0 +1,37 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <defs>
+    <linearGradient id="grad3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#A29BFE;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#6C5CE7;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="100" fill="url(#grad3)"/>
+  
+  <!-- Head -->
+  <circle cx="100" cy="70" r="32" fill="#FBE4D6"/>
+  
+  <!-- Hair - long style -->
+  <path d="M 70 50 Q 60 70 70 90" stroke="#8B4513" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M 130 50 Q 140 70 130 90" stroke="#8B4513" stroke-width="6" fill="none" stroke-linecap="round"/>
+  
+  <!-- Eyes -->
+  <ellipse cx="90" cy="68" rx="3" ry="5" fill="#333"/>
+  <ellipse cx="110" cy="68" rx="3" ry="5" fill="#333"/>
+  
+  <!-- Eyebrows -->
+  <path d="M 85 60 Q 90 58 95 60" stroke="#8B4513" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M 105 60 Q 110 58 115 60" stroke="#8B4513" stroke-width="2" fill="none" stroke-linecap="round"/>
+  
+  <!-- Nose -->
+  <line x1="100" y1="65" x2="100" y2="75" stroke="#DCC9B6" stroke-width="1.5"/>
+  
+  <!-- Peaceful smile -->
+  <path d="M 90 80 Q 100 85 110 80" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round"/>
+  
+  <!-- Body -->
+  <ellipse cx="100" cy="135" rx="36" ry="50" fill="#FBE4D6"/>
+  
+  <!-- Dress -->
+  <path d="M 68 115 Q 68 130 70 150 L 130 150 Q 132 130 132 115" fill="#A29BFE"/>
+</svg>

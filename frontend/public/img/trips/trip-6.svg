@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="grad6" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#12C2E9;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#C471ED;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#grad6)"/>
+  <path d="M 200 80 L 260 140 L 240 220 L 160 220 L 140 140 Z" fill="#FFCCDD" opacity="0.8"/>
+  <circle cx="200" cy="180" r="30" fill="#B4E7FF" opacity="0.9"/>
+  <text x="200" y="260" font-size="24" font-weight="bold" text-anchor="middle" fill="white">Trip 6</text>
+</svg>
