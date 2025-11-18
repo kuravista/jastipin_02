@@ -17,6 +17,7 @@ import socialMediaRoutes from './routes/social-media.js'
 import shippingRoutes from './routes/shipping.js'
 import healthRoutes from './routes/health.js'
 import { errorHandler } from './middleware/errorHandler.js'
+import { maintenanceMiddleware } from './middleware/maintenance.js'
 
 const app: Express = express()
 const PORT = process.env.API_PORT || 4000
@@ -39,6 +40,9 @@ app.use(
     allowedHeaders: ['Content-Type', 'Authorization'],
   })
 )
+
+// Maintenance mode middleware (check before routes)
+app.use(maintenanceMiddleware)
 
 // Health check endpoint
 app.get('/health', (_req, res) => {
