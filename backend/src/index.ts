@@ -16,6 +16,7 @@ import orderRoutes from './routes/orders.js'
 import socialMediaRoutes from './routes/social-media.js'
 import shippingRoutes from './routes/shipping.js'
 import healthRoutes from './routes/health.js'
+import debugRoutes from './routes/debug.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import { maintenanceMiddleware } from './middleware/maintenance.js'
 
@@ -67,6 +68,7 @@ app.use('/health', healthRoutes)
 
 // API routes
 app.use('/api/auth', authRoutes)
+app.use('/api/debug', debugRoutes)
 app.use('/api', profileRoutes)
 app.use('/api', tripRoutes)
 app.use('/api', productRoutes)

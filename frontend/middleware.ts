@@ -4,11 +4,13 @@ import { NextRequest, NextResponse } from 'next/server';
  * Middleware to handle maintenance mode
  * 
  * Redirects all requests to /maintenance when MAINTENANCE_MODE=true
+ * Supports IP whitelist bypass for development/admin access
  * Whitelists:
  * - Static assets (_next, public files)
  * - Maintenance page itself
  * - API routes (for backend calls)
  * - Health check endpoint
+ * - Whitelisted IPs (bypass maintenance)
  */
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -34,6 +36,25 @@ export function middleware(request: NextRequest) {
   const maintenanceMode = process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'true';
 
   if (maintenanceMode) {
+    // Check if IP is whitelisted for bypass
+    const cfConnectingIp = request.headers.get('cf-connecting-ip');
+    const xForwardedFor = request.headers.get('x-forwarded-for');
+    const clientIP = cfConnectingIp || 
+                     xForwardedFor?.split(',')[0]?.trim() || 
+                     request.ip;
+    
+    const bypassIPs = process.env.NEXT_PUBLIC_BYPASS_IPS?.split(',').map(ip => ip.trim()) || [];
+    
+    // Debug log (will appear in build logs, not runtime)
+    console.log('[FRONTEND MAINTENANCE] Detected IP:', clientIP);
+    console.log('[FRONTEND MAINTENANCE] CF-Connecting-IP:', cfConnectingIp);
+    console.log('[FRONTEND MAINTENANCE] Whitelist:', bypassIPs);
+    
+    if (bypassIPs.length > 0 && clientIP && bypassIPs.includes(clientIP)) {
+      console.log('[FRONTEND MAINTENANCE] IP BYPASS: Allowed for', clientIP);
+      return NextResponse.next(); // Bypass maintenance for whitelisted IP
+    }
+
     // Redirect to maintenance page
     return NextResponse.rewrite(
       new URL('/maintenance', request.url)
