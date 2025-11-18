@@ -1,7 +1,5 @@
 "use client"
 
-export const runtime = 'edge';
-
 import { Button } from "@/components/ui/button"
 import { Download, Printer, CheckCircle2, MapPin, Phone, Share2 } from "lucide-react"
 import { notFound } from "next/navigation"
