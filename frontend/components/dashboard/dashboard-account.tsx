@@ -8,12 +8,14 @@ import { useAuth } from "@/lib/auth-context"
 import { clearAuthToken } from "@/lib/api-client"
 import { EditProfileDialog } from "@/components/dialogs/edit-profile-dialog"
 import { EditPrivateDataDialog } from "@/components/dialogs/edit-private-data-dialog"
+import { ChangePasswordDialog } from "@/components/dialogs/change-password-dialog"
 
 export default function DashboardAccount({ onNavigate }: { onNavigate?: (tab: string) => void }) {
   const router = useRouter()
   const { user } = useAuth()
   const [editProfileOpen, setEditProfileOpen] = useState(false)
   const [editPrivateDataOpen, setEditPrivateDataOpen] = useState(false)
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false)
 
   const handleLogout = () => {
     clearAuthToken()
@@ -91,7 +93,10 @@ export default function DashboardAccount({ onNavigate }: { onNavigate?: (tab: st
             </div>
           </button>
 
-          <button className="w-full flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors">
+          <button 
+            onClick={() => setChangePasswordOpen(true)}
+            className="w-full flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors"
+          >
             <Lock className="w-5 h-5 text-gray-600" />
             <div className="flex-1 text-left">
               <div className="font-semibold text-gray-900">Keamanan</div>
@@ -141,6 +146,7 @@ export default function DashboardAccount({ onNavigate }: { onNavigate?: (tab: st
       {/* Edit Profile Dialog */}
       <EditProfileDialog open={editProfileOpen} onOpenChange={setEditProfileOpen} />
       <EditPrivateDataDialog open={editPrivateDataOpen} onOpenChange={setEditPrivateDataOpen} />
+      <ChangePasswordDialog open={changePasswordOpen} onOpenChange={setChangePasswordOpen} />
     </div>
   )
 }

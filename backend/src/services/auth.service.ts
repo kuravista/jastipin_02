@@ -156,6 +156,7 @@ export class AuthService {
         avatar: true,
         coverImage: true,
         coverPosition: true,
+        whatsappNumber: true,
         originProvinceId: true,
         originProvinceName: true,
         originCityId: true,
@@ -164,6 +165,9 @@ export class AuthService {
         originDistrictName: true,
         originPostalCode: true,
         originAddressText: true,
+        bankName: true,
+        accountNumber: true,
+        accountHolderName: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -195,6 +199,7 @@ export class AuthService {
       avatar?: string
       coverImage?: string
       coverPosition?: number
+      whatsappNumber?: string
       originProvinceId?: string
       originProvinceName?: string
       originCityId?: string
@@ -203,6 +208,9 @@ export class AuthService {
       originDistrictName?: string
       originPostalCode?: string
       originAddressText?: string
+      bankName?: string
+      accountNumber?: string
+      accountHolderName?: string
     }
   ) {
     // Check if slug is being updated and if it's unique
@@ -237,6 +245,7 @@ export class AuthService {
         avatar: true,
         coverImage: true,
         coverPosition: true,
+        whatsappNumber: true,
         originProvinceId: true,
         originProvinceName: true,
         originCityId: true,
@@ -245,6 +254,9 @@ export class AuthService {
         originDistrictName: true,
         originPostalCode: true,
         originAddressText: true,
+        bankName: true,
+        accountNumber: true,
+        accountHolderName: true,
         updatedAt: true,
       },
     })
@@ -343,5 +355,62 @@ export class AuthService {
         available: product.stock > 0,
       })),
     }
+  }
+
+  /**
+   * Change user password
+   * @param userId - User ID
+   * @param currentPassword - Current password for verification
+   * @param newPassword - New password to set
+   * @returns Success message
+   */
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string
+  ) {
+    const user = await this.db.user.findUnique({
+      where: { id: userId },
+    })
+
+    if (!user) {
+      const error: ApiError = {
+        status: 404,
+        message: 'User not found',
+      }
+      throw error
+    }
+
+    // Verify current password
+    const isPasswordValid = await verifyPassword(
+      currentPassword,
+      user.password
+    )
+    if (!isPasswordValid) {
+      const error: ApiError = {
+        status: 401,
+        message: 'Current password is incorrect',
+      }
+      throw error
+    }
+
+    // Check if new password is same as current
+    const isSamePassword = await verifyPassword(newPassword, user.password)
+    if (isSamePassword) {
+      const error: ApiError = {
+        status: 400,
+        message: 'New password must be different from current password',
+      }
+      throw error
+    }
+
+    // Hash and update password
+    const hashedPassword = await hashPassword(newPassword)
+    await this.db.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    })
+
+    return { message: 'Password changed successfully' }
   }
 }

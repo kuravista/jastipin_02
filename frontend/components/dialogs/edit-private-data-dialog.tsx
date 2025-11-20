@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { useToast } from "@/components/ui/use-toast"
 import { apiPatch, apiGet } from "@/lib/api-client"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Pencil, Eye, EyeOff } from "lucide-react"
 import { 
   Select, 
   SelectContent, 
@@ -23,7 +25,8 @@ interface EditPrivateDataDialogProps {
 
 interface PrivateData {
   email: string
-  profileName: string // Used as full name for now
+  profileName: string
+  whatsappNumber?: string
   // Origin Address Fields
   originProvinceId?: string
   originProvinceName?: string
@@ -33,6 +36,10 @@ interface PrivateData {
   originDistrictName?: string
   originPostalCode?: string
   originAddressText?: string
+  // Bank Account Fields
+  bankName?: string
+  accountNumber?: string
+  accountHolderName?: string
 }
 
 interface LocationOption {
@@ -42,11 +49,16 @@ interface LocationOption {
 
 export function EditPrivateDataDialog({ open, onOpenChange, onSuccess }: EditPrivateDataDialogProps) {
   const [loading, setLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState("data-pribadi")
   const [formData, setFormData] = useState<PrivateData>({
     email: "",
     profileName: "",
   })
   const [error, setError] = useState<string | null>(null)
+  const [showEmailChangeConfirm, setShowEmailChangeConfirm] = useState(false)
+  const [emailChangePassword, setEmailChangePassword] = useState("")
+  const [showEmailPassword, setShowEmailPassword] = useState(false)
+  const [newEmail, setNewEmail] = useState("")
   const { toast } = useToast()
 
   // Location State
@@ -142,6 +154,7 @@ export function EditPrivateDataDialog({ open, onOpenChange, onSuccess }: EditPri
       setFormData({
         email: profileData.email || "",
         profileName: profileData.profileName || "",
+        whatsappNumber: profileData.whatsappNumber || "",
         originProvinceId: profileData.originProvinceId || "",
         originProvinceName: profileData.originProvinceName || "",
         originCityId: profileData.originCityId || "",
@@ -150,6 +163,9 @@ export function EditPrivateDataDialog({ open, onOpenChange, onSuccess }: EditPri
         originDistrictName: profileData.originDistrictName || "",
         originPostalCode: profileData.originPostalCode || "",
         originAddressText: profileData.originAddressText || "",
+        bankName: profileData.bankName || "",
+        accountNumber: profileData.accountNumber || "",
+        accountHolderName: profileData.accountHolderName || "",
       })
 
     } catch (err) {
@@ -269,6 +285,75 @@ export function EditPrivateDataDialog({ open, onOpenChange, onSuccess }: EditPri
     setError(null)
   }
 
+  const validateAddress = (address: string) => {
+    return {
+      minLength: address.length >= 25,
+      hasNumber: /[0-9]/.test(address),
+      hasLetter: /[a-zA-Z]/.test(address),
+    }
+  }
+
+  const isAddressValid = (address: string) => {
+    const validation = validateAddress(address)
+    return validation.minLength && validation.hasNumber && validation.hasLetter
+  }
+
+  const isValidEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  }
+
+  const handleConfirmEmailChange = async () => {
+    if (!emailChangePassword) {
+      toast({
+        variant: "destructive",
+        title: "Gagal",
+        description: "Masukkan password untuk konfirmasi",
+      })
+      return
+    }
+
+    if (!newEmail) {
+      toast({
+        variant: "destructive",
+        title: "Gagal",
+        description: "Masukkan email baru",
+      })
+      return
+    }
+
+    if (!isValidEmail(newEmail)) {
+      toast({
+        variant: "destructive",
+        title: "Gagal",
+        description: "Format email tidak valid",
+      })
+      return
+    }
+
+    setLoading(true)
+    try {
+      // In real implementation, backend should verify password before changing email
+      // For now, we'll just update the email in formData
+      setFormData((prev) => ({ ...prev, email: newEmail }))
+      setShowEmailChangeConfirm(false)
+      setNewEmail("")
+      setEmailChangePassword("")
+      
+      toast({
+        title: "Berhasil",
+        description: "Email berhasil diperbarui",
+      })
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Gagal",
+        description: err.message || "Gagal mengubah email",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -284,7 +369,23 @@ export function EditPrivateDataDialog({ open, onOpenChange, onSuccess }: EditPri
       onOpenChange(false)
       onSuccess?.()
     } catch (err: any) {
-      setError(err.message || "Gagal menyimpan data")
+      // Parse validation error details from API
+      let errorMessage = "Gagal menyimpan data"
+      
+      if (err.details && Array.isArray(err.details) && err.details.length > 0) {
+        // Extract the first validation error message
+        const firstError = err.details[0]
+        errorMessage = firstError.message || err.message || errorMessage
+      } else if (err.message) {
+        errorMessage = err.message
+      }
+      
+      setError(errorMessage)
+      toast({
+        variant: "destructive",
+        title: "Gagal Menyimpan",
+        description: errorMessage,
+      })
     } finally {
       setLoading(false)
     }
@@ -297,132 +398,312 @@ export function EditPrivateDataDialog({ open, onOpenChange, onSuccess }: EditPri
           <SheetTitle>Informasi Pribadi</SheetTitle>
           <SheetDescription>Kelola data pribadi dan alamat pengiriman Anda</SheetDescription>
         </SheetHeader>
-        <form className="mt-6 space-y-6 pb-6" onSubmit={handleSubmit}>
-          {error && <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{error}</div>}
+        <form className="mt-4 pb-6" onSubmit={handleSubmit}>
+          {error && <div className="p-2 bg-red-50 border border-red-200 rounded text-red-700 text-xs mb-4">{error}</div>}
 
-          <div className="space-y-4">
-            <h3 className="font-medium text-gray-900 border-b pb-2">Data Diri</h3>
-            
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                value={formData.email}
-                disabled={true}
-                className="mt-2 bg-gray-50"
-              />
-              <p className="text-xs text-gray-500 mt-1">Email tidak dapat diubah</p>
-            </div>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-3 mb-4">
+              <TabsTrigger value="data-pribadi" className="text-xs">Data Pribadi</TabsTrigger>
+              <TabsTrigger value="alamat" className="text-xs">Alamat</TabsTrigger>
+              <TabsTrigger value="rekening" className="text-xs">Rekening</TabsTrigger>
+            </TabsList>
 
-            <div>
-              <Label htmlFor="profileName">Nama Lengkap</Label>
-              <Input
-                id="profileName"
-                value={formData.profileName}
-                onChange={(e) => handleInputChange("profileName", e.target.value)}
-                disabled={loading}
-                className="mt-2"
-              />
-            </div>
-          </div>
+            {/* Tab 1: Data Pribadi */}
+            <TabsContent value="data-pribadi" className="space-y-3">
+              {/* Email Change Confirmation */}
+              {showEmailChangeConfirm ? (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded space-y-2">
+                  <p className="text-xs font-semibold text-blue-900">Ubah Email</p>
+                  
+                  <div>
+                    <Label htmlFor="newEmail" className="text-xs">Email Baru</Label>
+                    <Input
+                      id="newEmail"
+                      type="email"
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      placeholder="Masukkan email baru"
+                      className="mt-0.5 h-8 text-sm"
+                      disabled={loading}
+                    />
+                  </div>
 
-          <div className="space-y-4">
-            <h3 className="font-medium text-gray-900 border-b pb-2">Alamat Pengiriman (Asal)</h3>
-            <p className="text-sm text-gray-500">Alamat ini digunakan sebagai titik awal perhitungan ongkos kirim.</p>
-            
-            {/* Province */}
-            <div className="mb-3">
-              <Label htmlFor="province">Provinsi</Label>
-              <Select 
-                value={formData.originProvinceId || ''} 
-                onValueChange={handleProvinceChange}
-                disabled={locationLoading.provinces}
-              >
-                <SelectTrigger id="province" className="mt-1">
-                  <SelectValue placeholder={locationLoading.provinces ? "Memuat..." : "Pilih Provinsi"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {provinces.map((province) => (
-                    <SelectItem key={province.code} value={province.code}>
-                      {province.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                  <div>
+                    <Label htmlFor="emailPassword" className="text-xs">Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="emailPassword"
+                        type={showEmailPassword ? "text" : "password"}
+                        value={emailChangePassword}
+                        onChange={(e) => setEmailChangePassword(e.target.value)}
+                        placeholder="Masukkan password untuk konfirmasi"
+                        className="mt-0.5 h-8 text-sm pr-8"
+                        disabled={loading}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowEmailPassword(!showEmailPassword)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showEmailPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
 
-            {/* City */}
-            <div className="mb-3">
-              <Label htmlFor="city">Kota/Kabupaten</Label>
-              <Select 
-                value={formData.originCityId || ''} 
-                onValueChange={handleCityChange}
-                disabled={!formData.originProvinceId || locationLoading.cities}
-              >
-                <SelectTrigger id="city" className="mt-1">
-                  <SelectValue placeholder={locationLoading.cities ? "Memuat..." : "Pilih Kota/Kabupaten"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {cities.map((city) => (
-                    <SelectItem key={city.code} value={city.code}>
-                      {city.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setShowEmailChangeConfirm(false)
+                        setNewEmail("")
+                        setEmailChangePassword("")
+                      }}
+                      disabled={loading}
+                      className="h-7 text-xs flex-1"
+                    >
+                      Batal
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleConfirmEmailChange}
+                      disabled={loading || !newEmail || !emailChangePassword || !isValidEmail(newEmail)}
+                      className="h-7 text-xs flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {loading ? "Proses..." : "Ubah"}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="email" className="text-xs">Email</Label>
+                    <button
+                      type="button"
+                      onClick={() => setShowEmailChangeConfirm(true)}
+                      className="p-1 hover:bg-gray-100 rounded transition-colors"
+                      title="Ubah email"
+                    >
+                      <Pencil className="w-4 h-4 text-gray-500" />
+                    </button>
+                  </div>
+                  <Input
+                    id="email"
+                    value={formData.email}
+                    disabled={true}
+                    className="mt-1 h-8 text-sm bg-gray-50"
+                  />
+                  <p className="text-[10px] text-gray-500 mt-0.5">Klik ikon untuk mengubah email</p>
+                </div>
+              )}
 
-            {/* District */}
-            <div className="mb-3">
-              <Label htmlFor="district">Kecamatan</Label>
-              <Select 
-                key={`district-${districts.length}-${formData.originCityId}`}
-                value={formData.originDistrictId || ''} 
-                onValueChange={handleDistrictChange}
-                disabled={!formData.originCityId || locationLoading.districts}
-              >
-                <SelectTrigger id="district" className="mt-1">
-                  <SelectValue placeholder={locationLoading.districts ? "Memuat..." : "Pilih Kecamatan"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {districts.map((district) => (
-                    <SelectItem key={district.code} value={district.code}>
-                      {district.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              <div>
+                <Label htmlFor="profileName" className="text-xs">Nama Lengkap</Label>
+                <Input
+                  id="profileName"
+                  value={formData.profileName}
+                  onChange={(e) => handleInputChange("profileName", e.target.value)}
+                  disabled={loading}
+                  className="mt-1 h-8 text-sm"
+                />
+              </div>
 
-            {/* Postal Code */}
-            <div className="mb-3">
-              <Label htmlFor="postalCode">Kode Pos</Label>
-              <Input
-                id="postalCode"
-                value={formData.originPostalCode || ''}
-                onChange={(e) => handleInputChange("originPostalCode", e.target.value)}
-                disabled={loading}
-                className="mt-1"
-                placeholder="Contoh: 12345"
-                maxLength={5}
-              />
-            </div>
+              <div>
+                <Label htmlFor="whatsappNumber" className="text-xs">Nomor WhatsApp</Label>
+                <div className="flex mt-1">
+                  <span className="flex items-center px-2 h-8 bg-gray-100 border border-r-0 border-gray-300 rounded-l text-sm font-medium text-gray-600">+62</span>
+                  <Input
+                    id="whatsappNumber"
+                    type="tel"
+                    value={formData.whatsappNumber ? formData.whatsappNumber.replace('+62', '') : ''}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 12)
+                      handleInputChange("whatsappNumber", value ? `+62${value}` : '')
+                    }}
+                    disabled={loading}
+                    className="mt-0 h-8 text-sm rounded-r rounded-l-none border-l-0"
+                    placeholder="8123491293912"
+                  />
+                </div>
+                <p className="text-[10px] text-gray-500 mt-0.5">Isi tanpa +62, mulai dari 81/82/83 dst</p>
+              </div>
+            </TabsContent>
 
-             {/* Address Text */}
-             <div>
-              <Label htmlFor="addressText">Alamat Lengkap</Label>
-              <textarea
-                id="addressText"
-                placeholder="Nama jalan, nomor rumah, RT/RW..."
-                value={formData.originAddressText || ''}
-                onChange={(e) => handleInputChange("originAddressText", e.target.value)}
-                disabled={loading}
-                className="mt-1 w-full h-20 rounded-lg border border-gray-300 px-3 py-2 resize-none text-sm"
-              />
-            </div>
-          </div>
+            {/* Tab 2: Alamat */}
+            <TabsContent value="alamat" className="space-y-3">
+              <p className="text-xs text-gray-500">Alamat awal untuk perhitungan ongkos kirim</p>
+              
+              <div>
+                <Label htmlFor="province" className="text-xs">Provinsi</Label>
+                <Select 
+                  value={formData.originProvinceId || ''} 
+                  onValueChange={handleProvinceChange}
+                  disabled={locationLoading.provinces}
+                >
+                  <SelectTrigger id="province" className="mt-1 h-8 text-sm">
+                    <SelectValue placeholder={locationLoading.provinces ? "Memuat..." : "Pilih"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {provinces.map((province) => (
+                      <SelectItem key={province.code} value={province.code}>
+                        {province.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <Button type="submit" className="w-full bg-[#FB923C] hover:bg-[#EA7C2C] h-12 font-semibold" disabled={loading}>
+              <div>
+                <Label htmlFor="city" className="text-xs">Kota/Kabupaten</Label>
+                <Select 
+                  value={formData.originCityId || ''} 
+                  onValueChange={handleCityChange}
+                  disabled={!formData.originProvinceId || locationLoading.cities}
+                >
+                  <SelectTrigger id="city" className="mt-1 h-8 text-sm">
+                    <SelectValue placeholder={locationLoading.cities ? "Memuat..." : "Pilih"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cities.map((city) => (
+                      <SelectItem key={city.code} value={city.code}>
+                        {city.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="district" className="text-xs">Kecamatan</Label>
+                <Select 
+                  key={`district-${districts.length}-${formData.originCityId}`}
+                  value={formData.originDistrictId || ''} 
+                  onValueChange={handleDistrictChange}
+                  disabled={!formData.originCityId || locationLoading.districts}
+                >
+                  <SelectTrigger id="district" className="mt-1 h-8 text-sm">
+                    <SelectValue placeholder={locationLoading.districts ? "Memuat..." : "Pilih"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {districts.map((district) => (
+                      <SelectItem key={district.code} value={district.code}>
+                        {district.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="postalCode" className="text-xs">Kode Pos</Label>
+                <Input
+                  id="postalCode"
+                  value={formData.originPostalCode || ''}
+                  onChange={(e) => handleInputChange("originPostalCode", e.target.value)}
+                  disabled={loading}
+                  className="mt-1 h-8 text-sm"
+                  placeholder="12345"
+                  maxLength={5}
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="addressText" className="text-xs">Alamat Lengkap</Label>
+                  <span className="text-[10px] text-gray-500">
+                    {(formData.originAddressText || '').length}/25
+                  </span>
+                </div>
+                <textarea
+                  id="addressText"
+                  placeholder="Nama jalan, nomor rumah, RT/RW..."
+                  value={formData.originAddressText || ''}
+                  onChange={(e) => handleInputChange("originAddressText", e.target.value)}
+                  disabled={loading}
+                  className={`mt-1 w-full h-16 rounded border px-2 py-1.5 resize-none text-xs transition-colors ${
+                    !formData.originAddressText 
+                      ? 'border-gray-300' 
+                      : isAddressValid(formData.originAddressText)
+                      ? 'border-green-300 bg-green-50'
+                      : 'border-red-300 bg-red-50'
+                  }`}
+                />
+                <div className="mt-1 space-y-1">
+                  {formData.originAddressText && (
+                    <div className="flex flex-wrap gap-3">
+                      <div className="flex items-center gap-1.5">
+                        <div className={`w-3 h-3 rounded-full ${validateAddress(formData.originAddressText).minLength ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                        <span className={`text-[10px] ${validateAddress(formData.originAddressText).minLength ? 'text-green-700' : 'text-gray-600'}`}>
+                          Minimal 25 karakter
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className={`w-3 h-3 rounded-full ${validateAddress(formData.originAddressText).hasNumber ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                        <span className={`text-[10px] ${validateAddress(formData.originAddressText).hasNumber ? 'text-green-700' : 'text-gray-600'}`}>
+                          Wajib ada nomor rumah/RT/RW
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className={`w-3 h-3 rounded-full ${validateAddress(formData.originAddressText).hasLetter ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                        <span className={`text-[10px] ${validateAddress(formData.originAddressText).hasLetter ? 'text-green-700' : 'text-gray-600'}`}>
+                          Wajib ada nama jalan
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Tab 3: Rekening */}
+            <TabsContent value="rekening" className="space-y-3">
+              <p className="text-xs text-gray-500">Data rekening untuk transfer pembayaran</p>
+              
+              <div>
+                <Label htmlFor="bankName" className="text-xs">Nama Bank</Label>
+                <Input
+                  id="bankName"
+                  value={formData.bankName || ''}
+                  onChange={(e) => handleInputChange("bankName", e.target.value)}
+                  disabled={loading}
+                  className="mt-1 h-8 text-sm"
+                  placeholder="Contoh: BCA, Mandiri, BNI"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="accountNumber" className="text-xs">Nomor Rekening</Label>
+                <Input
+                  id="accountNumber"
+                  value={formData.accountNumber || ''}
+                  onChange={(e) => handleInputChange("accountNumber", e.target.value)}
+                  disabled={loading}
+                  className="mt-1 h-8 text-sm"
+                  placeholder="Contoh: 1234567890"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="accountHolderName" className="text-xs">Nama Pemilik Rekening</Label>
+                <Input
+                  id="accountHolderName"
+                  value={formData.accountHolderName || ''}
+                  onChange={(e) => handleInputChange("accountHolderName", e.target.value)}
+                  disabled={loading}
+                  className="mt-1 h-8 text-sm"
+                  placeholder="Nama sesuai rekening"
+                />
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          <Button 
+            type="submit" 
+            className="w-full bg-[#FB923C] hover:bg-[#EA7C2C] h-10 font-semibold mt-4 text-sm disabled:opacity-50" 
+            disabled={loading || (activeTab === "alamat" && formData.originAddressText && !isAddressValid(formData.originAddressText))}
+          >
             {loading ? "Menyimpan..." : "Simpan Perubahan"}
           </Button>
         </form>

@@ -18,7 +18,8 @@ import {
 interface Product {
   id: string
   title: string
-  stock: number
+  stock: number | null
+  isUnlimitedStock?: boolean
   price: number
   description?: string
   tripId: string
@@ -193,8 +194,9 @@ export default function DashboardProduk({ initialFilterTrip }: { initialFilterTr
               {/* 2-Column Grid */}
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 {paginatedProducts.map((product) => {
-                  const stockPercentage = product.stock > 0 ? Math.min((product.stock / 50) * 100, 100) : 0
-                  const stockLabel = product.stock === 0 ? "HABIS" : `${product.stock} tersisa`
+                  const isUnlimited = product.isUnlimitedStock === true
+                  const stockPercentage = isUnlimited ? 100 : (product.stock && product.stock > 0 ? Math.min((product.stock / 50) * 100, 100) : 0)
+                  const stockLabel = isUnlimited ? "∞ Unlimited" : (product.stock === 0 ? "HABIS" : `${product.stock} tersisa`)
                   
                   return (
                     <div 
@@ -278,7 +280,9 @@ export default function DashboardProduk({ initialFilterTrip }: { initialFilterTr
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-[10px] text-gray-500">Stok</span>
                             <span className={`text-[10px] font-bold ${
-                              product.stock === 0
+                              isUnlimited
+                                ? "text-blue-600"
+                                : product.stock === 0
                                 ? "text-red-600"
                                 : product.stock < 5
                                 ? "text-yellow-600"
@@ -290,7 +294,9 @@ export default function DashboardProduk({ initialFilterTrip }: { initialFilterTr
                           <div className="w-full bg-gray-200 rounded-full h-1.5">
                             <div
                               className={`h-1.5 rounded-full transition-all ${
-                                product.stock === 0
+                                isUnlimited
+                                  ? "bg-blue-500"
+                                  : product.stock === 0
                                   ? "bg-red-500"
                                   : product.stock < 5
                                   ? "bg-yellow-500"

@@ -54,7 +54,8 @@ router.post(
           title: req.body.title,
           slug: slug || 'product',
           price: req.body.price,
-          stock: req.body.stock,
+          stock: req.body.isUnlimitedStock ? null : req.body.stock,
+          isUnlimitedStock: req.body.isUnlimitedStock || false,
           description: req.body.description,
           image: req.body.image,
           // NEW: DP flow fields
@@ -134,9 +135,15 @@ router.patch(
         return
       }
 
+      const updateData: any = { ...req.body }
+      // If isUnlimitedStock is true, set stock to null; otherwise keep stock value
+      if (updateData.isUnlimitedStock === true) {
+        updateData.stock = null
+      }
+
       const updated = await db.product.update({
         where: { id: req.params.productId },
-        data: req.body,
+        data: updateData,
         include: { Trip: true },
       })
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Home, DollarSign, Package, User } from "lucide-react"
+import { Home, DollarSign, Package, Plane } from "lucide-react"
 import { AuthGuard } from "@/components/AuthGuard"
 import DashboardHome from "@/components/dashboard/dashboard-home"
 import DashboardValidasi from "@/components/dashboard/dashboard-validasi"
@@ -28,19 +28,21 @@ export default function DashboardPage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-violet-50 pb-20">
-        {/* Main Content */}
-        <div className="container mx-auto px-4 py-6 max-w-2xl">
-          {activeTab === "home" && <DashboardHome onNavigate={setActiveTab} />}
-          {activeTab === "validasi" && <DashboardValidasi />}
-          {activeTab === "produk" && <DashboardProduk initialFilterTrip={selectedTripId} />}
-          {activeTab === "profile" && <DashboardProfile onBack={() => setActiveTab("account")} />}
-          {activeTab === "trips" && <DashboardTrips onBack={() => setActiveTab("account")} />}
-          {activeTab === "account" && <DashboardAccount onNavigate={setActiveTab} />}
+      <div className="h-screen flex flex-col bg-gradient-to-br from-orange-50 via-white to-violet-50">
+        {/* Main Content - Scrollable */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="container mx-auto px-4 py-6 max-w-2xl">
+            {activeTab === "home" && <DashboardHome onNavigate={setActiveTab} />}
+            {activeTab === "validasi" && <DashboardValidasi />}
+            {activeTab === "produk" && <DashboardProduk initialFilterTrip={selectedTripId} />}
+            {activeTab === "profile" && <DashboardProfile onBack={() => setActiveTab("account")} />}
+            {activeTab === "trips" && <DashboardTrips onBack={() => setActiveTab("account")} />}
+            {activeTab === "account" && <DashboardAccount onNavigate={setActiveTab} />}
+          </div>
         </div>
 
         {/* Bottom Tab Navigation */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
+        <nav className="bg-white border-t border-gray-200 shadow-lg z-50 flex-shrink-0">
           <div className="container mx-auto max-w-2xl">
             <div className="grid grid-cols-4 h-16">
               <button
@@ -78,13 +80,13 @@ export default function DashboardPage() {
               </button>
 
               <button
-                onClick={() => setActiveTab("account")}
+                onClick={() => setActiveTab("trips")}
                 className={`flex flex-col items-center justify-center gap-1 transition-colors ${
-                  activeTab === "account" ? "text-orange-500" : "text-gray-500 hover:text-gray-700"
+                  activeTab === "trips" ? "text-orange-500" : "text-gray-500 hover:text-gray-700"
                 }`}
               >
-                <User className="w-6 h-6" />
-                <span className="text-xs font-medium">Akun</span>
+                <Plane className="w-6 h-6" />
+                <span className="text-xs font-medium">Trip</span>
               </button>
             </div>
           </div>

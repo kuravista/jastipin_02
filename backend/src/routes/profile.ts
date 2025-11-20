@@ -11,7 +11,7 @@ import { AuthService } from '../services/auth.service.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { optionalAuth } from '../middleware/auth.js'
 import { validate } from '../middleware/validate.js'
-import { updateProfileSchema } from '../utils/validators.js'
+import { updateProfileSchema, changePasswordSchema } from '../utils/validators.js'
 import { AuthRequest } from '../types/index.js'
 
 const router: ExpressRouter = Router()
@@ -70,5 +70,30 @@ router.get('/profile/:slug', optionalAuth, async (req: AuthRequest, res: Respons
     res.status(status).json({ error: message })
   }
 })
+
+/**
+ * POST /profile/change-password
+ * Change authenticated user's password
+ */
+router.post(
+  '/profile/change-password',
+  authMiddleware,
+  validate(changePasswordSchema),
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { currentPassword, newPassword } = req.body
+      const result = await authService.changePassword(
+        req.user!.id,
+        currentPassword,
+        newPassword
+      )
+      res.json(result)
+    } catch (error: any) {
+      const status = error.status || 500
+      const message = error.message || 'Failed to change password'
+      res.status(status).json({ error: message })
+    }
+  }
+)
 
 export default router

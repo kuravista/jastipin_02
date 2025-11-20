@@ -1,12 +1,13 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Plus, ChevronRight, AlertCircle, TrendingDown, Users, TrendingUp, ShoppingBag, DollarSign, Copy, Check, ExternalLink } from "lucide-react"
+import { Plus, ChevronRight, AlertCircle, TrendingDown, Users, TrendingUp, ShoppingBag, DollarSign, Copy, Check, ExternalLink, Settings } from "lucide-react"
 import { CreateTripDialog } from "@/components/dialogs/create-trip-dialog"
 import { CreateProductDialog } from "@/components/dialogs/create-product-dialog"
 import { useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import Link from "next/link"
+import Image from "next/image"
 
 interface DashboardHomeProps {
   onNavigate: (tab: string) => void
@@ -32,12 +33,46 @@ export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          Halo, {user?.profileName || 'Pengguna'}! 👋
-        </h1>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold text-gray-900">
+              Halo, {user?.profileName || 'Pengguna'}! 👋
+            </h1>
+          </div>
+          
+          {/* Avatar with Settings Icon */}
+          <div className="relative group">
+            <button
+              onClick={() => onNavigate("account")}
+              className="relative w-12 h-12"
+            >
+              <div className="relative w-full h-full rounded-full overflow-hidden border-2 border-gray-200 hover:border-orange-400 transition-all">
+                {user?.avatar ? (
+                  <Image
+                    src={user.avatar}
+                    alt={user.profileName || "Profile"}
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center">
+                    <span className="text-white font-bold text-lg">
+                      {user?.profileName?.charAt(0).toUpperCase() || 'U'}
+                    </span>
+                  </div>
+                )}
+              </div>
+              
+              {/* Settings Badge Overlay */}
+              <div className="absolute -bottom-1 -right-1 bg-orange-500 rounded-full p-1.5 shadow-lg border border-white z-10">
+                <Settings className="w-3.5 h-3.5 text-white" />
+              </div>
+            </button>
+          </div>
+        </div>
         
         {user?.slug && (
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2 mt-3">
             <div 
               className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm cursor-pointer hover:border-orange-300 hover:shadow-md transition-all group"
               onClick={handleCopyUrl}

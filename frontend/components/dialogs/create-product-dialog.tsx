@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { Switch } from "@/components/ui/switch"
 import {
   Select,
   SelectContent,
@@ -28,7 +29,8 @@ interface CreateProductDialogProps {
 interface ProductFormData {
   title: string
   price: number
-  stock: number
+  stock: number | null
+  isUnlimitedStock: boolean
   description: string
   tripId: string
   type: 'goods' | 'tasks'
@@ -55,6 +57,7 @@ export function CreateProductDialog({ open, onOpenChange, onSuccess, preselected
     title: "",
     price: 0,
     stock: 0,
+    isUnlimitedStock: false,
     description: "",
     tripId: "",
     type: "goods",
@@ -127,6 +130,7 @@ export function CreateProductDialog({ open, onOpenChange, onSuccess, preselected
       
       await apiPost("/products", {
         ...formData,
+        stock: formData.isUnlimitedStock ? null : formData.stock,
         image: imageToSend,
       })
       
@@ -140,6 +144,7 @@ export function CreateProductDialog({ open, onOpenChange, onSuccess, preselected
         title: "",
         price: 0,
         stock: 0,
+        isUnlimitedStock: false,
         description: "",
         tripId: "",
         type: "goods",
@@ -260,17 +265,23 @@ export function CreateProductDialog({ open, onOpenChange, onSuccess, preselected
               </Select>
             </div>
 
-            <div>
-              <Label htmlFor="product-name" className="text-sm">Nama Produk</Label>
-              <Input
-                id="product-name"
-                placeholder="Contoh: KitKat Matcha"
-                value={formData.title}
-                onChange={(e) => handleInputChange("title", e.target.value)}
-                required
-                disabled={loading}
-                className="mt-1.5 h-10"
-              />
+            <div className="flex items-end">
+              <div className="flex items-center justify-between w-full p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex flex-col">
+                  <Label className="text-sm font-semibold text-blue-900">Unlimited</Label>
+                  <p className="text-[10px] text-blue-700">Tanpa batas stok</p>
+                </div>
+                <Switch
+                  checked={formData.isUnlimitedStock}
+                  onCheckedChange={(checked) => {
+                    handleInputChange("isUnlimitedStock", checked)
+                    if (checked) {
+                      handleInputChange("stock", null)
+                    }
+                  }}
+                  disabled={loading}
+                />
+              </div>
             </div>
           </div>
 
@@ -294,13 +305,25 @@ export function CreateProductDialog({ open, onOpenChange, onSuccess, preselected
                 id="product-stock"
                 type="number"
                 placeholder="10"
-                value={formData.stock || ""}
-                onChange={(e) => handleInputChange("stock", Number(e.target.value))}
-                required
-                disabled={loading}
-                className="mt-1.5 h-10"
+                value={formData.isUnlimitedStock ? "" : (formData.stock || "")}
+                onChange={(e) => handleInputChange("stock", e.target.value ? Number(e.target.value) : null)}
+                disabled={loading || formData.isUnlimitedStock}
+                className="mt-1.5 h-10 disabled:bg-gray-100"
               />
             </div>
+          </div>
+
+          <div>
+            <Label htmlFor="product-name" className="text-sm">Nama Produk</Label>
+            <Input
+              id="product-name"
+              placeholder="Contoh: KitKat Matcha"
+              value={formData.title}
+              onChange={(e) => handleInputChange("title", e.target.value)}
+              required
+              disabled={loading}
+              className="mt-1.5 h-10"
+            />
           </div>
 
           <div>

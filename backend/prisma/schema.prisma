@@ -136,9 +136,10 @@ model Product {
   tripId          String
   slug            String
   title           String
-  price           Int
-  stock           Int?
-  image           String?
+  price               Int
+  stock               Int?
+  isUnlimitedStock    Boolean     @default(false)
+  image               String?
   description     String?
   status          String      @default("active")
   createdAt       DateTime    @default(now())
@@ -209,6 +210,9 @@ model User {
   coverImage  String?
   coverPosition Int?      @default(50)
   
+  // Contact Information
+  whatsappNumber String?
+  
   // Jastiper Origin Address
   originProvinceId   String?
   originProvinceName String?
@@ -218,6 +222,11 @@ model User {
   originDistrictName String?
   originPostalCode   String?
   originAddressText  String?
+  
+  // Bank Account Information
+  bankName           String?
+  accountNumber      String?
+  accountHolderName  String?
   
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt

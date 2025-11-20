@@ -24,6 +24,16 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 })
 
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Current password is required'),
+  newPassword: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain an uppercase letter')
+    .regex(/[a-z]/, 'Password must contain a lowercase letter')
+    .regex(/[0-9]/, 'Password must contain a number'),
+})
+
 export const refreshTokenSchema = z.object({
   refreshToken: z.string().optional(),
 })
@@ -44,6 +54,11 @@ export const updateProfileSchema = z.object({
   avatar: z.string().nullable().optional(),
   coverImage: z.string().nullable().optional(),
   coverPosition: z.number().min(0).max(100).optional(),
+  // Contact Information
+  whatsappNumber: z.string()
+    .regex(/^\+62[0-9]{9,12}$/, 'Format nomor WhatsApp: +628xxxxx')
+    .optional()
+    .or(z.literal('')),
   // Jastiper Origin Address
   originProvinceId: z.string().optional(),
   originProvinceName: z.string().optional(),
@@ -51,8 +66,30 @@ export const updateProfileSchema = z.object({
   originCityName: z.string().optional(),
   originDistrictId: z.string().optional(),
   originDistrictName: z.string().optional(),
-  originPostalCode: z.string().optional(),
-  originAddressText: z.string().optional(),
+  originPostalCode: z.string()
+    .regex(/^[0-9]{5}$/, 'Kode pos harus 5 digit')
+    .optional()
+    .or(z.literal('')),
+  originAddressText: z.string()
+    .min(25, 'Alamat minimal 25 karakter')
+    .regex(/[0-9]/, 'Alamat harus mengandung angka')
+    .regex(/[a-zA-Z]/, 'Alamat harus mengandung huruf')
+    .optional()
+    .or(z.literal('')),
+  // Bank Account Information
+  bankName: z.string()
+    .max(100)
+    .optional()
+    .or(z.literal('')),
+  accountNumber: z.string()
+    .regex(/^[0-9]{8,20}$/, 'Nomor rekening harus 8-20 digit')
+    .optional()
+    .or(z.literal('')),
+  accountHolderName: z.string()
+    .min(2)
+    .max(100)
+    .optional()
+    .or(z.literal('')),
 })
 
 // Trip schemas
@@ -92,7 +129,8 @@ export const createProductSchema = z.object({
   tripId: z.string().min(1, 'Trip ID is required'), // Fixed: camelCase
   title: z.string().min(3).max(255),
   price: z.number().positive('Price must be positive'),
-  stock: z.number().nonnegative('Stock cannot be negative').optional(), // Fixed: optional for tasks
+  stock: z.number().nonnegative('Stock cannot be negative').optional().nullable(), // Fixed: optional for tasks
+  isUnlimitedStock: z.boolean().optional().default(false),
   description: z.string().max(500).optional(),
   image: z.string().optional(),
   slug: z
@@ -114,7 +152,8 @@ export const createProductSchema = z.object({
 export const updateProductSchema = z.object({
   title: z.string().min(3).max(255).optional(),
   price: z.number().positive().optional(),
-  stock: z.number().nonnegative().optional(),
+  stock: z.number().nonnegative().optional().nullable(),
+  isUnlimitedStock: z.boolean().optional(),
   description: z.string().max(500).optional(),
   status: z.enum(['active', 'inactive']).optional(),
 })
@@ -208,6 +247,7 @@ export const updateSocialMediaSchema = z.object({
 // Type exports
 export type RegisterInput = z.infer<typeof registerSchema>
 export type LoginInput = z.infer<typeof loginSchema>
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>
 export type CreateTripInput = z.infer<typeof createTripSchema>
 export type CreateProductInput = z.infer<typeof createProductSchema>
 export type JoinTripInput = z.infer<typeof joinTripSchema>
