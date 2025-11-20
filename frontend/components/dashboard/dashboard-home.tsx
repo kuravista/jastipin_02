@@ -1,11 +1,12 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Plus, ChevronRight, AlertCircle, TrendingDown, Users, TrendingUp, ShoppingBag, DollarSign } from "lucide-react"
+import { Plus, ChevronRight, AlertCircle, TrendingDown, Users, TrendingUp, ShoppingBag, DollarSign, Copy, Check, ExternalLink } from "lucide-react"
 import { CreateTripDialog } from "@/components/dialogs/create-trip-dialog"
 import { CreateProductDialog } from "@/components/dialogs/create-product-dialog"
 import { useState } from "react"
 import { useAuth } from "@/lib/auth-context"
+import Link from "next/link"
 
 interface DashboardHomeProps {
   onNavigate: (tab: string) => void
@@ -15,15 +16,46 @@ export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
   const { user } = useAuth()
   const [productDialogOpen, setProductDialogOpen] = useState(false)
   const [createTripOpen, setCreateTripOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  const profileUrl = user?.slug ? `https://jastipin.me/${user.slug}` : ''
+
+  const handleCopyUrl = () => {
+    if (profileUrl) {
+      navigator.clipboard.writeText(profileUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+        <h1 className="text-2xl font-bold text-gray-900">
           Halo, {user?.profileName || 'Pengguna'}! 👋
         </h1>
-        <p className="text-gray-600">Ini ringkasan bisnis Anda hari ini</p>
+        
+        {user?.slug && (
+          <div className="flex items-center gap-2 mt-1">
+            <div 
+              className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm cursor-pointer hover:border-orange-300 hover:shadow-md transition-all group"
+              onClick={handleCopyUrl}
+            >
+              <span className="text-sm font-medium text-gray-600 group-hover:text-orange-600 transition-colors">
+                jastipin.me/{user.slug}
+              </span>
+              {copied ? (
+                <Check className="w-3.5 h-3.5 text-green-500" />
+              ) : (
+                <Copy className="w-3.5 h-3.5 text-gray-400 group-hover:text-orange-500" />
+              )}
+            </div>
+            <Link href={`/${user.slug}`} target="_blank" className="p-1.5 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-700 transition-colors">
+              <ExternalLink className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* CTA Aksi Cepat Global */}

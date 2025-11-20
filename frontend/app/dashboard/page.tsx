@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Home, DollarSign, Package, User } from "lucide-react"
 import { AuthGuard } from "@/components/AuthGuard"
 import DashboardHome from "@/components/dashboard/dashboard-home"
@@ -12,6 +12,19 @@ import DashboardAccount from "@/components/dashboard/dashboard-account"
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState("home")
+  const [selectedTripId, setSelectedTripId] = useState<string | null>(null)
+
+  // Check for URL params on mount to handle navigation from other pages
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const tab = params.get('tab')
+      const trip = params.get('trip')
+      
+      if (tab) setActiveTab(tab)
+      if (trip) setSelectedTripId(trip)
+    }
+  }, [])
 
   return (
     <AuthGuard>
@@ -20,7 +33,7 @@ export default function DashboardPage() {
         <div className="container mx-auto px-4 py-6 max-w-2xl">
           {activeTab === "home" && <DashboardHome onNavigate={setActiveTab} />}
           {activeTab === "validasi" && <DashboardValidasi />}
-          {activeTab === "produk" && <DashboardProduk />}
+          {activeTab === "produk" && <DashboardProduk initialFilterTrip={selectedTripId} />}
           {activeTab === "profile" && <DashboardProfile onBack={() => setActiveTab("account")} />}
           {activeTab === "trips" && <DashboardTrips onBack={() => setActiveTab("account")} />}
           {activeTab === "account" && <DashboardAccount onNavigate={setActiveTab} />}

@@ -4,14 +4,20 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Bell, Lock, LogOut, User, CreditCard, HelpCircle, Plane, UserCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/auth-context"
+import { clearAuthToken } from "@/lib/api-client"
 import { EditProfileDialog } from "@/components/dialogs/edit-profile-dialog"
+import { EditPrivateDataDialog } from "@/components/dialogs/edit-private-data-dialog"
 
 export default function DashboardAccount({ onNavigate }: { onNavigate?: (tab: string) => void }) {
   const router = useRouter()
+  const { user } = useAuth()
   const [editProfileOpen, setEditProfileOpen] = useState(false)
+  const [editPrivateDataOpen, setEditPrivateDataOpen] = useState(false)
 
   const handleLogout = () => {
-    router.push("/")
+    clearAuthToken()
+    router.push("/auth/login")
   }
 
   return (
@@ -25,13 +31,19 @@ export default function DashboardAccount({ onNavigate }: { onNavigate?: (tab: st
       {/* User Info */}
       <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-200 to-purple-200 flex items-center justify-center">
-            <span className="text-xl font-bold text-white">T</span>
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-200 to-purple-200 flex items-center justify-center overflow-hidden">
+            {user?.avatar ? (
+              <img src={user.avatar} alt={user.profileName || 'User'} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-xl font-bold text-white">
+                {(user?.profileName || 'U').charAt(0).toUpperCase()}
+              </span>
+            )}
           </div>
-          <div>
-            <div className="font-bold text-gray-900">Tina</div>
-            <div className="text-sm text-gray-600">tina@jastipin.me</div>
-            <div className="text-xs text-gray-500 mt-1">Member sejak Januari 2023</div>
+          <div className="flex-1 overflow-hidden">
+            <div className="font-bold text-gray-900 truncate">{user?.profileName || 'Pengguna'}</div>
+            <div className="text-sm text-gray-600 truncate">{user?.email}</div>
+            <div className="text-xs text-gray-500 mt-1 truncate">jastipin.me/{user?.slug}</div>
           </div>
         </div>
       </div>
@@ -68,11 +80,14 @@ export default function DashboardAccount({ onNavigate }: { onNavigate?: (tab: st
       <div>
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Pengaturan</h2>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 divide-y divide-gray-100">
-          <button className="w-full flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors">
+          <button 
+            onClick={() => setEditPrivateDataOpen(true)}
+            className="w-full flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors"
+          >
             <User className="w-5 h-5 text-gray-600" />
             <div className="flex-1 text-left">
               <div className="font-semibold text-gray-900">Informasi Pribadi</div>
-              <div className="text-sm text-gray-600">Edit nama, email, dan nomor telepon</div>
+              <div className="text-sm text-gray-600">Edit data diri dan alamat asal pengiriman</div>
             </div>
           </button>
 
@@ -125,6 +140,7 @@ export default function DashboardAccount({ onNavigate }: { onNavigate?: (tab: st
 
       {/* Edit Profile Dialog */}
       <EditProfileDialog open={editProfileOpen} onOpenChange={setEditProfileOpen} />
+      <EditPrivateDataDialog open={editPrivateDataOpen} onOpenChange={setEditPrivateDataOpen} />
     </div>
   )
 }
