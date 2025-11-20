@@ -303,12 +303,24 @@ export class AuthService {
         description: true,
         url_img: true,
         deadline: true,
+        paymentType: true,
+        dpPercentage: true,
       },
     })
 
     const products = await this.db.product.findMany({
       where: { Trip: { jastiperId: user.id } },
-      select: { id: true, title: true, price: true, stock: true, image: true },
+      select: { 
+        id: true,
+        tripId: true,
+        title: true, 
+        price: true, 
+        stock: true, 
+        image: true, 
+        type: true,
+        unit: true,
+        weightGram: true,
+      },
     })
 
     // Fetch social media accounts
@@ -346,13 +358,19 @@ export class AuthService {
         deadline: trip.deadline,
         status: trip.isActive ? 'Buka' : 'Tutup',
         spotsLeft: Math.floor(Math.random() * 15) + 1,
+        paymentType: trip.paymentType || 'full',
+        dpPercentage: trip.dpPercentage || 20,
       })),
       catalog: products.map((product: any) => ({
         id: product.id,
+        tripId: product.tripId,
         title: product.title,
         price: product.price,
         image: product.image,
         available: product.stock > 0,
+        type: product.type || 'goods',
+        unit: product.unit,
+        weightGram: product.weightGram,
       })),
     }
   }

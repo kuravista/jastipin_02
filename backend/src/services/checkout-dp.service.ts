@@ -94,17 +94,6 @@ export async function processCheckoutDP(
       )
     )
     
-    // Check if any product is goods type
-    const hasGoods = products.some(p => p?.type === 'goods')
-    
-    // Address required if has goods
-    if (hasGoods && !request.address) {
-      return { 
-        success: false, 
-        error: 'Address required for orders containing goods' 
-      }
-    }
-    
     // Validate all products
     for (let i = 0; i < products.length; i++) {
       const product = products[i]

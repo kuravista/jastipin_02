@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ExternalLink, Instagram, MessageCircle, Heart, Calendar, MapPin, Package, CheckCircle2, Star, ChevronLeft, ChevronRight, Search, Plus, ShoppingCart, X } from "lucide-react"
-import { apiGet, apiPost, searchShippingDestinations, calculateShippingCost } from "@/lib/api-client"
+import { apiGet, apiPost } from "@/lib/api-client"
 import { toast } from "sonner"
 import { getGradientBySeed } from "@/lib/gradient-utils"
 import { getSocialMediaConfig } from "@/lib/social-media-icons"
@@ -32,7 +32,7 @@ interface Trip {
   deadline?: string
   status: string
   spotsLeft: number
-  paymentType?: 'full' | 'dp'  // Payment type: full payment or down payment
+  paymentType?: 'full' | 'dp'
 }
 
 interface ProfileData {
@@ -51,13 +51,17 @@ interface ProfileData {
     }
     socialMedia?: SocialMedia[]
   }
-  trips?: Trip[]
+  trips: Trip[]
   catalog: Array<{
     id: string
+    tripId: string
     title: string
     price: number
     image?: string
     available: boolean
+    type?: string
+    unit?: string
+    weightGram?: number
   }>
 }
 
@@ -74,18 +78,21 @@ const demoProfiles = {
       happyCustomers: 320,
       rating: 4.9,
     },
-    currentTrip: {
-      title: "Fall Sale — Nike & Adidas Sneakers",
-      image: "/athletic-shoes.jpg",
-      location: "New York, USA",
-      deadline: "25 Nov 2024",
-      status: "Buka",
-      spotsLeft: 12,
-    },
+    trips: [
+      {
+        id: "trip-tina-1",
+        title: "Fall Sale — Nike & Adidas Sneakers",
+        image: "/athletic-shoes.jpg",
+        deadline: "25 Nov 2024",
+        status: "Buka",
+        spotsLeft: 12,
+        paymentType: "dp",
+      },
+    ],
     catalog: [
-      { name: "Nike Air Max", price: "Rp 2.1jt", image: "/athletic-shoes.jpg", available: true },
-      { name: "Adidas Ultraboost", price: "Rp 2.4jt", image: "/athletic-shoes.jpg", available: true },
-      { name: "New Balance 574", price: "Rp 1.8jt", image: "/athletic-shoes.jpg", available: false },
+      { id: "prod-tina-1", title: "Nike Air Max", price: 2100000, image: "/athletic-shoes.jpg", available: true, type: "goods", unit: "pcs" },
+      { id: "prod-tina-2", title: "Adidas Ultraboost", price: 2400000, image: "/athletic-shoes.jpg", available: true, type: "goods", unit: "pcs" },
+      { id: "prod-tina-3", title: "New Balance 574", price: 1800000, image: "/athletic-shoes.jpg", available: false, type: "goods", unit: "pcs" },
     ],
     social: {
       instagram: "tina_jastip",
@@ -103,18 +110,21 @@ const demoProfiles = {
       happyCustomers: 580,
       rating: 5.0,
     },
-    currentTrip: {
-      title: "Korea Beauty Haul — December Edition",
-      image: "/korean-beauty-products.jpg",
-      location: "Seoul, South Korea",
-      deadline: "30 Nov 2024",
-      status: "Buka",
-      spotsLeft: 8,
-    },
+    trips: [
+      {
+        id: "trip-ana-1",
+        title: "Korea Beauty Haul — December Edition",
+        image: "/korean-beauty-products.jpg",
+        deadline: "30 Nov 2024",
+        status: "Buka",
+        spotsLeft: 8,
+        paymentType: "dp",
+      },
+    ],
     catalog: [
-      { name: "COSRX Snail Mucin", price: "Rp 280k", image: "/korean-beauty-products.jpg", available: true },
-      { name: "Laneige Cream Skin", price: "Rp 420k", image: "/korean-beauty-products.jpg", available: true },
-      { name: "Innisfree Green Tea", price: "Rp 190k", image: "/korean-beauty-products.jpg", available: true },
+      { name: "COSRX Snail Mucin", price: "Rp 280k", image: "/korean-beauty-products.jpg", available: true, type: "goods", unit: "bottle" },
+      { name: "Laneige Cream Skin", price: "Rp 420k", image: "/korean-beauty-products.jpg", available: true, type: "goods", unit: "set" },
+      { name: "Innisfree Green Tea", price: "Rp 190k", image: "/korean-beauty-products.jpg", available: true, type: "goods", unit: "bottle" },
     ],
     social: {
       instagram: "ana_shop",
@@ -132,18 +142,21 @@ const demoProfiles = {
       happyCustomers: 1240,
       rating: 4.8,
     },
-    currentTrip: {
-      title: "Singapore Electronics — Black Friday Deals",
-      image: "/electronics-gadget.jpg",
-      location: "Singapore",
-      deadline: "28 Nov 2024",
-      status: "Buka",
-      spotsLeft: 15,
-    },
+    trips: [
+      {
+        id: "trip-sg-1",
+        title: "Singapore Electronics — Black Friday Deals",
+        image: "/electronics-gadget.jpg",
+        deadline: "28 Nov 2024",
+        status: "Buka",
+        spotsLeft: 15,
+        paymentType: "dp",
+      },
+    ],
     catalog: [
-      { name: "AirPods Pro", price: "Rp 3.2jt", image: "/electronics-gadget.jpg", available: true },
-      { name: "Apple Watch Series 9", price: "Rp 6.5jt", image: "/electronics-gadget.jpg", available: true },
-      { name: "iPad Air", price: "Rp 8.9jt", image: "/electronics-gadget.jpg", available: false },
+      { name: "AirPods Pro", price: "Rp 3.2jt", image: "/electronics-gadget.jpg", available: true, type: "goods", unit: "pcs" },
+      { name: "Apple Watch Series 9", price: "Rp 6.5jt", image: "/electronics-gadget.jpg", available: true, type: "goods", unit: "pcs" },
+      { name: "iPad Air", price: "Rp 8.9jt", image: "/electronics-gadget.jpg", available: false, type: "goods", unit: "pcs" },
     ],
     social: {
       instagram: "jastip.sg",
@@ -172,30 +185,59 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
   const [currentPage, setCurrentPage] = useState(1)
   const [cartItems, setCartItems] = useState<Array<{ product: any; quantity: number }>>([])
   const [showCart, setShowCart] = useState(false)
-  const [showCheckoutForm, setShowCheckoutForm] = useState(false)
-  const [checkoutForm, setCheckoutForm] = useState({
+  const [showDPCheckoutForm, setShowDPCheckoutForm] = useState(false)
+  const [isHydrated, setIsHydrated] = useState(false)
+  const [rememberMe, setRememberMe] = useState(true)
+  const [dpCheckoutForm, setDPCheckoutForm] = useState({
     nama: "",
-    email: "",
     nomor: "",
-    alamat: "",
-    cityId: "",
-    cityName: "",
-    districtId: "",
+    notes: "",
   })
-  const [locationSearch, setLocationSearch] = useState("")
-  const [locationResults, setLocationResults] = useState<any[]>([])
-  const [shippingOptions, setShippingOptions] = useState<any[]>([])
-  const [selectedShipping, setSelectedShipping] = useState<any>(null)
-  const [loadingShipping, setLoadingShipping] = useState(false)
+  
+  // Load saved checkout data from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('dp_checkout_data')
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved)
+          setDPCheckoutForm({
+            nama: parsed.nama || "",
+            nomor: parsed.nomor || "",
+            notes: "",
+          })
+        } catch (e) {
+          console.error("Failed to parse saved checkout data:", e)
+        }
+      }
+      setIsHydrated(true)
+    }
+  }, [])
+  
   const itemsPerPage = 10
 
   // Calculate total price from cart
   const totalPrice = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
+  
+  // Calculate DP amount (20% of total, minimum Rp 10,000)
+  const dpAmount = Math.max(Math.ceil(totalPrice * 0.2), 10000)
+  const remainingAmount = totalPrice - dpAmount
 
-  // Filter and paginate catalog
-  const filteredCatalog = profile?.catalog.filter((item) =>
-    item.title.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || []
+  // Clear cart dan reset page ketika user berganti trip
+  useEffect(() => {
+    setCartItems([])
+    setShowCart(false)
+    setCurrentPage(1)
+  }, [currentTripIndex])
+
+  // Filter catalog: sesuai current trip (jika tripId ada) + search filter
+  const currentTrip = profile?.trips?.[currentTripIndex]
+  const filteredCatalog = profile?.catalog.filter((item) => {
+    // Jika product punya tripId, hanya tampilkan product dari trip yang currently selected
+    if (item.tripId && item.tripId !== currentTrip?.id) return false
+    // Apply search filter
+    return item.title.toLowerCase().includes(searchQuery.toLowerCase())
+  }) || []
   const totalPages = Math.ceil(filteredCatalog.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
@@ -230,27 +272,31 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
     }
   }
 
-  const handleCheckoutSubmit = async () => {
-    if (!checkoutForm.nama || !checkoutForm.email || !checkoutForm.nomor || !checkoutForm.alamat) {
-      toast.error("Semua field harus diisi")
+  // Handle DP Checkout Submission (simplified form)
+  const handleDPCheckoutSubmit = async () => {
+    if (!dpCheckoutForm.nama || !dpCheckoutForm.nomor) {
+      toast.error("⚠️ Nama dan nomor WhatsApp harus diisi")
       return
     }
 
-    if (!selectedShipping) {
-      toast.error("Silakan pilih kurir pengiriman terlebih dahulu")
+    // Validate WhatsApp number format (harus min 9 digit: 8XXXXXXXXX)
+    if (!/^\d{9,}$/.test(dpCheckoutForm.nomor)) {
+      toast.error("⚠️ Nomor WhatsApp harus minimal 9 digit (contoh: 812345678)")
+      return
+    }
+    
+    // Format nomor dengan prefix 62
+    const formattedPhone = '62' + dpCheckoutForm.nomor
+
+    if (!cartItems.length) {
+      toast.error("⚠️ Keranjang kosong, tambahkan produk terlebih dahulu")
       return
     }
 
     try {
-      // Validasi nomor WhatsApp format
-      if (!/^628\d{9,}$/.test(checkoutForm.nomor)) {
-        toast.error("Nomor WhatsApp harus format 628XXXXXXXXX")
-        return
-      }
-
-      const tripId = profile?.trips?.[currentTripIndex]?.id
-      if (!tripId) {
-        toast.error("Trip tidak ditemukan")
+      const currentTrip = profile?.trips?.[currentTripIndex]
+      if (!currentTrip?.id) {
+        toast.error("❌ Trip tidak ditemukan")
         return
       }
 
@@ -258,84 +304,64 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
       const checkoutItems = cartItems.map(item => ({
         productId: item.product.id,
         quantity: item.quantity,
-        notes: `${item.product.title} - ${selectedShipping.service}`,
+        priceAtOrder: item.product.price,
+        productType: item.product.type || 'goods',
       }))
 
-      const totalWithShipping = totalPrice + selectedShipping.cost
+      // Show loading toast
+      const loadingToast = toast.loading("⏳ Memproses checkout DP...")
 
-      const response = await apiPost(`/trips/${tripId}/checkout`, {
-        participantName: checkoutForm.nama,
-        participantEmail: checkoutForm.email,
-        participantPhone: checkoutForm.nomor,
-        participantAddress: checkoutForm.alamat,
-        participantCityId: checkoutForm.cityId,
-        participantCityName: checkoutForm.cityName,
-        shippingCourier: selectedShipping.courier,
-        shippingService: selectedShipping.service,
-        shippingCost: selectedShipping.cost,
+      // Call DP checkout API
+      const response = await apiPost(`/checkout/dp`, {
+        tripId: currentTrip.id,
+        participantName: dpCheckoutForm.nama,
+        participantPhone: formattedPhone,
         items: checkoutItems,
       })
 
-      toast.success(`Checkout berhasil! Total: Rp ${totalWithShipping.toLocaleString('id-ID')}`)
-      setCartItems([])
-      setCheckoutForm({ nama: "", email: "", nomor: "", alamat: "", cityId: "", cityName: "", districtId: "" })
-      setSelectedShipping(null)
-      setLocationResults([])
-      setShippingOptions([])
-      setShowCheckoutForm(false)
-      setShowCart(false)
-    } catch (error: any) {
-      console.error("Checkout error:", error)
-      toast.error(error.message || "Gagal melakukan checkout")
-    }
-  }
+      // Dismiss loading toast
+      toast.dismiss(loadingToast)
 
-  // Search location for address
-  const handleLocationSearch = async (query: string) => {
-    setLocationSearch(query)
-    if (query.length < 2) {
-      setLocationResults([])
-      return
-    }
-
-    try {
-      const results = await searchShippingDestinations(query)
-      setLocationResults(results?.data || [])
-    } catch (error) {
-      console.error("Location search error:", error)
-      setLocationResults([])
-    }
-  }
-
-  // Calculate shipping cost
-  const handleCalculateShipping = async () => {
-    if (!checkoutForm.cityId) {
-      toast.error("Silakan pilih kota pengiriman")
-      return
-    }
-
-    // Use Jakarta (31555) as default origin city for all shipments
-    const originCity = "31555"
-    // Use districtId if available (numeric), fallback to cityId
-    const destinationCity = checkoutForm.districtId || checkoutForm.cityId
-    
-    setLoadingShipping(true)
-    try {
-      const results = await calculateShippingCost(originCity, destinationCity)
-      setShippingOptions(results?.data || [])
-      
-      if (!results?.data || results.data.length === 0) {
-        toast.error("Tidak ada opsi pengiriman tersedia")
-      } else {
-        toast.success(`Ditemukan ${results.data.length} opsi pengiriman`)
+      // Save checkout data to localStorage if "Remember me" is checked
+      if (typeof window !== 'undefined') {
+        if (rememberMe) {
+          localStorage.setItem('dp_checkout_data', JSON.stringify({
+            nama: dpCheckoutForm.nama,
+            nomor: dpCheckoutForm.nomor,
+          }))
+        } else {
+          localStorage.removeItem('dp_checkout_data')
+        }
       }
+
+      // Show success toast dengan detail
+      const message = response?.data?.invoiceId 
+        ? `✅ DP Checkout Berhasil!\n\nTrip: ${currentTrip.title}\nDP: Rp ${dpAmount.toLocaleString('id-ID')}\nInvoice: ${response.data.invoiceId}`
+        : `✅ DP Checkout Berhasil!\n\nTrip: ${currentTrip.title}\nDP: Rp ${dpAmount.toLocaleString('id-ID')}`
+      
+      toast.success(message, { duration: 5000 })
+      
+      // Reset cart and close modal (keep form data for next checkout)
+      setCartItems([])
+      setShowDPCheckoutForm(false)
+      setShowCart(false)
+      // NOTE: Form values (nama, nomor) are preserved from localStorage for next checkout
     } catch (error: any) {
-      toast.error("Gagal menghitung biaya pengiriman")
-      console.error("Shipping calculation error:", error)
-    } finally {
-      setLoadingShipping(false)
+      console.error("DP Checkout error:", error)
+      
+      // Parse error message
+      const errorMsg = error?.response?.data?.error || error.message || "Gagal membuat checkout DP"
+      const errorDetail = error?.response?.data?.details || ""
+      
+      const fullMessage = errorDetail 
+        ? `❌ Checkout DP Gagal\n\n${errorMsg}\n${errorDetail}`
+        : `❌ Checkout DP Gagal\n\n${errorMsg}`
+      
+      toast.error(fullMessage, { duration: 5000 })
     }
   }
+
+
 
   // Reset to page 1 when search query changes
   useEffect(() => {
@@ -357,10 +383,12 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
               stats: fallback.stats,
               social: fallback.social,
             },
-            currentTrip: fallback.currentTrip,
+            trips: fallback.trips,
             catalog: fallback.catalog.map((c) => ({
               ...c,
               id: c.name,
+              title: c.name,
+              price: parseInt(c.price.replace(/[^\d]/g, '')) || 0,
             })),
           } as any)
         }
@@ -393,9 +421,8 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
   // Smart routing based on trip payment type
   const handleCheckout = () => {
     const currentTrip = profile?.trips?.[currentTripIndex]
-    const tripId = currentTrip?.id
 
-    if (!tripId) {
+    if (!currentTrip?.id) {
       toast.error("Trip tidak ditemukan")
       return
     }
@@ -405,31 +432,9 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
       return
     }
 
-    // Check payment type and route accordingly
-    if (currentTrip?.paymentType === 'dp') {
-      // Route to NEW DP checkout page
-      const items = cartItems
-        .map(item => `${item.product.id}:${item.quantity}`)
-        .join(',')
-      router.push(`/checkout/dp/${tripId}?items=${items}`)
-    } else {
-      // Use OLD full payment checkout (default)
-      setShowCheckoutForm(true)
-      // Reset checkout form and related states
-      setCheckoutForm({ 
-        nama: "", 
-        email: "", 
-        nomor: "", 
-        alamat: "", 
-        cityId: "", 
-        cityName: "", 
-        districtId: "" 
-      })
-      setLocationSearch("")
-      setSelectedShipping(null)
-      setShippingOptions([])
-      setLocationResults([])
-    }
+    // Show DP checkout form (simplified: name + phone only)
+    // Keep existing form values (loaded from localStorage)
+    setShowDPCheckoutForm(true)
   }
 
   const handleProductClick = (product: any) => {
@@ -634,7 +639,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
               {paginatedCatalog.map((item) => (
                 <Card 
                   key={item.id} 
-                  className={`overflow-hidden flex flex-col p-0 transition-all ${!item.available ? "opacity-50" : ""}`}
+                  className={`overflow-hidden flex flex-col p-0 transition-all ${!item.available && item.type !== 'tasks' ? "opacity-50" : ""}`}
                 >
                   <div className="relative w-full h-32 flex-shrink-0">
                     <img
@@ -642,20 +647,39 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                       alt={item.title}
                       className="w-full h-full object-cover"
                     />
-                    <Badge className="absolute top-2 right-2" variant={item.available ? "default" : "secondary"}>
-                      {item.available ? "Tersedia" : "Habis"}
-                    </Badge>
-                  </div>
-                  <div className="p-1 flex-1 flex flex-col justify-between">
-                    <div>
-                      <p className="font-semibold text-xl line-clamp-2">{item.title}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{profile?.trips?.[0]?.title || "Trip"}</p>
+                    <div className="absolute top-2 left-2 right-2 flex justify-between gap-1">
+                      <Badge 
+                        variant={item.type === 'goods' ? 'default' : 'secondary'}
+                        className="text-xs"
+                      >
+                        {item.type === 'goods' ? '📦 Barang' : item.type === 'tasks' ? '🔧 Jasa' : '🔧 Jasa'}
+                      </Badge>
+                      <Badge 
+                        className="ml-auto" 
+                        variant={item.available || item.type === 'tasks' ? "default" : "secondary"}
+                      >
+                        {item.available ? "Tersedia" : item.type === 'tasks' ? "Bisa Pesan" : "Habis"}
+                      </Badge>
                     </div>
-                    <div className="flex justify-between items-center pt-1">
+                  </div>
+                  <div className="p-2 flex-1 flex flex-col justify-between">
+                    <div>
+                      <p className="font-semibold text-sm line-clamp-2">{item.title}</p>
+                      <div className="flex items-center justify-between mt-0.5">
+                        {item.unit && <p className="text-xs text-gray-500">{item.unit}</p>}
+                        {item.tripId && profile?.trips && (
+                          <p className="text-xs text-blue-600 font-medium">
+                            {profile.trips.find(t => t.id === item.tripId)?.title || 'Trip'}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center pt-1 border-t">
                       <p className="text-orange-500 font-bold text-sm">Rp {item.price.toLocaleString('id-ID')}</p>
                       <button 
                         onClick={() => addToCart(item)}
-                        className="text-orange-500 hover:text-orange-600 transition-colors p-1 hover:bg-orange-50 rounded"
+                        disabled={!item.available && item.type !== 'tasks'}
+                        className="text-orange-500 hover:text-orange-600 disabled:text-gray-300 transition-colors p-1 hover:bg-orange-50 rounded disabled:hover:bg-transparent"
                       >
                         <Plus className="w-5 h-5" />
                       </button>
@@ -887,234 +911,131 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
         </div>
       )}
 
-      {/* Checkout Form Dialog */}
-      {showCheckoutForm && (
+      {/* DP Checkout Form Dialog - Simplified (Name + Phone Only) */}
+      {showDPCheckoutForm && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-6">
-            <h2 className="text-xl font-bold mb-4">Informasi Checkout</h2>
+            <h2 className="text-xl font-bold mb-2">Bayar Down Payment</h2>
+            <p className="text-sm text-gray-600 mb-4">Validasi lebih lanjut oleh Jastiper diperlukan</p>
 
-            {/* Order Summary */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-4">
-              <h3 className="font-semibold mb-2">Ringkasan Order:</h3>
-              <div className="space-y-1 mb-3">
+            {/* Order Summary with DP Breakdown */}
+            <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-lg p-4 mb-4 border border-orange-200">
+              <h3 className="font-semibold text-sm mb-3">Ringkasan Order:</h3>
+              
+              <div className="space-y-2 mb-3 pb-3 border-b border-orange-200">
                 {cartItems.map((item) => (
                   <div key={item.product.id} className="flex justify-between text-sm">
-                    <span>{item.product.title} x{item.quantity}</span>
-                    <span>Rp {(item.product.price * item.quantity).toLocaleString('id-ID')}</span>
+                    <div>
+                      <span className="font-medium">{item.product.title}</span>
+                      <span className="text-gray-500 ml-1">x{item.quantity}</span>
+                    </div>
+                    <span className="font-medium">Rp {(item.product.price * item.quantity).toLocaleString('id-ID')}</span>
                   </div>
                 ))}
               </div>
-              <div className="border-t pt-2">
-                <div className="flex justify-between font-bold text-lg">
-                  <span>Total:</span>
-                  <span className="text-orange-500">Rp {totalPrice.toLocaleString('id-ID')}</span>
+
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Subtotal:</span>
+                  <span className="font-medium">Rp {totalPrice.toLocaleString('id-ID')}</span>
+                </div>
+                <div className="flex justify-between pt-2 border-t border-orange-200">
+                  <span className="font-semibold text-orange-700">Down Payment (20%):</span>
+                  <span className="font-bold text-lg text-orange-600">Rp {dpAmount.toLocaleString('id-ID')}</span>
+                </div>
+                <div className="flex justify-between text-gray-600 text-xs pt-1">
+                  <span>Sisa pembayaran setelah validasi:</span>
+                  <span>Rp {remainingAmount.toLocaleString('id-ID')}</span>
                 </div>
               </div>
             </div>
 
             {/* Form Fields */}
-            <div className="space-y-3 mb-4 max-h-96 overflow-y-auto">
+            <div className="space-y-3 mb-4" key={`form-${isHydrated}`}>
               <div>
                 <label className="block text-sm font-medium mb-1">Nama Lengkap</label>
                 <input
+                  key={`nama-${isHydrated}`}
                   type="text"
-                  placeholder="John Doe"
-                  value={checkoutForm.nama}
-                  onChange={(e) => setCheckoutForm({ ...checkoutForm, nama: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-orange-500"
+                  placeholder="Nama Anda"
+                  value={dpCheckoutForm.nama}
+                  onChange={(e) => setDPCheckoutForm({ ...dpCheckoutForm, nama: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-medium mb-1">Email</label>
-                <input
-                  type="email"
-                  placeholder="john@example.com"
-                  value={checkoutForm.email}
-                  onChange={(e) => setCheckoutForm({ ...checkoutForm, email: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-orange-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Nomor WhatsApp</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-medium">Nomor WhatsApp</label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="w-4 h-4 accent-orange-500"
+                    />
+                    <span className="text-xs text-gray-600">Ingat saya</span>
+                  </label>
+                </div>
                 <div className="flex border border-gray-300 rounded-lg overflow-hidden focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
                   <span className="bg-gray-100 px-3 py-2 text-sm font-medium text-gray-600 flex items-center whitespace-nowrap">+62</span>
                   <input
+                    key={`nomor-${isHydrated}`}
                     type="tel"
                     placeholder="812345678"
-                    value={checkoutForm.nomor.replace(/^62/, '')}
+                    value={dpCheckoutForm.nomor}
                     onChange={(e) => {
                       const val = e.target.value.replace(/\D/g, '')
-                      setCheckoutForm({ ...checkoutForm, nomor: val })
+                      setDPCheckoutForm({ ...dpCheckoutForm, nomor: val })
                     }}
                     className="flex-1 border-0 outline-none focus:ring-0 px-3 py-2 text-sm"
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Contoh: 812345678 → +62812345678</p>
+                <p className="text-xs text-gray-500 mt-1">Contoh: 812345678 (tanpa +62)</p>
               </div>
 
-              {/* Address Search with Autocomplete */}
               <div>
-                <label className="block text-sm font-medium mb-1">Kota/Daerah Pengiriman</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Cari kota (Jakarta, Bandung, dll)"
-                    value={locationSearch}
-                    onChange={(e) => handleLocationSearch(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-orange-500"
-                  />
-                  
-                  {/* Autocomplete Dropdown */}
-                  {locationSearch && locationResults.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-40 overflow-y-auto">
-                      {locationResults.map((loc: any) => (
-                        <div
-                          key={loc.id}
-                          onClick={() => {
-                            setCheckoutForm({
-                              ...checkoutForm,
-                              cityId: loc.id,
-                              cityName: loc.name,
-                              districtId: loc.districtId || loc.id,
-                            })
-                            setLocationSearch(loc.name)
-                            setLocationResults([])
-                          }}
-                          className="px-3 py-2 text-sm hover:bg-orange-50 cursor-pointer border-b last:border-b-0"
-                        >
-                          <div className="font-medium">{loc.name}</div>
-                          {loc.province_name && (
-                            <div className="text-xs text-gray-500">{loc.province_name}</div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                {checkoutForm.cityName && (
-                  <p className="text-xs text-green-600 mt-1">✓ Terpilih: {checkoutForm.cityName}</p>
-                )}
-              </div>
-
-              {/* Shipping Calculator */}
-              {checkoutForm.cityId && !selectedShipping && (
-                <button
-                  onClick={handleCalculateShipping}
-                  disabled={loadingShipping}
-                  className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white py-2 px-3 rounded-lg text-sm font-medium transition"
-                >
-                  {loadingShipping ? "Menghitung..." : "Hitung Biaya Pengiriman"}
-                </button>
-              )}
-
-              {/* Shipping Options */}
-              {shippingOptions.length > 0 && !selectedShipping && (
-                <div className="border border-blue-200 rounded-lg p-3 bg-blue-50">
-                  <h4 className="text-sm font-semibold mb-2">Pilih Kurir Pengiriman:</h4>
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {shippingOptions.map((option: any, idx: number) => (
-                      <button
-                        key={idx}
-                        onClick={() => setSelectedShipping(option)}
-                        className="w-full text-left p-2 border border-blue-300 rounded hover:bg-blue-100 transition"
-                      >
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <div className="font-medium text-sm">
-                              {option.courier.toUpperCase()} - {option.service}
-                            </div>
-                            <div className="text-xs text-gray-600">
-                              {option.description} (EST: {option.etd} hari)
-                            </div>
-                          </div>
-                          <div className="font-bold text-orange-500 text-sm">
-                            Rp {option.cost.toLocaleString('id-ID')}
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Selected Shipping Info */}
-              {selectedShipping && (
-                <div className="border-2 border-green-400 rounded-lg p-3 bg-green-50">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <div className="font-semibold text-sm">
-                        ✓ {selectedShipping.courier.toUpperCase()} - {selectedShipping.service}
-                      </div>
-                      <div className="text-xs text-gray-600">
-                        {selectedShipping.description} (EST: {selectedShipping.etd} hari)
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setSelectedShipping(null)
-                        setShippingOptions([])
-                      }}
-                      className="text-xs text-red-500 hover:text-red-700 font-medium"
-                    >
-                      Ubah
-                    </button>
-                  </div>
-                  <div className="text-sm font-bold text-orange-600">
-                    Biaya Pengiriman: Rp {selectedShipping.cost.toLocaleString('id-ID')}
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Alamat Lengkap</label>
+                <label className="block text-sm font-medium mb-1">Catatan / Keterangan (Opsional)</label>
                 <textarea
-                  placeholder="Jl. Contoh No. 123, RT/RW..."
-                  value={checkoutForm.alamat}
-                  onChange={(e) => setCheckoutForm({ ...checkoutForm, alamat: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-orange-500 resize-none h-16"
+                  placeholder="Contoh: Warna hitam, Size M..."
+                  value={dpCheckoutForm.notes}
+                  onChange={(e) => setDPCheckoutForm({ ...dpCheckoutForm, notes: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 resize-none h-12"
                 />
               </div>
             </div>
 
-            {/* Updated Total with Shipping */}
-            <div className="border-t pt-3 mb-4">
-              <div className="flex justify-between text-sm mb-1">
-                <span>Subtotal:</span>
-                <span>Rp {totalPrice.toLocaleString('id-ID')}</span>
-              </div>
-              {selectedShipping && (
-                <div className="flex justify-between text-sm mb-2">
-                  <span>Pengiriman:</span>
-                  <span>Rp {selectedShipping.cost.toLocaleString('id-ID')}</span>
-                </div>
-              )}
-              <div className="flex justify-between font-bold text-lg text-orange-600 border-t pt-2">
-                <span>Total:</span>
-                <span>
-                  Rp {(totalPrice + (selectedShipping?.cost || 0)).toLocaleString('id-ID')}
-                </span>
-              </div>
+            {/* Info Box */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-xs text-blue-800">
+              <p className="font-medium mb-1">ℹ️ Proses Selanjutnya:</p>
+              <ul className="space-y-1 ml-2 list-disc">
+                <li>Jastiper akan memvalidasi pesanan Anda</li>
+                <li>Alamat lengkap akan dikonfirmasi saat validasi</li>
+                <li>Anda akan diminta untuk pembayaran sisa setelah validasi</li>
+              </ul>
             </div>
 
             {/* Buttons */}
             <div className="flex gap-2">
-              <Button
-                onClick={() => setShowCheckoutForm(false)}
-                className="flex-1 bg-gray-300 hover:bg-gray-400 text-black"
+              <button
+                onClick={() => setShowDPCheckoutForm(false)}
+                className="flex-1 bg-gray-300 hover:bg-gray-400 text-black font-medium py-2 px-3 rounded-lg transition"
               >
                 Batal
-              </Button>
-              <Button
-                onClick={handleCheckoutSubmit}
-                disabled={!checkoutForm.nama || !checkoutForm.email || !checkoutForm.nomor || !checkoutForm.alamat || !checkoutForm.cityId || !selectedShipping}
-                className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white"
+              </button>
+              <button
+                onClick={handleDPCheckoutSubmit}
+                disabled={!dpCheckoutForm.nama || !dpCheckoutForm.nomor || dpCheckoutForm.nomor.length < 9}
+                className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-2 px-3 rounded-lg transition"
               >
-                Pesan Sekarang
-              </Button>
+                Bayar DP: Rp {dpAmount.toLocaleString('id-ID')}
+              </button>
             </div>
           </div>
         </div>
       )}
+
+
     </div>
   )
 }
