@@ -321,14 +321,14 @@ export function EditTripDialog({ open, onOpenChange, onSuccess, trip }: EditTrip
                   value={[dpPercentage]}
                   onValueChange={(values) => setDpPercentage(values[0])}
                   min={10}
-                  max={50}
+                  max={90}
                   step={5}
                   className="w-full"
                   disabled={loading}
                 />
                 <div className="flex justify-between text-[10px] text-gray-500 mt-1">
                   <span>Min: 10%</span>
-                  <span>Max: 50%</span>
+                  <span>Max: 90%</span>
                 </div>
                 <p className="text-[10px] text-gray-500 mt-2 leading-relaxed">
                   Pembeli membayar {dpPercentage}% di awal, sisanya {100 - dpPercentage}% saat siap kirim
