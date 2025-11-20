@@ -36,10 +36,23 @@ router.post(
       // Auto-generate slug from title if not provided
       let slug = req.body.slug
       if (!slug) {
-        slug = req.body.title
+        // Create base slug from title
+        // Strategy: Take first few words, truncate to max 10 chars base, then add 4 random suffix
+        // Max total length = 10 + 1 + 4 = 15 chars
+        
+        const fullSlug = req.body.title
           .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-|-$/g, '')
+          .replace(/[^a-z0-9]/g, '-') // Replace all non-alphanumeric with hyphen
+          .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+          .replace(/^-|-$/g, '') // Trim hyphens
+        
+        // Truncate to 10 chars for the readable part
+        const baseSlug = fullSlug.substring(0, 10).replace(/-$/, '')
+        
+        // Generate random suffix (4 chars)
+        const randomSuffix = Math.random().toString(36).substring(2, 6)
+        
+        slug = `${baseSlug}-${randomSuffix}`
       }
 
       // Auto-set isActive based on startDate
@@ -49,8 +62,8 @@ router.post(
       startDate.setHours(0, 0, 0, 0)
       const isActive = startDate <= today
 
-      // Get random trip image
-      const url_img = getRandomTripImage()
+      // Get random trip image if not provided
+      const url_img = req.body.url_img || getRandomTripImage()
 
       const trip = await tripService.createTrip(req.user!.id, {
         ...req.body,

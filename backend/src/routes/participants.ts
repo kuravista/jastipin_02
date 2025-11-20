@@ -74,7 +74,7 @@ router.get(
     try {
       const participants = await db.participant.findMany({
         where: { tripId: req.params.tripId },
-        include: { _count: { select: { orders: true } } },
+        include: { _count: { select: { Order: true } } },
         orderBy: { createdAt: 'asc' },
       })
 
@@ -101,7 +101,7 @@ router.get(
             phone: req.params.phone,
           },
         },
-        include: { orders: true },
+        include: { Order: true },
       })
 
       if (!participant) {

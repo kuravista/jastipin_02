@@ -29,7 +29,7 @@ router.post(
   async (req: AuthRequest, res: Response) => {
     try {
       const trip = await db.trip.findUnique({
-        where: { id: req.body.trip_id },
+        where: { id: req.body.tripId }, // Fixed: use camelCase
       })
 
       if (!trip) {
@@ -50,20 +50,34 @@ router.post(
       
       const product = await db.product.create({
         data: {
-          tripId: req.body.trip_id,
+          tripId: req.body.tripId, // Fixed: camelCase
           title: req.body.title,
           slug: slug || 'product',
           price: req.body.price,
           stock: req.body.stock,
           description: req.body.description,
           image: req.body.image,
+          // NEW: DP flow fields
+          type: req.body.type || 'goods',
+          unit: req.body.unit,
+          weightGram: req.body.weightGram,
+          requiresDetails: req.body.requiresDetails || false,
+          requiresProof: req.body.requiresProof || false,
+          markupType: req.body.markupType || 'percent',
+          markupValue: req.body.markupValue || 0,
         },
-        include: { trip: true },
+        include: { Trip: true },
       })
 
       res.status(201).json(product)
     } catch (error: any) {
-      res.status(500).json({ error: 'Failed to create product' })
+      console.error('Product creation error:', error)
+      res.status(500).json({ 
+        error: 'Failed to create product',
+        details: error.message,
+        code: error.code,
+        meta: error.meta
+      })
     }
   }
 )
@@ -79,12 +93,15 @@ router.get(
     try {
       const products = await db.product.findMany({
         where: {
-          trip: {
+          Trip: {
             jastiperId: req.user!.id,
           },
         },
-        include: { trip: true },
+        include: { Trip: true },
       })
+
+      // Add debug log
+      // console.log('Products fetched:', JSON.stringify(products, null, 2))
 
       res.json(products)
     } catch (error: any) {
@@ -104,7 +121,7 @@ router.patch(
     try {
       const product = await db.product.findUnique({
         where: { id: req.params.productId },
-        include: { trip: true },
+        include: { Trip: true },
       })
 
       if (!product) {
@@ -112,7 +129,7 @@ router.patch(
         return
       }
 
-      if (product.trip.jastiperId !== req.user!.id) {
+      if (product.Trip.jastiperId !== req.user!.id) {
         res.status(403).json({ error: 'Not authorized' })
         return
       }
@@ -120,7 +137,7 @@ router.patch(
       const updated = await db.product.update({
         where: { id: req.params.productId },
         data: req.body,
-        include: { trip: true },
+        include: { Trip: true },
       })
 
       res.json(updated)
@@ -145,7 +162,7 @@ router.delete(
     try {
       const product = await db.product.findUnique({
         where: { id: req.params.productId },
-        include: { trip: true },
+        include: { Trip: true },
       })
 
       if (!product) {
@@ -153,7 +170,7 @@ router.delete(
         return
       }
 
-      if (product.trip.jastiperId !== req.user!.id) {
+      if (product.Trip.jastiperId !== req.user!.id) {
         res.status(403).json({ error: 'Not authorized' })
         return
       }

@@ -56,8 +56,8 @@ router.post(
         return
       }
 
-      // Verify stock availability
-      if (product.stock < req.body.quantity) {
+      // Verify stock availability (only for goods with stock tracking)
+      if (product.stock !== null && product.stock < req.body.quantity) {
         res
           .status(400)
           .json({ error: 'Insufficient stock available' })
@@ -110,8 +110,8 @@ router.post(
           notes: req.body.notes,
         },
         include: {
-          participant: true,
-          product: true,
+          Participant: true,
+          Product: true,
         },
       })
 
@@ -225,13 +225,13 @@ router.get(
 
       const orders = await db.order.findMany({
         where: {
-          product: {
+          Product: {
             tripId: req.params.tripId,
           },
         },
         include: {
-          participant: true,
-          product: true,
+          Participant: true,
+          Product: true,
         },
         orderBy: { createdAt: 'desc' },
       })
@@ -255,12 +255,12 @@ router.get(
       const order = await db.order.findUnique({
         where: { id: req.params.orderId },
         include: {
-          participant: true,
-          product: true,
+          Participant: true,
+          Product: true,
         },
       })
 
-      if (!order || order.product.tripId !== req.params.tripId) {
+      if (!order || !order.Product || order.Product.tripId !== req.params.tripId) {
         res.status(404).json({ error: 'Order not found' })
         return
       }
@@ -295,8 +295,8 @@ router.patch(
         where: { id: req.params.orderId },
         data: req.body,
         include: {
-          participant: true,
-          product: true,
+          Participant: true,
+          Product: true,
         },
       })
 
@@ -340,6 +340,199 @@ router.delete(
         return
       }
       res.status(500).json({ error: 'Failed to cancel order' })
+    }
+  }
+)
+
+/**
+ * POST /orders/:orderId/validate
+ * Jastiper validates order and sets final price
+ * Auth: Jastiper only
+ */
+router.post(
+  '/orders/:orderId/validate',
+  authMiddleware,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { orderId } = req.params
+      const { action, shippingFee, serviceFee, rejectionReason } = req.body
+      const jastiperId = req.user?.id
+      
+      if (!jastiperId) {
+        res.status(401).json({ error: 'Unauthorized' })
+        return
+      }
+      
+      if (!action || !['accept', 'reject'].includes(action)) {
+        res.status(400).json({ error: 'Action must be "accept" or "reject"' })
+        return
+      }
+      
+      // Dynamic import validation service
+      const { validateOrder } = await import('../services/validation.service.js')
+      
+      const result = await validateOrder({
+        orderId,
+        jastiperId,
+        action,
+        shippingFee,
+        serviceFee,
+        rejectionReason
+      })
+      
+      if (!result.success) {
+        res.status(400).json(result)
+        return
+      }
+      
+      res.json(result)
+    } catch (error: any) {
+      console.error('Validation error:', error)
+      res.status(500).json({ error: error.message || 'Validation failed' })
+    }
+  }
+)
+
+/**
+ * GET /orders/:orderId/breakdown
+ * Get price breakdown for an order
+ * Public endpoint (for participant to see breakdown)
+ */
+router.get(
+  '/orders/:orderId/breakdown',
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { orderId } = req.params
+      
+      const order = await db.order.findUnique({
+        where: { id: orderId },
+        select: {
+          id: true,
+          status: true,
+          dpAmount: true,
+          finalAmount: true,
+          totalPrice: true,
+          shippingFee: true,
+          serviceFee: true,
+          platformCommission: true,
+          finalBreakdown: true
+        }
+      })
+      
+      if (!order) {
+        res.status(404).json({ error: 'Order not found' })
+        return
+      }
+      
+      res.json({
+        success: true,
+        data: {
+          orderId: order.id,
+          status: order.status,
+          dpAmount: order.dpAmount,
+          finalAmount: order.finalAmount,
+          totalPrice: order.totalPrice,
+          fees: {
+            shippingFee: order.shippingFee,
+            serviceFee: order.serviceFee,
+            platformCommission: order.platformCommission
+          },
+          breakdown: order.finalBreakdown
+        }
+      })
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'Failed to fetch breakdown' })
+    }
+  }
+)
+
+/**
+ * POST /orders/:orderId/calculate-shipping
+ * Calculate shipping cost using RajaOngkir (optional helper)
+ * Auth: Jastiper only
+ */
+router.post(
+  '/orders/:orderId/calculate-shipping',
+  authMiddleware,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { orderId } = req.params
+      const { courier } = req.body
+      const jastiperId = req.user?.id
+      
+      if (!jastiperId) {
+        res.status(401).json({ error: 'Unauthorized' })
+        return
+      }
+      
+      // Get order with items and address
+      const order = await db.order.findUnique({
+        where: { id: orderId },
+        include: {
+          OrderItem: {
+            include: {
+              Product: true
+            }
+          },
+          Address: true,
+          Trip: true
+        }
+      })
+      
+      if (!order) {
+        res.status(404).json({ error: 'Order not found' })
+        return
+      }
+      
+      // Verify ownership
+      if (order.Trip?.jastiperId !== jastiperId) {
+        res.status(403).json({ error: 'Unauthorized: Not the trip owner' })
+        return
+      }
+      
+      if (!order.Address) {
+        res.status(400).json({ error: 'Order has no address' })
+        return
+      }
+      
+      // Calculate total weight
+      const { calculateTotalWeight } = await import('../services/price-calculator.service.js')
+      const totalWeight = calculateTotalWeight(
+        order.OrderItem.map((item: any) => ({
+          weightGram: item.Product.weightGram,
+          quantity: item.quantity
+        }))
+      )
+      
+      // Get jastiper origin (TODO: add to user profile)
+      // For now, use a default or from request
+      const origin = req.body.origin || order.Address.districtId
+      const destination = order.Address.districtId
+      
+      // Calculate shipping
+      const { calculateShippingCost, getBestShippingOption } = await import('../services/rajaongkir.service.js')
+      const shippingOptions = await calculateShippingCost(
+        origin,
+        destination,
+        totalWeight,
+        courier || 'jne:tiki:pos'
+      )
+      
+      const recommendedOption = getBestShippingOption(shippingOptions)
+      
+      res.json({
+        success: true,
+        data: {
+          origin,
+          destination,
+          weight: totalWeight,
+          options: shippingOptions,
+          recommendedOption
+        }
+      })
+    } catch (error: any) {
+      console.error('Calculate shipping error:', error)
+      res.status(500).json({ error: error.message || 'Failed to calculate shipping' })
     }
   }
 )
