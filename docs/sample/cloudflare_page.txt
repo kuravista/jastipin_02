@@ -1,0 +1,255 @@
+2025-11-18T02:22:45.050342657Z	Cloning repository...
+2025-11-18T02:22:45.756429925Z	From https://github.com/kuravista/jastipin_02
+2025-11-18T02:22:45.756700708Z	 * branch            004897ec01fbb360eca25303fb511b2838beb819 -> FETCH_HEAD
+2025-11-18T02:22:45.75696901Z	
+2025-11-18T02:22:45.836014639Z	HEAD is now at 004897e SERVER setup: undermaintenance
+2025-11-18T02:22:45.836315986Z	
+2025-11-18T02:22:45.919973733Z	
+2025-11-18T02:22:45.920540696Z	Using v2 root directory strategy
+2025-11-18T02:22:45.943878044Z	Success: Finished cloning repository files
+2025-11-18T02:22:48.867520373Z	No wrangler.toml file found. Continuing.
+2025-11-18T02:22:48.933826343Z	Detected the following tools from environment: pnpm@10.11.1, nodejs@22.16.0
+2025-11-18T02:22:48.867520373Z	No wrangler.toml file found. Continuing.
+2025-11-18T02:22:48.933826343Z	Detected the following tools from environment: pnpm@10.11.1, nodejs@22.16.0
+2025-11-18T02:22:49.66675973Z	Installing project dependencies: pnpm install
+2025-11-18T02:22:50.284613447Z	Lockfile is up to date, resolution step is skipped
+2025-11-18T02:22:55.377892744Z	Progress: resolved 640, reused 0, downloaded 278, added 182
+2025-11-18T02:22:56.377729114Z	Progress: resolved 640, reused 0, downloaded 502, added 501
+2025-11-18T02:22:57.887263204Z	
+2025-11-18T02:22:57.887535257Z	dependencies:
+2025-11-18T02:22:57.887612438Z	+ @hookform/resolvers 3.10.0
+2025-11-18T02:22:57.887735429Z	+ @radix-ui/react-accordion 1.2.2
+2025-11-18T02:22:57.887889355Z	+ @radix-ui/react-alert-dialog 1.1.4
+2025-11-18T02:22:57.888132373Z	+ @radix-ui/react-aspect-ratio 1.1.1
+2025-11-18T02:22:57.888162785Z	+ @radix-ui/react-avatar 1.1.2
+2025-11-18T02:22:57.888405835Z	+ @radix-ui/react-checkbox 1.1.3
+2025-11-18T02:22:57.888420155Z	+ @radix-ui/react-collapsible 1.1.2
+2025-11-18T02:22:57.888426023Z	+ @radix-ui/react-context-menu 2.2.4
+2025-11-18T02:22:57.888707482Z	+ @radix-ui/react-dialog 1.1.4
+2025-11-18T02:22:57.888723379Z	+ @radix-ui/react-dropdown-menu 2.1.4
+2025-11-18T02:22:57.888728381Z	+ @radix-ui/react-hover-card 1.1.4
+2025-11-18T02:22:57.888838928Z	+ @radix-ui/react-label 2.1.1
+2025-11-18T02:22:57.888994752Z	+ @radix-ui/react-menubar 1.1.4
+2025-11-18T02:22:57.889220348Z	+ @radix-ui/react-navigation-menu 1.2.3
+2025-11-18T02:22:57.889441838Z	+ @radix-ui/react-popover 1.1.4
+2025-11-18T02:22:57.889604762Z	+ @radix-ui/react-progress 1.1.1
+2025-11-18T02:22:57.889749643Z	+ @radix-ui/react-radio-group 1.2.2
+2025-11-18T02:22:57.889805275Z	+ @radix-ui/react-scroll-area 1.2.2
+2025-11-18T02:22:57.889897026Z	+ @radix-ui/react-select 2.1.4
+2025-11-18T02:22:57.889991938Z	+ @radix-ui/react-separator 1.1.1
+2025-11-18T02:22:57.890100885Z	+ @radix-ui/react-slider 1.2.2
+2025-11-18T02:22:57.890108004Z	+ @radix-ui/react-slot 1.1.1
+2025-11-18T02:22:57.890170747Z	+ @radix-ui/react-switch 1.1.2
+2025-11-18T02:22:57.890345665Z	+ @radix-ui/react-tabs 1.1.2
+2025-11-18T02:22:57.890356247Z	+ @radix-ui/react-toast 1.2.4
+2025-11-18T02:22:57.890500018Z	+ @radix-ui/react-toggle 1.1.1
+2025-11-18T02:22:57.891107556Z	+ @radix-ui/react-toggle-group 1.1.1
+2025-11-18T02:22:57.89131374Z	+ @radix-ui/react-tooltip 1.1.6
+2025-11-18T02:22:57.89144553Z	+ autoprefixer 10.4.22
+2025-11-18T02:22:57.891849261Z	+ class-variance-authority 0.7.1
+2025-11-18T02:22:57.891971216Z	+ clsx 2.1.1
+2025-11-18T02:22:57.892126884Z	+ cmdk 1.0.4
+2025-11-18T02:22:57.892348096Z	+ date-fns 4.1.0
+2025-11-18T02:22:57.892700041Z	+ embla-carousel-react 8.5.1
+2025-11-18T02:22:57.89282097Z	+ input-otp 1.4.1
+2025-11-18T02:22:57.893055148Z	+ lucide-react 0.454.0
+2025-11-18T02:22:57.8931207Z	+ next 16.0.0
+2025-11-18T02:22:57.893237665Z	+ next-themes 0.4.6
+2025-11-18T02:22:57.893352567Z	+ react 19.2.0
+2025-11-18T02:22:57.893511051Z	+ react-day-picker 9.8.0
+2025-11-18T02:22:57.893603181Z	+ react-dom 19.2.0
+2025-11-18T02:22:57.893636745Z	+ react-hook-form 7.66.0
+2025-11-18T02:22:57.893780137Z	+ react-resizable-panels 2.1.9
+2025-11-18T02:22:57.894051319Z	+ recharts 2.15.4
+2025-11-18T02:22:57.894245291Z	+ sonner 1.7.4
+2025-11-18T02:22:57.894378431Z	+ tailwind-merge 2.6.0
+2025-11-18T02:22:57.894510904Z	+ tailwindcss-animate 1.0.7
+2025-11-18T02:22:57.894661537Z	+ vaul 0.9.9
+2025-11-18T02:22:57.894947453Z	+ zod 3.25.76
+2025-11-18T02:22:57.89513573Z	
+2025-11-18T02:22:57.895189948Z	devDependencies:
+2025-11-18T02:22:57.895349597Z	+ @tailwindcss/postcss 4.1.17
+2025-11-18T02:22:57.89549994Z	+ @testing-library/jest-dom 6.9.1
+2025-11-18T02:22:57.895654473Z	+ @testing-library/react 14.3.1
+2025-11-18T02:22:57.895701413Z	+ @testing-library/user-event 14.6.1
+2025-11-18T02:22:57.895810337Z	+ @types/jest 29.5.14
+2025-11-18T02:22:57.895851239Z	+ @types/node 22.19.1
+2025-11-18T02:22:57.895953471Z	+ @types/react 19.2.5
+2025-11-18T02:22:57.89599064Z	+ @types/react-dom 19.2.3
+2025-11-18T02:22:57.896023013Z	+ eslint 8.57.1
+2025-11-18T02:22:57.896186494Z	+ identity-obj-proxy 3.0.0
+2025-11-18T02:22:57.896231341Z	+ jest 29.7.0
+2025-11-18T02:22:57.896332035Z	+ jest-environment-jsdom 29.7.0
+2025-11-18T02:22:57.896342753Z	+ postcss 8.5.6
+2025-11-18T02:22:57.896439757Z	+ tailwindcss 4.1.17
+2025-11-18T02:22:57.89645223Z	+ ts-jest 29.4.5
+2025-11-18T02:22:57.896510625Z	+ tw-animate-css 1.3.3
+2025-11-18T02:22:57.896564547Z	+ typescript 5.9.3
+2025-11-18T02:22:57.8966536Z	
+2025-11-18T02:22:57.887263204Z	
+2025-11-18T02:22:57.887535257Z	dependencies:
+2025-11-18T02:22:57.887612438Z	+ @hookform/resolvers 3.10.0
+2025-11-18T02:22:57.887735429Z	+ @radix-ui/react-accordion 1.2.2
+2025-11-18T02:22:57.887889355Z	+ @radix-ui/react-alert-dialog 1.1.4
+2025-11-18T02:22:57.888132373Z	+ @radix-ui/react-aspect-ratio 1.1.1
+2025-11-18T02:22:57.888162785Z	+ @radix-ui/react-avatar 1.1.2
+2025-11-18T02:22:57.888405835Z	+ @radix-ui/react-checkbox 1.1.3
+2025-11-18T02:22:57.888420155Z	+ @radix-ui/react-collapsible 1.1.2
+2025-11-18T02:22:57.888426023Z	+ @radix-ui/react-context-menu 2.2.4
+2025-11-18T02:22:57.888707482Z	+ @radix-ui/react-dialog 1.1.4
+2025-11-18T02:22:57.888723379Z	+ @radix-ui/react-dropdown-menu 2.1.4
+2025-11-18T02:22:57.888728381Z	+ @radix-ui/react-hover-card 1.1.4
+2025-11-18T02:22:57.888838928Z	+ @radix-ui/react-label 2.1.1
+2025-11-18T02:22:57.888994752Z	+ @radix-ui/react-menubar 1.1.4
+2025-11-18T02:22:57.889220348Z	+ @radix-ui/react-navigation-menu 1.2.3
+2025-11-18T02:22:57.889441838Z	+ @radix-ui/react-popover 1.1.4
+2025-11-18T02:22:57.889604762Z	+ @radix-ui/react-progress 1.1.1
+2025-11-18T02:22:57.889749643Z	+ @radix-ui/react-radio-group 1.2.2
+2025-11-18T02:22:57.889805275Z	+ @radix-ui/react-scroll-area 1.2.2
+2025-11-18T02:22:57.889897026Z	+ @radix-ui/react-select 2.1.4
+2025-11-18T02:22:57.889991938Z	+ @radix-ui/react-separator 1.1.1
+2025-11-18T02:22:57.890100885Z	+ @radix-ui/react-slider 1.2.2
+2025-11-18T02:22:57.890108004Z	+ @radix-ui/react-slot 1.1.1
+2025-11-18T02:22:57.890170747Z	+ @radix-ui/react-switch 1.1.2
+2025-11-18T02:22:57.890345665Z	+ @radix-ui/react-tabs 1.1.2
+2025-11-18T02:22:57.890356247Z	+ @radix-ui/react-toast 1.2.4
+2025-11-18T02:22:57.890500018Z	+ @radix-ui/react-toggle 1.1.1
+2025-11-18T02:22:57.891107556Z	+ @radix-ui/react-toggle-group 1.1.1
+2025-11-18T02:22:57.89131374Z	+ @radix-ui/react-tooltip 1.1.6
+2025-11-18T02:22:57.89144553Z	+ autoprefixer 10.4.22
+2025-11-18T02:22:57.891849261Z	+ class-variance-authority 0.7.1
+2025-11-18T02:22:57.891971216Z	+ clsx 2.1.1
+2025-11-18T02:22:57.892126884Z	+ cmdk 1.0.4
+2025-11-18T02:22:57.892348096Z	+ date-fns 4.1.0
+2025-11-18T02:22:57.892700041Z	+ embla-carousel-react 8.5.1
+2025-11-18T02:22:57.89282097Z	+ input-otp 1.4.1
+2025-11-18T02:22:57.893055148Z	+ lucide-react 0.454.0
+2025-11-18T02:22:57.8931207Z	+ next 16.0.0
+2025-11-18T02:22:57.893237665Z	+ next-themes 0.4.6
+2025-11-18T02:22:57.893352567Z	+ react 19.2.0
+2025-11-18T02:22:57.893511051Z	+ react-day-picker 9.8.0
+2025-11-18T02:22:57.893603181Z	+ react-dom 19.2.0
+2025-11-18T02:22:57.893636745Z	+ react-hook-form 7.66.0
+2025-11-18T02:22:57.893780137Z	+ react-resizable-panels 2.1.9
+2025-11-18T02:22:57.894051319Z	+ recharts 2.15.4
+2025-11-18T02:22:57.894245291Z	+ sonner 1.7.4
+2025-11-18T02:22:57.894378431Z	+ tailwind-merge 2.6.0
+2025-11-18T02:22:57.894510904Z	+ tailwindcss-animate 1.0.7
+2025-11-18T02:22:57.894661537Z	+ vaul 0.9.9
+2025-11-18T02:22:57.894947453Z	+ zod 3.25.76
+2025-11-18T02:22:57.89513573Z	
+2025-11-18T02:22:57.895189948Z	devDependencies:
+2025-11-18T02:22:57.895349597Z	+ @tailwindcss/postcss 4.1.17
+2025-11-18T02:22:57.89549994Z	+ @testing-library/jest-dom 6.9.1
+2025-11-18T02:22:57.895654473Z	+ @testing-library/react 14.3.1
+2025-11-18T02:22:57.895701413Z	+ @testing-library/user-event 14.6.1
+2025-11-18T02:22:57.895810337Z	+ @types/jest 29.5.14
+2025-11-18T02:22:57.895851239Z	+ @types/node 22.19.1
+2025-11-18T02:22:57.895953471Z	+ @types/react 19.2.5
+2025-11-18T02:22:57.89599064Z	+ @types/react-dom 19.2.3
+2025-11-18T02:22:57.896023013Z	+ eslint 8.57.1
+2025-11-18T02:22:57.896186494Z	+ identity-obj-proxy 3.0.0
+2025-11-18T02:22:57.896231341Z	+ jest 29.7.0
+2025-11-18T02:22:57.896332035Z	+ jest-environment-jsdom 29.7.0
+2025-11-18T02:22:57.896342753Z	+ postcss 8.5.6
+2025-11-18T02:22:57.896439757Z	+ tailwindcss 4.1.17
+2025-11-18T02:22:57.89645223Z	+ ts-jest 29.4.5
+2025-11-18T02:22:57.896510625Z	+ tw-animate-css 1.3.3
+2025-11-18T02:22:57.896564547Z	+ typescript 5.9.3
+2025-11-18T02:22:57.8966536Z	
+2025-11-18T02:22:57.896709204Z	╭ Warning ─────────────────────────────────────────────────────────────────────╮
+2025-11-18T02:22:57.89681149Z	│                                                                              │
+2025-11-18T02:22:57.896892296Z	│   Ignored build scripts: sharp.                                              │
+2025-11-18T02:22:57.897074217Z	│   Run "pnpm approve-builds" to pick which dependencies should be allowed     │
+2025-11-18T02:22:57.897087808Z	│   to run scripts.                                                            │
+2025-11-18T02:22:57.897093015Z	│                                                                              │
+2025-11-18T02:22:57.897278461Z	╰──────────────────────────────────────────────────────────────────────────────╯
+2025-11-18T02:22:57.897307553Z	
+2025-11-18T02:22:57.97259585Z	Done in 8s using pnpm v10.11.1
+2025-11-18T02:22:58.091857508Z	Executing user command: npx @cloudflare/next-on-pages@1
+2025-11-18T02:23:12.981264143Z	npm warn deprecated path-match@1.2.4: This package is archived and no longer maintained. For support, visit https://github.com/expressjs/express/discussions
+2025-11-18T02:23:24.915397574Z	⚡️ Detected Package Manager: npm (10.9.2)
+2025-11-18T02:23:24.915623318Z	⚡️ Preparing project...
+2025-11-18T02:23:24.915810118Z	
+2025-11-18T02:23:24.91600729Z	⚡️ The project is set up for pnpm but it is currently being run via npm this might lead to build errors, please be sure to use the same package manager your project uses when running @cloudflare/next-on-pages
+2025-11-18T02:23:24.916167743Z	
+2025-11-18T02:23:24.91929617Z	⚡️ Project is ready
+2025-11-18T02:23:24.919506684Z	⚡️ Building project...
+2025-11-18T02:23:27.350320458Z	▲  npm warn exec The following package was not found and will be installed: vercel@48.10.3
+2025-11-18T02:23:34.528069043Z	▲  Vercel CLI 48.10.3
+2025-11-18T02:23:34.532132476Z	▲  > NOTE: The Vercel CLI now collects telemetry regarding usage of the CLI.
+2025-11-18T02:23:34.53238026Z	▲  > This information is used to shape the CLI roadmap and prioritize features.
+2025-11-18T02:23:34.532573546Z	▲  > You can learn more, including how to opt-out if you'd not like to participate in this program, by visiting the following URL:
+2025-11-18T02:23:34.53271134Z	▲  > https://vercel.com/docs/cli/about-telemetry
+2025-11-18T02:23:34.641151131Z	▲  WARN! Build not running on Vercel. System environment variables will not be available.
+2025-11-18T02:23:34.875520137Z	▲  Detected `pnpm-lock.yaml` 9 which may be generated by pnpm@9.x or pnpm@10.x
+2025-11-18T02:23:34.876073146Z	▲  Using pnpm@9.x based on project creation date
+2025-11-18T02:23:34.876096989Z	▲  To use pnpm@10.x, manually opt in using corepack (https://vercel.com/docs/deployments/configure-a-build#corepack)
+2025-11-18T02:23:34.898352723Z	▲  Installing dependencies...
+2025-11-18T02:23:35.338602043Z	▲  Lockfile is up to date, resolution step is skipped
+2025-11-18T02:23:35.441844193Z	▲  Already up to date
+2025-11-18T02:23:35.891137083Z	▲  ╭ Warning ─────────────────────────────────────────────────────────────────────╮
+2025-11-18T02:23:35.891359917Z	▲  │                                                                              │
+2025-11-18T02:23:35.892024955Z	▲  │   Ignored build scripts: sharp.                                              │
+2025-11-18T02:23:35.892099879Z	▲  │   Run "pnpm approve-builds" to pick which dependencies should be allowed     │
+2025-11-18T02:23:35.892170616Z	▲  │   to run scripts.                                                            │
+2025-11-18T02:23:35.892275919Z	▲  │                                                                              │
+2025-11-18T02:23:35.892596553Z	▲  ╰──────────────────────────────────────────────────────────────────────────────╯
+2025-11-18T02:23:35.915227507Z	▲  Done in 930ms using pnpm v10.11.1
+2025-11-18T02:23:35.927705451Z	▲  Detected Next.js version: 16.0.0
+2025-11-18T02:23:35.945027361Z	▲  Running "pnpm run build"
+2025-11-18T02:23:36.29356389Z	▲  > my-v0-project@0.1.0 build /opt/buildhome/repo/frontend
+2025-11-18T02:23:36.2938718Z	▲  > next build
+2025-11-18T02:23:37.067133128Z	▲  Attention: Next.js now collects completely anonymous telemetry regarding usage.
+2025-11-18T02:23:37.067315835Z	▲  This information is used to shape Next.js' roadmap and prioritize features.
+2025-11-18T02:23:37.067617478Z	▲  You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+2025-11-18T02:23:37.067632788Z	▲  https://nextjs.org/telemetry
+2025-11-18T02:23:37.083197974Z	▲  ▲ Next.js 16.0.0 (Turbopack)
+2025-11-18T02:23:37.083542426Z	▲  
+2025-11-18T02:23:37.132923987Z	▲  ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+2025-11-18T02:23:37.154908172Z	▲  Creating an optimized production build ...
+2025-11-18T02:23:41.808849857Z	▲  Collecting page data ...
+2025-11-18T02:23:43.076062622Z	▲  Generating static pages (0/5) ...
+2025-11-18T02:23:41.808849857Z	▲  Collecting page data ...
+2025-11-18T02:23:43.076062622Z	▲  Generating static pages (0/5) ...
+2025-11-18T02:23:43.808298253Z	▲  Generating static pages (1/5)
+2025-11-18T02:23:43.808585878Z	▲  Generating static pages (2/5) 
+2025-11-18T02:23:43.808903595Z	▲  Generating static pages (3/5)
+2025-11-18T02:23:43.808920809Z	▲  ✓ Generating static pages (5/5) in 732.7ms
+2025-11-18T02:23:43.832841027Z	▲  Finalizing page optimization ...
+2025-11-18T02:23:43.84006426Z	▲  
+2025-11-18T02:23:43.842113525Z	▲  Route (app)
+2025-11-18T02:23:43.842452818Z	▲  ┌ ○ /
+2025-11-18T02:23:43.842462129Z	▲  ├ ○ /_not-found
+2025-11-18T02:23:43.844943551Z	▲  ├ ƒ /[username]
+2025-11-18T02:23:43.844961587Z	▲  ├ ƒ /auth
+2025-11-18T02:23:43.84496687Z	▲  ├ ○ /dashboard
+2025-11-18T02:23:43.844971789Z	▲  ├ ƒ /inv/[invoiceId]
+2025-11-18T02:23:43.844976797Z	▲  └ ○ /maintenance
+2025-11-18T02:23:43.844981176Z	▲  
+2025-11-18T02:23:43.844985745Z	▲  
+2025-11-18T02:23:43.844990405Z	▲  ƒ Proxy (Middleware)
+2025-11-18T02:23:43.844995325Z	▲  ○  (Static)   prerendered as static content
+2025-11-18T02:23:43.8450085Z	▲  ƒ  (Dynamic)  server-rendered on demand
+2025-11-18T02:23:53.788330094Z	▲  Traced Next.js server files in: 9.817s
+2025-11-18T02:23:53.896184095Z	▲  Created all serverless functions in: 107.517ms
+2025-11-18T02:23:53.946122553Z	▲  Collected static files (public/, static/, .next/static): 7.15ms
+2025-11-18T02:23:54.015661408Z	▲  Build Completed in .vercel/output [19s]
+2025-11-18T02:23:54.219316206Z	⚡️ Completed `npx vercel build`.
+2025-11-18T02:23:56.716297073Z	
+2025-11-18T02:23:56.716627891Z	⚡️ ERROR: Failed to produce a Cloudflare Pages build from the project.
+2025-11-18T02:23:56.716662139Z	⚡️ 
+2025-11-18T02:23:56.716867617Z	⚡️ 	The following routes were not configured to run with the Edge Runtime:
+2025-11-18T02:23:56.716991529Z	⚡️ 	  - /[username]
+2025-11-18T02:23:56.7173178Z	⚡️ 	  - /auth
+2025-11-18T02:23:56.717704558Z	⚡️ 	  - /inv/[invoiceId]
+2025-11-18T02:23:56.717718508Z	⚡️ 
+2025-11-18T02:23:56.718132149Z	⚡️ 	Please make sure that all your non-static routes export the following edge runtime route segment config:
+2025-11-18T02:23:56.718147694Z	⚡️ 	  export const runtime = 'edge';
+2025-11-18T02:23:56.718516733Z	⚡️ 
+2025-11-18T02:23:56.718530923Z	⚡️ 	You can read more about the Edge Runtime on the Next.js documentation:
+2025-11-18T02:23:56.718868361Z	⚡️ 	  https://nextjs.org/docs/app/building-your-application/rendering/edge-and-nodejs-runtimes
+2025-11-18T02:23:56.718988418Z	
+2025-11-18T02:23:56.771418137Z	Failed: Error while executing user command. Exited with error code: 1
+2025-11-18T02:23:56.782040789Z	Failed: build command exited with code: 1
+2025-11-18T02:23:58.245325Z	Failed: error occurred while running build command
