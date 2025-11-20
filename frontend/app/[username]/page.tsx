@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, use } from "react"
-import { notFound } from "next/navigation"
+import { notFound, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -32,6 +32,7 @@ interface Trip {
   deadline?: string
   status: string
   spotsLeft: number
+  paymentType?: 'full' | 'dp'  // Payment type: full payment or down payment
 }
 
 interface ProfileData {
@@ -42,6 +43,7 @@ interface ProfileData {
     profileBio?: string
     avatar?: string
     coverImage?: string
+    coverPosition?: number
     stats: {
       totalTrips: number
       happyCustomers: number
@@ -152,6 +154,7 @@ const demoProfiles = {
 
 export default function ProfilePage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = use(params)
+  const router = useRouter()
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -387,6 +390,48 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
     return notFound()
   }
 
+  // Smart routing based on trip payment type
+  const handleCheckout = () => {
+    const currentTrip = profile?.trips?.[currentTripIndex]
+    const tripId = currentTrip?.id
+
+    if (!tripId) {
+      toast.error("Trip tidak ditemukan")
+      return
+    }
+
+    if (!cartItems.length) {
+      toast.error("Keranjang kosong")
+      return
+    }
+
+    // Check payment type and route accordingly
+    if (currentTrip?.paymentType === 'dp') {
+      // Route to NEW DP checkout page
+      const items = cartItems
+        .map(item => `${item.product.id}:${item.quantity}`)
+        .join(',')
+      router.push(`/checkout/dp/${tripId}?items=${items}`)
+    } else {
+      // Use OLD full payment checkout (default)
+      setShowCheckoutForm(true)
+      // Reset checkout form and related states
+      setCheckoutForm({ 
+        nama: "", 
+        email: "", 
+        nomor: "", 
+        alamat: "", 
+        cityId: "", 
+        cityName: "", 
+        districtId: "" 
+      })
+      setLocationSearch("")
+      setSelectedShipping(null)
+      setShippingOptions([])
+      setLocationResults([])
+    }
+  }
+
   const handleProductClick = (product: any) => {
     setSelectedProduct(product)
     setOrderDialogOpen(true)
@@ -447,6 +492,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
             src={profile.user.coverImage}
             alt="Cover"
             className="w-full h-full object-cover"
+            style={{ objectPosition: `center ${profile.user.coverPosition || 50}%` }}
           />
         ) : (
           <div
@@ -832,15 +878,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
             </div>
 
             <Button 
-              onClick={() => {
-                setShowCheckoutForm(true)
-                // Reset checkout form and related states
-                setCheckoutForm({ nama: "", email: "", nomor: "", alamat: "", cityId: "", cityName: "", districtId: "" })
-                setLocationSearch("")
-                setSelectedShipping(null)
-                setShippingOptions([])
-                setLocationResults([])
-              }}
+              onClick={handleCheckout}
               className="w-full bg-orange-500 hover:bg-orange-600 text-white"
             >
               Checkout Sekarang
