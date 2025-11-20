@@ -25,6 +25,8 @@ export class TripService {
       startDate?: Date
       deadline?: Date
       isActive?: boolean
+      paymentType?: 'full' | 'dp'
+      dpPercentage?: number
     }
   ) {
     // Check unique slug per user
@@ -52,6 +54,8 @@ export class TripService {
         startDate: data.startDate,
         deadline: data.deadline,
         isActive: data.isActive,
+        paymentType: data.paymentType || 'full', // NEW: Support DP payment type
+        dpPercentage: data.dpPercentage || 20, // NEW: DP percentage (default 20%)
       },
     })
   }
@@ -65,7 +69,7 @@ export class TripService {
     const trip = await this.db.trip.findUnique({
       where: { id: tripId },
       include: {
-        jastiper: {
+        User: {
           select: {
             id: true,
             slug: true,
@@ -73,10 +77,10 @@ export class TripService {
             avatar: true,
           },
         },
-        products: true,
-        participants: true,
+        Product: true,
+        Participant: true,
         _count: {
-          select: { participants: true, products: true },
+          select: { Participant: true, Product: true },
         },
       },
     })
@@ -98,13 +102,38 @@ export class TripService {
    * @returns List of user's trips
    */
   async getUserTrips(jastiperId: string) {
+    // First, update status of trips that have passed deadline
+    // We do this lazily when fetching to keep data consistent without cron jobs
+    const now = new Date()
+    now.setHours(0, 0, 0, 0) // Compare dates without time for simplicity, or keep time if precise
+
+    // Update isActive = false where deadline < now and currently active
+    // Note: Prisma doesn't support updateMany with join or complex conditions easily in one go 
+    // if we wanted to be very precise, but for simple deadline check it works.
+    // However, deadline usually means "last order date".
+    // If deadline < now, trip is closed for orders.
+    
+    await this.db.trip.updateMany({
+      where: {
+        jastiperId,
+        isActive: true,
+        deadline: {
+          lt: now,
+          not: null // Only expire if deadline is set (not null)
+        }
+      },
+      data: {
+        isActive: false
+      }
+    })
+
     return this.db.trip.findMany({
       where: { jastiperId },
       include: {
         _count: {
           select: {
-            participants: true,
-            products: true,
+            Participant: true,
+            Product: true,
           },
         },
       },
@@ -126,6 +155,9 @@ export class TripService {
       startDate?: Date
       deadline?: Date
       isActive?: boolean
+      url_img?: string
+      paymentType?: 'full' | 'dp'
+      dpPercentage?: number
     }
   ) {
     return this.db.trip.update({
@@ -134,8 +166,8 @@ export class TripService {
       include: {
         _count: {
           select: {
-            participants: true,
-            products: true,
+            Participant: true,
+            Product: true,
           },
         },
       },

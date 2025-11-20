@@ -124,7 +124,7 @@ export async function processCheckout(
         }
       }
 
-      if (product.stock < item.quantity) {
+      if (product.stock !== null && product.stock < item.quantity) {
         return {
           success: false,
           error: `Insufficient stock for product "${product.title}". Available: ${product.stock}, Requested: ${item.quantity}`,
@@ -158,8 +158,8 @@ export async function processCheckout(
           status: 'pending',
         },
         include: {
-          participant: true,
-          product: true,
+          Participant: true,
+          Product: true,
         },
       })
 
@@ -197,9 +197,9 @@ export async function getCheckoutSummary(
         phone: participantPhone,
       },
       include: {
-        orders: {
+        Order: {
           include: {
-            product: true,
+            Product: true,
           },
           where: {
             status: 'pending',
@@ -212,7 +212,7 @@ export async function getCheckoutSummary(
       return null
     }
 
-    const totalPrice = participant.orders.reduce((sum: number, order: any) => {
+    const totalPrice = participant.Order.reduce((sum: number, order: any) => {
       return sum + order.totalPrice
     }, 0)
 
@@ -224,7 +224,7 @@ export async function getCheckoutSummary(
         email: participant.email,
         address: participant.address,
       },
-      orders: participant.orders.map((order: any) => ({
+      orders: participant.Order.map((order: any) => ({
         id: order.id,
         productTitle: order.product.title,
         quantity: order.quantity,
@@ -233,11 +233,11 @@ export async function getCheckoutSummary(
         notes: order.notes,
       })),
       summary: {
-        totalItems: participant.orders.reduce(
+        totalItems: participant.Order.reduce(
           (sum: number, order: any) => sum + order.quantity,
           0
         ),
-        totalOrders: participant.orders.length,
+        totalOrders: participant.Order.length,
         totalPrice,
       },
     }

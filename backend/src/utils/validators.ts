@@ -36,8 +36,23 @@ export const updateProfileSchema = z.object({
     .max(100)
     .optional(),
   profileBio: z.string().max(500).optional(),
-  avatar: z.string().url('Invalid avatar URL').optional(),
-  coverImage: z.string().url('Invalid cover image URL').optional(),
+  slug: z.string()
+    .min(3)
+    .max(50)
+    .regex(/^[a-z0-9-]+$/, 'Slug hanya boleh berisi huruf kecil, angka, dan tanda hubung')
+    .optional(),
+  avatar: z.string().nullable().optional(),
+  coverImage: z.string().nullable().optional(),
+  coverPosition: z.number().min(0).max(100).optional(),
+  // Jastiper Origin Address
+  originProvinceId: z.string().optional(),
+  originProvinceName: z.string().optional(),
+  originCityId: z.string().optional(),
+  originCityName: z.string().optional(),
+  originDistrictId: z.string().optional(),
+  originDistrictName: z.string().optional(),
+  originPostalCode: z.string().optional(),
+  originAddressText: z.string().optional(),
 })
 
 // Trip schemas
@@ -45,37 +60,55 @@ export const createTripSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters').max(255),
   slug: z
     .string()
+    .min(3, 'Slug must be at least 3 characters')
+    .max(100, 'Slug must be at most 100 characters')
     .regex(
-      /^[a-z0-9_-]{3,10}$/,
-      'Slug must be 3-10 chars, lowercase letters, numbers, hyphens, underscores'
+      /^[a-z0-9_-]+$/,
+      'Slug must contain only lowercase letters, numbers, hyphens, and underscores'
     )
     .optional(),
   description: z.string().max(500).optional(),
-  startDate: z.coerce.date().optional(),
-  deadline: z.coerce.date().optional(),
+  startDate: z.coerce.date().nullable().optional(),
+  deadline: z.coerce.date().nullable().optional(),
   isActive: z.boolean().optional(),
+  paymentType: z.enum(['full', 'dp']).optional().default('full'), // NEW: DP payment support
+  dpPercentage: z.number().min(1).max(100).optional().default(20), // NEW: DP percentage (1-100)
+  url_img: z.string().nullable().optional(),
 })
 
 export const updateTripSchema = z.object({
   title: z.string().min(3).max(255).optional(),
   description: z.string().max(500).optional(),
-  startDate: z.coerce.date().optional(),
-  deadline: z.coerce.date().optional(),
+  startDate: z.coerce.date().nullable().optional(),
+  deadline: z.coerce.date().nullable().optional(),
   isActive: z.boolean().optional(),
+  url_img: z.string().nullable().optional(),
+  paymentType: z.enum(['full', 'dp']).optional(),
+  dpPercentage: z.number().min(1).max(100).optional(),
 })
 
 // Product schemas
 export const createProductSchema = z.object({
-  trip_id: z.string().min(1, 'Trip ID is required'),
+  tripId: z.string().min(1, 'Trip ID is required'), // Fixed: camelCase
   title: z.string().min(3).max(255),
   price: z.number().positive('Price must be positive'),
-  stock: z.number().nonnegative('Stock cannot be negative'),
+  stock: z.number().nonnegative('Stock cannot be negative').optional(), // Fixed: optional for tasks
   description: z.string().max(500).optional(),
   image: z.string().optional(),
   slug: z
     .string()
-    .regex(/^[a-z0-9_-]{3,10}$/, 'Invalid product slug format')
+    .min(3, 'Slug must be at least 3 characters')
+    .max(100, 'Slug must be at most 100 characters')
+    .regex(/^[a-z0-9_-]+$/, 'Slug must contain only lowercase letters, numbers, hyphens, and underscores')
     .optional(),
+  // NEW: DP flow fields
+  type: z.enum(['goods', 'tasks']).optional().default('goods'),
+  unit: z.string().optional(),
+  weightGram: z.number().positive().optional(),
+  requiresDetails: z.boolean().optional(),
+  requiresProof: z.boolean().optional(),
+  markupType: z.enum(['percent', 'flat']).optional().default('percent'),
+  markupValue: z.number().nonnegative().optional().default(0),
 })
 
 export const updateProductSchema = z.object({

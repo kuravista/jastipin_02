@@ -17,6 +17,11 @@ import socialMediaRoutes from './routes/social-media.js'
 import shippingRoutes from './routes/shipping.js'
 import healthRoutes from './routes/health.js'
 import debugRoutes from './routes/debug.js'
+import locationsRoutes from './routes/locations.js'
+import checkoutRoutes from './routes/checkout.js'
+import monitoringRoutes from './routes/monitoring.js'
+import webhooksRoutes from './routes/webhooks.js'
+import workersRoutes from './routes/workers.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import { maintenanceMiddleware } from './middleware/maintenance.js'
 
@@ -69,6 +74,11 @@ app.use('/health', healthRoutes)
 // API routes
 app.use('/api/auth', authRoutes)
 app.use('/api/debug', debugRoutes)
+app.use('/api/locations', locationsRoutes)
+app.use('/api/checkout', checkoutRoutes)
+app.use('/api/monitoring', monitoringRoutes)
+app.use('/api/webhooks', webhooksRoutes)
+app.use('/api/workers', workersRoutes)
 app.use('/api', profileRoutes)
 app.use('/api', tripRoutes)
 app.use('/api', productRoutes)

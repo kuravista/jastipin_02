@@ -155,6 +155,15 @@ export class AuthService {
         profileBio: true,
         avatar: true,
         coverImage: true,
+        coverPosition: true,
+        originProvinceId: true,
+        originProvinceName: true,
+        originCityId: true,
+        originCityName: true,
+        originDistrictId: true,
+        originDistrictName: true,
+        originPostalCode: true,
+        originAddressText: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -182,10 +191,40 @@ export class AuthService {
     profileData: {
       profileName?: string
       profileBio?: string
+      slug?: string
       avatar?: string
       coverImage?: string
+      coverPosition?: number
+      originProvinceId?: string
+      originProvinceName?: string
+      originCityId?: string
+      originCityName?: string
+      originDistrictId?: string
+      originDistrictName?: string
+      originPostalCode?: string
+      originAddressText?: string
     }
   ) {
+    // Check if slug is being updated and if it's unique
+    if (profileData.slug) {
+      const existingUser = await this.db.user.findFirst({
+        where: {
+          slug: profileData.slug,
+          NOT: {
+            id: userId
+          }
+        }
+      })
+
+      if (existingUser) {
+        const error: ApiError = {
+          status: 409,
+          message: 'Profile link/slug already taken',
+        }
+        throw error
+      }
+    }
+
     const user = await this.db.user.update({
       where: { id: userId },
       data: profileData,
@@ -197,6 +236,15 @@ export class AuthService {
         profileBio: true,
         avatar: true,
         coverImage: true,
+        coverPosition: true,
+        originProvinceId: true,
+        originProvinceName: true,
+        originCityId: true,
+        originCityName: true,
+        originDistrictId: true,
+        originDistrictName: true,
+        originPostalCode: true,
+        originAddressText: true,
         updatedAt: true,
       },
     })
@@ -219,6 +267,7 @@ export class AuthService {
         profileBio: true,
         avatar: true,
         coverImage: true,
+        coverPosition: true,
         createdAt: true,
       },
     })
@@ -246,7 +295,7 @@ export class AuthService {
     })
 
     const products = await this.db.product.findMany({
-      where: { trip: { jastiperId: user.id } },
+      where: { Trip: { jastiperId: user.id } },
       select: { id: true, title: true, price: true, stock: true, image: true },
     })
 
