@@ -19,6 +19,8 @@ router.post('/dp', async (req, res) => {
       tripId,
       participantPhone,
       participantName,
+      participantEmail,
+      rememberMe,
       address,
       items
     } = req.body
@@ -89,6 +91,8 @@ router.post('/dp', async (req, res) => {
       tripId,
       participantPhone,
       participantName,
+      participantEmail,
+      rememberMe,
       address,
       items
     })

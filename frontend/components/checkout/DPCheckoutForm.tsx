@@ -1,13 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { AlertCircle, Loader2 } from 'lucide-react'
+import { AlertCircle, Loader2, X } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import AddressForm from './AddressForm'
 
@@ -27,20 +28,83 @@ interface CheckoutItem {
 
 interface DPCheckoutFormProps {
   tripId: string
+  tripTitle?: string
   products: Product[]
   items: CheckoutItem[]
+  mode?: 'page' | 'modal'
+  onSuccess?: (data: any) => void
+  onCancel?: () => void
 }
 
-export default function DPCheckoutForm({ tripId, products, items }: DPCheckoutFormProps) {
+const GUEST_PROFILE_KEY = 'jastipin_guest_profile'
+
+interface GuestProfile {
+  guestId: string
+  name: string
+  phone: string
+  email?: string
+  rememberMe: boolean
+}
+
+export default function DPCheckoutForm({ 
+  tripId, 
+  tripTitle,
+  products, 
+  items,
+  mode = 'page',
+  onSuccess,
+  onCancel
+}: DPCheckoutFormProps) {
   const router = useRouter()
   
   const [participantName, setParticipantName] = useState('')
   const [participantPhone, setParticipantPhone] = useState('')
+  const [participantEmail, setParticipantEmail] = useState('')
+  const [rememberMe, setRememberMe] = useState(true)
   const [notes, setNotes] = useState('')
   const [address, setAddress] = useState<any>({})
   
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    loadGuestProfile()
+  }, [])
+
+  const loadGuestProfile = () => {
+    try {
+      const stored = localStorage.getItem(GUEST_PROFILE_KEY)
+      if (stored) {
+        const profile: GuestProfile = JSON.parse(stored)
+        setParticipantName(profile.name || '')
+        setParticipantPhone(profile.phone || '')
+        setParticipantEmail(profile.email || '')
+        setRememberMe(profile.rememberMe ?? true)
+      }
+    } catch (err) {
+      console.error('Failed to load guest profile:', err)
+    }
+  }
+
+  const saveGuestProfile = (guestId: string) => {
+    if (!rememberMe) {
+      localStorage.removeItem(GUEST_PROFILE_KEY)
+      return
+    }
+
+    try {
+      const profile: GuestProfile = {
+        guestId,
+        name: participantName,
+        phone: participantPhone,
+        email: participantEmail,
+        rememberMe: true
+      }
+      localStorage.setItem(GUEST_PROFILE_KEY, JSON.stringify(profile))
+    } catch (err) {
+      console.error('Failed to save guest profile:', err)
+    }
+  }
 
   // Check if any product requires address (type = goods)
   const requiresAddress = products.some(p => p.type === 'goods')
@@ -76,6 +140,8 @@ export default function DPCheckoutForm({ tripId, products, items }: DPCheckoutFo
         tripId,
         participantName,
         participantPhone,
+        participantEmail: participantEmail || undefined,
+        rememberMe,
         items,
         ...(requiresAddress && { address: {
           recipientName: address.recipientName,
@@ -109,8 +175,19 @@ export default function DPCheckoutForm({ tripId, products, items }: DPCheckoutFo
         throw new Error(data.error || 'Checkout failed')
       }
 
-      // Redirect to payment page
-      router.push(`/checkout/payment/${data.data.orderId}`)
+      // Save guest profile to localStorage
+      if (data.data.guestId) {
+        saveGuestProfile(data.data.guestId)
+      }
+
+      // Handle success based on mode
+      if (onSuccess) {
+        // Modal mode: call callback
+        onSuccess(data.data)
+      } else {
+        // Page mode: redirect to payment
+        router.push(`/checkout/payment/${data.data.orderId}`)
+      }
 
     } catch (err: any) {
       setError(err.message || 'Terjadi kesalahan saat checkout')
@@ -119,8 +196,31 @@ export default function DPCheckoutForm({ tripId, products, items }: DPCheckoutFo
     }
   }
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+  // Wrapper component based on mode
+  const FormWrapper = mode === 'modal' ? 'div' : 'form'
+  const formProps = mode === 'modal' ? {} : { onSubmit: handleSubmit }
+
+  const content = (
+    <>
+      {/* Modal Header - only in modal mode */}
+      {mode === 'modal' && (
+        <div className="flex items-center justify-between mb-4 pb-4 border-b">
+          <div>
+            <h2 className="text-xl font-bold">Bayar Down Payment</h2>
+            {tripTitle && <p className="text-sm text-gray-600">Trip: {tripTitle}</p>}
+          </div>
+          {onCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Error Alert */}
       {error && (
         <Alert variant="destructive">
@@ -164,6 +264,36 @@ export default function DPCheckoutForm({ tripId, products, items }: DPCheckoutFo
             <p className="text-sm text-gray-500">
               Notifikasi pesanan akan dikirim via WhatsApp
             </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email">
+              Email <span className="text-gray-500">(opsional)</span>
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              value={participantEmail}
+              onChange={(e) => setParticipantEmail(e.target.value)}
+              placeholder="email@example.com"
+            />
+            <p className="text-sm text-gray-500">
+              Untuk notifikasi tambahan dan invoice
+            </p>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="remember"
+              checked={rememberMe}
+              onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+            />
+            <Label
+              htmlFor="remember"
+              className="text-sm font-normal cursor-pointer"
+            >
+              Ingat data saya untuk pembelian berikutnya
+            </Label>
           </div>
 
           <div className="space-y-2">
@@ -250,26 +380,76 @@ export default function DPCheckoutForm({ tripId, products, items }: DPCheckoutFo
         </CardContent>
       </Card>
 
-      {/* Submit Button */}
-      <Button 
-        type="submit" 
-        size="lg" 
-        className="w-full"
-        disabled={loading}
-      >
-        {loading ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Memproses...
-          </>
-        ) : (
-          <>Bayar DP Rp {dpAmount.toLocaleString('id-ID')}</>
+      {/* Submit Buttons */}
+      <div className={mode === 'modal' ? 'flex gap-2' : ''}>
+        {mode === 'modal' && onCancel && (
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="flex-1"
+            onClick={onCancel}
+            disabled={loading}
+          >
+            Batal
+          </Button>
         )}
-      </Button>
+        <Button 
+          type="button"
+          onClick={handleSubmit}
+          size="lg" 
+          className={mode === 'modal' ? 'flex-1' : 'w-full'}
+          disabled={loading}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Memproses...
+            </>
+          ) : (
+            <>Bayar DP Rp {dpAmount.toLocaleString('id-ID')}</>
+          )}
+        </Button>
+      </div>
 
       <p className="text-center text-sm text-gray-500">
         Dengan melanjutkan, Anda menyetujui syarat dan ketentuan kami
       </p>
-    </form>
+    </>
+  )
+
+  // Return based on mode
+  if (mode === 'modal') {
+    return (
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="p-6 space-y-6">
+            {content}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-blue-50 py-8">
+      <div className="container max-w-2xl mx-auto px-4">
+        {/* Header */}
+        <div className="mb-6">
+          <button
+            onClick={() => router.back()}
+            className="text-sm text-gray-600 hover:text-gray-900 mb-2"
+          >
+            ← Kembali
+          </button>
+          <h1 className="text-2xl font-bold text-gray-900">{tripTitle || 'Checkout'}</h1>
+          <p className="text-sm text-gray-600">Checkout dengan sistem DP</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {content}
+        </form>
+      </div>
+    </div>
   )
 }

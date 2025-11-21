@@ -22,6 +22,7 @@ import checkoutRoutes from './routes/checkout.js'
 import monitoringRoutes from './routes/monitoring.js'
 import webhooksRoutes from './routes/webhooks.js'
 import workersRoutes from './routes/workers.js'
+import uploadRoutes from './routes/upload.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import { maintenanceMiddleware } from './middleware/maintenance.js'
 
@@ -34,6 +35,9 @@ app.use(
     limit: '10mb',
   })
 )
+
+// Serve uploaded files (static)
+app.use('/uploads', express.static('uploads'))
 
 // Parse CORS origins from comma-separated env var
 const corsOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000').split(',').map(url => url.trim())
@@ -79,6 +83,7 @@ app.use('/api/checkout', checkoutRoutes)
 app.use('/api/monitoring', monitoringRoutes)
 app.use('/api/webhooks', webhooksRoutes)
 app.use('/api/workers', workersRoutes)
+app.use('/api/upload', uploadRoutes)
 app.use('/api', profileRoutes)
 app.use('/api', tripRoutes)
 app.use('/api', productRoutes)

@@ -27,6 +27,10 @@ import {
 const router: ExpressRouter = Router()
 const db = new PrismaClient()
 
+// Import TokenService for magic link generation
+import { TokenService } from '../services/token.service.js'
+const tokenService = new TokenService(db)
+
 /**
  * POST /trips/:tripId/orders
  * Create order for a product (guest or participant)
@@ -675,6 +679,101 @@ router.get(
     } catch (error: any) {
       console.error('Fetch orders error:', error)
       res.status(500).json({ error: error.message || 'Failed to fetch orders' })
+    }
+  }
+)
+
+/**
+ * POST /api/orders/:orderId/generate-upload-token
+ * Generate magic link token for guest to upload payment proof
+ * Auth: Only jastiper who owns the order's trip can generate token
+ */
+router.post(
+  '/orders/:orderId/generate-upload-token',
+  authMiddleware,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { orderId } = req.params
+      const userId = req.user?.id
+
+      if (!userId) {
+        res.status(401).json({ error: 'Authentication required' })
+        return
+      }
+
+      // Get order with trip info
+      const order = await db.order.findUnique({
+        where: { id: orderId },
+        include: {
+          Trip: {
+            select: {
+              jastiperId: true,
+              User: {
+                select: {
+                  profileName: true,
+                  slug: true
+                }
+              }
+            }
+          },
+          Participant: {
+            select: {
+              name: true,
+              phone: true
+            }
+          }
+        }
+      })
+
+      if (!order) {
+        res.status(404).json({ error: 'Order not found' })
+        return
+      }
+
+      // Verify user owns this trip
+      if (order.Trip?.jastiperId !== userId) {
+        res.status(403).json({ 
+          error: 'Only the jastiper who owns this order can generate upload token' 
+        })
+        return
+      }
+
+      // Check if order already has proof uploaded
+      if (order.proofUrl) {
+        res.status(400).json({ 
+          error: 'Order already has payment proof uploaded',
+          proofUrl: order.proofUrl
+        })
+        return
+      }
+
+      // Generate token
+      const { token, expiresAt } = await tokenService.generateUploadToken(
+        orderId,
+        order.guestId || undefined
+      )
+
+      // Construct magic link
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
+      const magicLink = `${frontendUrl}/order/upload/${token}`
+
+      res.json({
+        success: true,
+        token,
+        magicLink,
+        expiresAt,
+        order: {
+          id: order.id,
+          participantName: order.Participant?.name,
+          participantPhone: order.Participant?.phone,
+          status: order.status
+        }
+      })
+    } catch (error: any) {
+      console.error('Generate token error:', error)
+      res.status(500).json({ 
+        error: error.message || 'Failed to generate upload token' 
+      })
     }
   }
 )

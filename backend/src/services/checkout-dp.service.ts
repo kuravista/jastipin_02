@@ -5,13 +5,17 @@
 
 import { PrismaClient } from '@prisma/client'
 import { calculateDPAmount } from './price-calculator.service'
+import { GuestService } from './guest.service'
 
 const db = new PrismaClient()
+const guestService = new GuestService(db)
 
 export interface CheckoutDPRequest {
   tripId: string
   participantPhone: string
   participantName: string
+  participantEmail?: string
+  rememberMe?: boolean
   address?: {
     recipientName: string
     phone: string
@@ -36,6 +40,7 @@ export interface CheckoutDPRequest {
 export interface CheckoutDPResponse {
   success: boolean
   orderId?: string
+  guestId?: string
   dpAmount?: number
   paymentLink?: string
   error?: string
@@ -75,7 +80,17 @@ export async function processCheckoutDP(
         data: {
           tripId: request.tripId,
           phone: normalizedPhone,
-          name: request.participantName
+          name: request.participantName,
+          email: request.participantEmail || null
+        }
+      })
+    } else {
+      // Update existing participant with new email if provided
+      participant = await db.participant.update({
+        where: { id: participant.id },
+        data: {
+          name: request.participantName,
+          email: request.participantEmail || participant.email
         }
       })
     }
@@ -84,7 +99,30 @@ export async function processCheckoutDP(
       return { success: false, error: 'Failed to create participant' }
     }
     
-    // 3. Validate products and check stock
+    // 3. Create or update guest profile
+    console.log('[DEBUG] Creating guest with:', {
+      name: request.participantName,
+      phone: request.participantPhone,
+      email: request.participantEmail,
+      emailType: typeof request.participantEmail,
+      emailValue: JSON.stringify(request.participantEmail),
+      rememberMe: request.rememberMe,
+    })
+    
+    const guest = await guestService.createOrUpdateGuest({
+      name: request.participantName,
+      phone: request.participantPhone,
+      email: request.participantEmail,
+      rememberMe: request.rememberMe,
+    })
+    
+    console.log('[DEBUG] Guest created:', {
+      id: guest.id,
+      email: guest.email,
+      emailValue: JSON.stringify(guest.email),
+    })
+    
+    // 4. Validate products and check stock
     const products = await Promise.all(
       request.items.map(item => 
         db.product.findUnique({
@@ -118,7 +156,7 @@ export async function processCheckoutDP(
       }
     }
     
-    // 4. Create address if provided
+    // 5. Create address if provided
     let addressId: string | null = null
     
     if (request.address) {
@@ -144,7 +182,7 @@ export async function processCheckoutDP(
       addressId = newAddress.id
     }
     
-    // 5. Calculate subtotal and DP amount
+    // 6. Calculate subtotal and DP amount
     const subtotal = products.reduce((sum, product, i) => {
       return sum + (product!.price * request.items[i].quantity)
     }, 0)
@@ -152,7 +190,7 @@ export async function processCheckoutDP(
     // Use trip's specific DP percentage, default to 20 if not set (fallback)
     const dpAmount = await calculateDPAmount(subtotal, trip.dpPercentage || 20)
     
-    // 6. Create order with items (transaction)
+    // 7. Create order with items (transaction)
     const order = await db.$transaction(async (tx) => {
       
       // Create order
@@ -160,6 +198,7 @@ export async function processCheckoutDP(
         data: {
           tripId: request.tripId,
           participantId: participant!.id,
+          guestId: guest.id,
           addressId: addressId,
           dpAmount,
           totalPrice: subtotal,  // initial estimate
@@ -188,13 +227,14 @@ export async function processCheckoutDP(
       return newOrder
     })
     
-    // 7. TODO: Create payment link with payment gateway
+    // 8. TODO: Create payment link with payment gateway
     // For now, return mock payment link
     const paymentLink = `https://payment.jastipin.me/dp/${order.id}`
     
     return {
       success: true,
       orderId: order.id,
+      guestId: guest.id,
       dpAmount,
       paymentLink
     }

@@ -52,6 +52,7 @@ model FeesConfig {
 model Order {
   id                 String      @id @default(cuid())
   participantId      String
+  guestId            String?
   productId          String?
   quantity           Int         @default(1)
   totalPrice         Int         @default(0)
@@ -83,6 +84,7 @@ model Order {
 
   @@index([addressId])
   @@index([dpPaidAt])
+  @@index([guestId])
   @@index([participantId])
   @@index([productId])
   @@index([status])
@@ -235,4 +237,78 @@ model User {
 
   @@index([email])
   @@index([slug])
+}
+
+model Guest {
+  id                  String              @id @default(cuid())
+  contactHash         String              @unique
+  name                String
+  phone               String
+  email               String?
+  rememberMe          Boolean             @default(false)
+  notifyEmail         Boolean             @default(false)
+  notifyWhatsapp      Boolean             @default(true)
+  notifyPush          Boolean             @default(false)
+  pushTokens          Json?
+  firstVisit          DateTime            @default(now())
+  lastActivity        DateTime            @default(now())
+  totalOrders         Int                 @default(0)
+  totalSpent          Int                 @default(0)
+  convertedToUserId   String?
+  convertedAt         DateTime?
+  referralSource      String?
+  deviceInfo          Json?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  GuestAccessToken    GuestAccessToken[]
+  NotificationLog     NotificationLog[]
+
+  @@index([contactHash])
+  @@index([phone])
+  @@index([email])
+}
+
+model GuestAccessToken {
+  id            String    @id @default(cuid())
+  guestId       String?
+  orderId       String
+  tokenHash     String    @unique
+  verifyType    String    @default("LAST4_WA")
+  maxUses       Int       @default(1)
+  usedCount     Int       @default(0)
+  expiresAt     DateTime
+  revokedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  Guest         Guest?    @relation(fields: [guestId], references: [id], onDelete: SetNull)
+
+  @@index([guestId])
+  @@index([orderId])
+  @@index([tokenHash])
+  @@index([expiresAt])
+}
+
+model NotificationLog {
+  id            String    @id @default(cuid())
+  recipientType String
+  recipientId   String
+  guestId       String?
+  userId        String?
+  channel       String
+  eventType     String
+  status        String    @default("queued")
+  sentAt        DateTime?
+  deliveredAt   DateTime?
+  openedAt      DateTime?
+  clickedAt     DateTime?
+  errorMessage  String?
+  metadata      Json?
+  createdAt     DateTime  @default(now())
+  Guest         Guest?    @relation(fields: [guestId], references: [id], onDelete: SetNull)
+
+  @@index([guestId])
+  @@index([userId])
+  @@index([channel])
+  @@index([eventType])
+  @@index([status])
+  @@index([createdAt])
 }

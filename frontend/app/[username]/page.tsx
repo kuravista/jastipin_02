@@ -191,23 +191,26 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
   const [dpCheckoutForm, setDPCheckoutForm] = useState({
     nama: "",
     nomor: "",
+    email: "",
     notes: "",
   })
   
   // Load saved checkout data from localStorage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('dp_checkout_data')
+      const saved = localStorage.getItem('jastipin_guest_profile')
       if (saved) {
         try {
           const parsed = JSON.parse(saved)
           setDPCheckoutForm({
-            nama: parsed.nama || "",
-            nomor: parsed.nomor || "",
+            nama: parsed.name || "",
+            nomor: parsed.phone?.replace(/^62/, '') || "",
+            email: parsed.email || "",
             notes: "",
           })
+          setRememberMe(parsed.rememberMe ?? true)
         } catch (e) {
-          console.error("Failed to parse saved checkout data:", e)
+          console.error("Failed to parse saved guest profile:", e)
         }
       }
       setIsHydrated(true)
@@ -316,21 +319,26 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
         tripId: currentTrip.id,
         participantName: dpCheckoutForm.nama,
         participantPhone: formattedPhone,
+        participantEmail: dpCheckoutForm.email || undefined,
+        rememberMe: rememberMe,
         items: checkoutItems,
       })
 
       // Dismiss loading toast
       toast.dismiss(loadingToast)
 
-      // Save checkout data to localStorage if "Remember me" is checked
-      if (typeof window !== 'undefined') {
+      // Save guest profile to localStorage if "Remember me" is checked
+      if (typeof window !== 'undefined' && response?.data?.guestId) {
         if (rememberMe) {
-          localStorage.setItem('dp_checkout_data', JSON.stringify({
-            nama: dpCheckoutForm.nama,
-            nomor: dpCheckoutForm.nomor,
+          localStorage.setItem('jastipin_guest_profile', JSON.stringify({
+            guestId: response.data.guestId,
+            name: dpCheckoutForm.nama,
+            phone: formattedPhone,
+            email: dpCheckoutForm.email || '',
+            rememberMe: true
           }))
         } else {
-          localStorage.removeItem('dp_checkout_data')
+          localStorage.removeItem('jastipin_guest_profile')
         }
       }
 
@@ -992,6 +1000,21 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-1">Contoh: 812345678 (tanpa +62)</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Email <span className="text-gray-500 text-xs">(Opsional)</span>
+                </label>
+                <input
+                  key={`email-${isHydrated}`}
+                  type="email"
+                  placeholder="email@example.com"
+                  value={dpCheckoutForm.email}
+                  onChange={(e) => setDPCheckoutForm({ ...dpCheckoutForm, email: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">Untuk notifikasi tambahan dan invoice</p>
               </div>
 
               <div>
