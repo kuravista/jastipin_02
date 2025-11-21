@@ -537,4 +537,146 @@ router.post(
   }
 )
 
+/**
+ * GET /orders
+ * Get orders for authenticated jastiper with optional filtering
+ * Auth: Jastiper only
+ * Query params:
+ *   - status: string (optional) - Filter by order status (awaiting_validation, validated, etc.)
+ *   - limit: number (optional) - Max results (default: 100)
+ *   - offset: number (optional) - Pagination offset (default: 0)
+ */
+router.get(
+  '/orders',
+  authMiddleware,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const jastiperId = req.user?.id
+      
+      if (!jastiperId) {
+        res.status(401).json({ error: 'Unauthorized' })
+        return
+      }
+      
+      // Parse query parameters
+      const status = req.query.status as string
+      const search = req.query.search as string
+      const limit = parseInt(req.query.limit as string) || 100
+      const offset = parseInt(req.query.offset as string) || 0
+      
+      // Validate limit and offset
+      if (limit < 1 || limit > 500) {
+        res.status(400).json({ error: 'Limit must be between 1 and 500' })
+        return
+      }
+      
+      if (offset < 0) {
+        res.status(400).json({ error: 'Offset must be non-negative' })
+        return
+      }
+      
+      // Build where clause
+      const whereClause: any = {
+        Trip: {
+          jastiperId
+        }
+      }
+      
+      // Add status filter only if provided (allows fetching all orders)
+      if (status) {
+        whereClause.status = status
+      }
+      
+      // Add search filter (search in participant name, phone, or order id)
+      if (search) {
+        whereClause.OR = [
+          {
+            Participant: {
+              name: {
+                contains: search,
+                mode: 'insensitive' // case-insensitive
+              }
+            }
+          },
+          {
+            Participant: {
+              phone: {
+                contains: search
+              }
+            }
+          },
+          {
+            id: {
+              contains: search,
+              mode: 'insensitive'
+            }
+          }
+        ]
+      }
+      
+      // Get total count for pagination
+      const totalCount = await db.order.count({
+        where: whereClause
+      })
+      
+      // Query orders for this jastiper
+      const orders = await db.order.findMany({
+        where: whereClause,
+        include: {
+          Participant: true,
+          OrderItem: {
+            include: {
+              Product: {
+                select: {
+                  id: true,
+                  title: true,
+                  price: true,
+                  type: true,
+                  weightGram: true,
+                  markupType: true,
+                  markupValue: true,
+                  slug: true,
+                  // Exclude image and description to reduce response size
+                }
+              }
+            }
+          },
+          Address: true,
+          Trip: {
+            select: {
+              id: true,
+              jastiperId: true,
+              title: true,
+              slug: true,
+              paymentType: true,
+              dpPercentage: true,
+              // Exclude unnecessary fields
+            }
+          }
+        },
+        orderBy: {
+          dpPaidAt: 'asc' // oldest first (FIFO)
+        },
+        take: limit,
+        skip: offset
+      })
+      
+      res.json({
+        success: true,
+        data: orders,
+        pagination: {
+          total: totalCount,
+          limit: limit,
+          offset: offset,
+          page: Math.floor(offset / limit) + 1,
+          totalPages: Math.ceil(totalCount / limit)
+        }
+      })
+    } catch (error: any) {
+      console.error('Fetch orders error:', error)
+      res.status(500).json({ error: error.message || 'Failed to fetch orders' })
+    }
+  }
+)
+
 export default router
