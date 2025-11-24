@@ -170,6 +170,16 @@ export class AuthService {
         accountHolderName: true,
         createdAt: true,
         updatedAt: true,
+        BankAccount: {
+          where: {
+            status: 'active'
+          },
+          orderBy: [
+            { isPrimary: 'desc' },
+            { isDefault: 'desc' },
+            { createdAt: 'desc' }
+          ]
+        }
       },
     })
 
@@ -181,7 +191,11 @@ export class AuthService {
       throw error
     }
 
-    return user
+    // Return with bank accounts array
+    return {
+      ...user,
+      bankAccounts: user.BankAccount || []
+    }
   }
 
   /**

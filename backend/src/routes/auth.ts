@@ -111,4 +111,58 @@ router.post('/logout', async (_req: AuthRequest, res: Response) => {
   res.json({ message: 'Logged out successfully' })
 })
 
+/**
+ * GET /check-username/:username
+ * Check if username is available
+ */
+router.get('/check-username/:username', async (req: AuthRequest, res: Response) => {
+  try {
+    const { username } = req.params
+
+    // Validate username format (alphanumeric, dash, underscore only)
+    const usernameRegex = /^[a-z0-9_-]+$/
+    if (!usernameRegex.test(username)) {
+      res.status(400).json({
+        error: 'Username hanya boleh mengandung huruf kecil, angka, dash (-) dan underscore (_)',
+        available: false
+      })
+      return
+    }
+
+    // Check if username length is valid (3-30 characters)
+    if (username.length < 3 || username.length > 30) {
+      res.status(400).json({
+        error: 'Username harus antara 3-30 karakter',
+        available: false
+      })
+      return
+    }
+
+    // Check if username exists in database
+    const existingUser = await db.user.findUnique({
+      where: { slug: username },
+      select: { id: true, slug: true }
+    })
+
+    if (existingUser) {
+      res.json({
+        available: false,
+        message: `Username "${username}" sudah digunakan`,
+        username: username
+      })
+    } else {
+      res.json({
+        available: true,
+        message: `Username "${username}" tersedia!`,
+        username: username
+      })
+    }
+  } catch (error: any) {
+    res.status(500).json({
+      error: 'Gagal memeriksa username',
+      available: false
+    })
+  }
+})
+
 export default router

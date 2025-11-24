@@ -140,12 +140,11 @@ router.post('/:orderId', async (req: Request, res: Response) => {
       return
     }
 
-    // Handle file upload (simple implementation for local storage)
-    // Will be replaced with Cloudflare R2 in production
-    const { handleFileUpload, getFileUrl } = await import('../utils/file-upload.js')
-    
-    const uploadedFile = await handleFileUpload(req)
-    const proofUrl = getFileUrl(uploadedFile.filename)
+    // Handle file upload to Cloudflare R2
+    const { handleFileUpload } = await import('../utils/file-upload.js')
+
+    const uploadedFile = await handleFileUpload(req, orderId)
+    const proofUrl = uploadedFile.url
 
     // Update order with proof URL
     const order = await db.order.update({
@@ -162,7 +161,9 @@ router.post('/:orderId', async (req: Request, res: Response) => {
     res.json({
       success: true,
       proofUrl: order.proofUrl,
+      thumbnailUrl: uploadedFile.thumbnailUrl,
       filename: uploadedFile.filename,
+      size: uploadedFile.size,
       message: 'Payment proof uploaded successfully',
     })
   } catch (error: any) {

@@ -9,7 +9,8 @@ import { Slider } from "@/components/ui/slider"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { useToast } from "@/components/ui/use-toast"
-import { apiPost } from "@/lib/api-client"
+import { apiPost, apiPatch } from "@/lib/api-client"
+import { uploadImage } from "@/lib/image-upload"
 import { ImageIcon, Trash2, Calendar } from "lucide-react"
 
 interface CreateTripDialogProps {
@@ -60,16 +61,33 @@ export function CreateTripDialog({ open, onOpenChange, onSuccess }: CreateTripDi
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+    if (!file) return
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        variant: "destructive",
+        title: "File terlalu besar",
+        description: "Maksimal 5MB",
+      })
+      return
     }
+
+    // Store file for later upload after trip is created
+    setSelectedFile(file)
+    
+    // Create preview
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string)
+    }
+    reader.readAsDataURL(file)
   }
+
+  const [loadingStep, setLoadingStep] = useState<string>("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -78,6 +96,8 @@ export function CreateTripDialog({ open, onOpenChange, onSuccess }: CreateTripDi
     try {
       // Note: We send undefined slug to let backend generate the short unique slug (max 15 chars)
       // backend logic: truncated-title(10) + '-' + random(4)
+      
+      setLoadingStep("Menyimpan trip...")
       
       const payload: any = {
         title: formData.title,
@@ -90,11 +110,21 @@ export function CreateTripDialog({ open, onOpenChange, onSuccess }: CreateTripDi
         isActive: formData.isActive,
       }
 
-      if (imagePreview) {
-        payload.url_img = imagePreview
-      }
+      // Create trip first to get tripId
+      const response = await apiPost<{ id: string }>("/trips", payload)
+      const tripId = response.id
 
-      await apiPost("/trips", payload)
+      // Upload image with real tripId if file selected
+      if (selectedFile && tripId) {
+        setLoadingStep("Mengupload gambar...")
+        const { url } = await uploadImage(selectedFile, 'trips', tripId)
+        
+        setLoadingStep("Memperbarui trip...")
+        // Update trip with image URL
+        await apiPatch(`/trips/${tripId}`, { url_img: url })
+      }
+      
+      setLoadingStep("")
       
       toast({
         title: "Trip berhasil dibuat",
@@ -112,11 +142,13 @@ export function CreateTripDialog({ open, onOpenChange, onSuccess }: CreateTripDi
         isLifetime: false
       })
       setImagePreview(null)
+      setSelectedFile(null)
       setDpPercentage(30)
       
       onOpenChange(false)
       onSuccess?.()
     } catch (error: any) {
+      setLoadingStep("")
       toast({
         variant: "destructive",
         title: "Gagal membuat trip",
@@ -298,7 +330,15 @@ export function CreateTripDialog({ open, onOpenChange, onSuccess }: CreateTripDi
             className="w-full bg-[#FB923C] hover:bg-[#EA7C2C] h-10 font-semibold text-sm" 
             disabled={loading}
           >
-            {loading ? "Menyimpan..." : "Simpan Trip"}
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                {loadingStep || "Menyimpan..."}
+              </span>
+            ) : "Simpan Trip"}
           </Button>
         </form>
       </SheetContent>

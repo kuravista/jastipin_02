@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, use } from "react"
-import { notFound, useRouter } from "next/navigation"
+import { notFound } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -65,109 +65,8 @@ interface ProfileData {
   }>
 }
 
-// Fallback demo data for development
-const demoProfiles = {
-  tina: {
-    name: "Tina Jastip",
-    username: "tina",
-    bio: "🇺🇸 NYC based | Sneaker & Fashion Hunter\n✈️ Trip bulanan | Trusted 3+ tahun",
-    avatar: "/indonesian-woman-profile-1.jpg",
-    coverImage: "/new-york-street.jpg",
-    stats: {
-      totalTrips: 47,
-      happyCustomers: 320,
-      rating: 4.9,
-    },
-    trips: [
-      {
-        id: "trip-tina-1",
-        title: "Fall Sale — Nike & Adidas Sneakers",
-        image: "/athletic-shoes.jpg",
-        deadline: "25 Nov 2024",
-        status: "Buka",
-        spotsLeft: 12,
-        paymentType: "dp",
-      },
-    ],
-    catalog: [
-      { id: "prod-tina-1", title: "Nike Air Max", price: 2100000, image: "/athletic-shoes.jpg", available: true, type: "goods", unit: "pcs" },
-      { id: "prod-tina-2", title: "Adidas Ultraboost", price: 2400000, image: "/athletic-shoes.jpg", available: true, type: "goods", unit: "pcs" },
-      { id: "prod-tina-3", title: "New Balance 574", price: 1800000, image: "/athletic-shoes.jpg", available: false, type: "goods", unit: "pcs" },
-    ],
-    social: {
-      instagram: "tina_jastip",
-      whatsapp: "+628123456789",
-    },
-  },
-  ana: {
-    name: "Ana Shop",
-    username: "ana",
-    bio: "🇰🇷 Seoul Beauty Expert | K-Beauty Specialist\n💄 Skincare & Makeup | Authentic guarantee",
-    avatar: "/indonesian-woman-profile-2.jpg",
-    coverImage: "/seoul-beauty-store.jpg",
-    stats: {
-      totalTrips: 62,
-      happyCustomers: 580,
-      rating: 5.0,
-    },
-    trips: [
-      {
-        id: "trip-ana-1",
-        title: "Korea Beauty Haul — December Edition",
-        image: "/korean-beauty-products.jpg",
-        deadline: "30 Nov 2024",
-        status: "Buka",
-        spotsLeft: 8,
-        paymentType: "dp",
-      },
-    ],
-    catalog: [
-      { name: "COSRX Snail Mucin", price: "Rp 280k", image: "/korean-beauty-products.jpg", available: true, type: "goods", unit: "bottle" },
-      { name: "Laneige Cream Skin", price: "Rp 420k", image: "/korean-beauty-products.jpg", available: true, type: "goods", unit: "set" },
-      { name: "Innisfree Green Tea", price: "Rp 190k", image: "/korean-beauty-products.jpg", available: true, type: "goods", unit: "bottle" },
-    ],
-    social: {
-      instagram: "ana_shop",
-      whatsapp: "+628234567890",
-    },
-  },
-  sg: {
-    name: "Jastip SG",
-    username: "sg",
-    bio: "🇸🇬 Singapore Electronics & Tech Gadgets\n⚡ Fast shipping | Official warranty",
-    avatar: "/indonesian-man-profile.jpg",
-    coverImage: "/singapore-electronics-mall.jpg",
-    stats: {
-      totalTrips: 89,
-      happyCustomers: 1240,
-      rating: 4.8,
-    },
-    trips: [
-      {
-        id: "trip-sg-1",
-        title: "Singapore Electronics — Black Friday Deals",
-        image: "/electronics-gadget.jpg",
-        deadline: "28 Nov 2024",
-        status: "Buka",
-        spotsLeft: 15,
-        paymentType: "dp",
-      },
-    ],
-    catalog: [
-      { name: "AirPods Pro", price: "Rp 3.2jt", image: "/electronics-gadget.jpg", available: true, type: "goods", unit: "pcs" },
-      { name: "Apple Watch Series 9", price: "Rp 6.5jt", image: "/electronics-gadget.jpg", available: true, type: "goods", unit: "pcs" },
-      { name: "iPad Air", price: "Rp 8.9jt", image: "/electronics-gadget.jpg", available: false, type: "goods", unit: "pcs" },
-    ],
-    social: {
-      instagram: "jastip.sg",
-      whatsapp: "+628345678901",
-    },
-  },
-}
-
 export default function ProfilePage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = use(params)
-  const router = useRouter()
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -383,23 +282,6 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
         setProfile(data)
       } catch (err: any) {
         setError(err.message)
-        const fallback = demoProfiles[username as keyof typeof demoProfiles]
-        if (fallback) {
-          setProfile({
-            user: {
-              ...fallback,
-              stats: fallback.stats,
-              social: fallback.social,
-            },
-            trips: fallback.trips,
-            catalog: fallback.catalog.map((c) => ({
-              ...c,
-              id: c.name,
-              title: c.name,
-              price: parseInt(c.price.replace(/[^\d]/g, '')) || 0,
-            })),
-          } as any)
-        }
       } finally {
         setLoading(false)
       }
@@ -577,7 +459,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                   {/* Content: 2 Columns - OVERLAY at bottom */}
                   <div className="absolute bottom-0 left-0 right-0 flex bg-black/50">
                     {/* Left: Text Content */}
-                    <div className="flex-1 p-3 text-white space-y-1 flex flex-col justify-between">
+                    <div className="flex-1 p-3 text-white space-y-1 flex flex-col justify-between min-w-0">
                       <div>
                         <h1 className="font-bold text-sm line-clamp-1">{profile.trips[currentTripIndex].title}</h1>
                         {profile.trips[currentTripIndex].description && (
@@ -585,16 +467,17 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                         )}
                       </div>
                     </div>
-                    
+
                     {/* Right: Button + Deadline */}
-                    <div className="flex flex-col items-end justify-between p-3">
-                      <Button className="bg-orange-500 hover:bg-orange-600 text-white hover:text-white h-8 px-4 text-xs font-semibold whitespace-nowrap">
-                        Ikut Sekarang
+                    <div className="flex flex-col items-end justify-between p-3 flex-shrink-0">
+                      <Button className="bg-orange-500 hover:bg-orange-600 text-white hover:text-white h-8 px-3 text-xs font-semibold">
+                        Ikut
                       </Button>
                       {profile.trips[currentTripIndex].deadline && (
-                        <div className="flex items-center gap-1 text-white text-xs">
-                          <Calendar className="w-3 h-3" />
-                          <span>{new Date(profile.trips[currentTripIndex].deadline!).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' })}</span>
+                        <div className="flex items-center gap-1 text-white text-xs whitespace-nowrap">
+                          <Calendar className="w-3 h-3 flex-shrink-0" />
+                          <span className="hidden sm:inline">{new Date(profile.trips[currentTripIndex].deadline!).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' })}</span>
+                          <span className="sm:hidden">{new Date(profile.trips[currentTripIndex].deadline!).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
                         </div>
                       )}
                     </div>
@@ -631,23 +514,23 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
         {profile.catalog.length > 0 && (
           <div className="mb-6">
             <div className="flex items-center justify-between gap-2 mb-4">
-              <h3 className="font-bold text-lg">📦 Katalog Barang</h3>
-              <div className="flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-3 py-2 w-48">
+              <h3 className="font-bold text-lg flex-shrink-0">📦 Katalog</h3>
+              <div className="flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-3 py-2 flex-1 max-w-[200px]">
                 <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
                 <input
                   type="text"
-                  placeholder="Cari barang..."
+                  placeholder="Cari..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 bg-transparent outline-none text-sm"
+                  className="flex-1 bg-transparent outline-none text-sm min-w-0"
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 min-w-0">
               {paginatedCatalog.map((item) => (
-                <Card 
-                  key={item.id} 
-                  className={`overflow-hidden flex flex-col p-0 transition-all ${!item.available && item.type !== 'tasks' ? "opacity-50" : ""}`}
+                <Card
+                  key={item.id}
+                  className={`overflow-hidden flex flex-col gap-0 p-0 transition-all min-w-0 ${!item.available && item.type !== 'tasks' ? "opacity-50" : ""}`}
                 >
                   <div className="relative w-full h-32 flex-shrink-0">
                     <img
@@ -656,38 +539,38 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute top-2 left-2 right-2 flex justify-between gap-1">
-                      <Badge 
+                      <Badge
                         variant={item.type === 'goods' ? 'default' : 'secondary'}
-                        className="text-xs"
+                        className="text-[10px] px-1.5 py-0.5"
                       >
-                        {item.type === 'goods' ? '📦 Barang' : item.type === 'tasks' ? '🔧 Jasa' : '🔧 Jasa'}
+                        {item.type === 'goods' ? '📦' : '🔧'}
                       </Badge>
-                      <Badge 
-                        className="ml-auto" 
+                      <Badge
+                        className="ml-auto text-[10px] px-1.5 py-0.5"
                         variant={item.available || item.type === 'tasks' ? "default" : "secondary"}
                       >
-                        {item.available ? "Tersedia" : item.type === 'tasks' ? "Bisa Pesan" : "Habis"}
+                        {item.available ? "Ada" : item.type === 'tasks' ? "Ada" : "Habis"}
                       </Badge>
                     </div>
                   </div>
-                  <div className="p-2 flex-1 flex flex-col justify-between">
-                    <div>
-                      <p className="font-semibold text-sm line-clamp-2">{item.title}</p>
-                      <div className="flex items-center justify-between mt-0.5">
-                        {item.unit && <p className="text-xs text-gray-500">{item.unit}</p>}
-                        {item.tripId && profile?.trips && (
-                          <p className="text-xs text-blue-600 font-medium">
+                  <div className="p-2 flex-1 flex flex-col justify-between min-w-0">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm line-clamp-2 break-words mb-0">{item.title}</p>
+                      <div className="flex items-center justify-between mt-0.5 gap-1 min-w-0">
+                        {item.unit && <p className="text-xs text-gray-500 truncate">{item.unit}</p>}
+                        {/* {item.tripId && profile?.trips && (
+                          <p className="text-xs text-blue-600 font-medium truncate">
                             {profile.trips.find(t => t.id === item.tripId)?.title || 'Trip'}
                           </p>
-                        )}
+                        )} */}
                       </div>
                     </div>
-                    <div className="flex justify-between items-center pt-1 border-t">
-                      <p className="text-orange-500 font-bold text-sm">Rp {item.price.toLocaleString('id-ID')}</p>
-                      <button 
+                    <div className="flex justify-between items-center pt-1 border-t gap-1 min-w-0">
+                      <p className="text-orange-500 font-bold text-xs sm:text-sm truncate">Rp {item.price.toLocaleString('id-ID')}</p>
+                      <button
                         onClick={() => addToCart(item)}
                         disabled={!item.available && item.type !== 'tasks'}
-                        className="text-orange-500 hover:text-orange-600 disabled:text-gray-300 transition-colors p-1 hover:bg-orange-50 rounded disabled:hover:bg-transparent"
+                        className="text-orange-500 hover:text-orange-600 disabled:text-gray-300 transition-colors p-1 hover:bg-orange-50 rounded disabled:hover:bg-transparent flex-shrink-0"
                       >
                         <Plus className="w-5 h-5" />
                       </button>
@@ -699,25 +582,26 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
 
             {/* Pagination Controls */}
             {filteredCatalog.length > 0 && (
-              <div className="flex items-center justify-between mt-6 pt-4 border-t">
+              <div className="flex items-center justify-between mt-6 pt-4 border-t gap-2">
                 <button
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
-                  className="flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex items-center gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  Sebelumnya
+                  <span className="hidden sm:inline">Sebelumnya</span>
                 </button>
-                <span className="text-sm text-gray-600">
-                  Halaman <span className="font-semibold">{currentPage}</span> dari <span className="font-semibold">{totalPages}</span>
-                  <span className="ml-2 text-xs text-gray-500">({filteredCatalog.length} item)</span>
+                <span className="text-xs sm:text-sm text-gray-600 text-center min-w-0">
+                  <span className="hidden sm:inline">Halaman <span className="font-semibold">{currentPage}</span> dari <span className="font-semibold">{totalPages}</span></span>
+                  <span className="sm:hidden font-semibold">{currentPage}/{totalPages}</span>
+                  <span className="ml-1 sm:ml-2 text-[10px] sm:text-xs text-gray-500 whitespace-nowrap">({filteredCatalog.length})</span>
                 </span>
                 <button
                   onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                   disabled={currentPage === totalPages}
-                  className="flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex items-center gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
                 >
-                  Selanjutnya
+                  <span className="hidden sm:inline">Selanjutnya</span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>

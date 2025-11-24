@@ -6,9 +6,13 @@
 import { PrismaClient } from '@prisma/client'
 import { calculateDPAmount } from './price-calculator.service'
 import { GuestService } from './guest.service'
+import { getSendPulseService } from './email/sendpulse.service.js'
+import { EmailTemplateService } from './email/email-template.service.js'
+import { TokenService } from './token.service.js'
 
 const db = new PrismaClient()
 const guestService = new GuestService(db)
+const tokenService = new TokenService(db)
 
 export interface CheckoutDPRequest {
   tripId: string
@@ -43,6 +47,8 @@ export interface CheckoutDPResponse {
   guestId?: string
   dpAmount?: number
   paymentLink?: string
+  uploadLink?: string  // NEW: Magic link for upload
+  uploadToken?: string // NEW: Raw token for frontend
   error?: string
 }
 
@@ -54,9 +60,17 @@ export async function processCheckoutDP(
 ): Promise<CheckoutDPResponse> {
   
   try {
-    // 1. Validate trip
+    // 1. Validate trip and get jastiper info
     const trip = await db.trip.findUnique({
-      where: { id: request.tripId }
+      where: { id: request.tripId },
+      include: {
+        User: {
+          select: {
+            profileName: true,
+            slug: true
+          }
+        }
+      }
     })
     
     if (!trip) {
@@ -227,16 +241,44 @@ export async function processCheckoutDP(
       return newOrder
     })
     
-    // 8. TODO: Create payment link with payment gateway
-    // For now, return mock payment link
-    const paymentLink = `https://payment.jastipin.me/dp/${order.id}`
-    
+    // 8. Generate magic link upload token
+    console.log('[Checkout] Generating upload token for order:', order.id)
+    const tokenData = await tokenService.generateUploadToken(order.id, guest.id)
+    const uploadToken = tokenData.token
+    const uploadLink = `https://jastipin.me/order/upload/${uploadToken}`
+
+    console.log('[Checkout] Upload link generated:', uploadLink)
+
+    // 9. Send order confirmation email with magic link (async, backup only)
+    if (request.participantEmail) {
+      sendOrderConfirmationWithMagicLink({
+        customerName: request.participantName,
+        customerEmail: request.participantEmail,
+        orderId: order.id,
+        dpAmount,
+        subtotal,
+        jastiperName: trip.User?.profileName || trip.User?.slug || 'Jastiper',
+        items: products.map((product, i) => ({
+          name: product!.title,
+          quantity: request.items[i].quantity,
+          price: product!.price
+        })),
+        uploadLink  // Include magic link in email
+      }).catch(error => {
+        // Log error but don't fail the checkout
+        console.error('[Checkout] Failed to send order confirmation email:', error)
+      })
+    }
+
+    // 10. Return response with upload link for frontend popup
     return {
       success: true,
       orderId: order.id,
       guestId: guest.id,
       dpAmount,
-      paymentLink
+      paymentLink: `https://payment.jastipin.me/dp/${order.id}`,
+      uploadLink,      // NEW: For frontend popup
+      uploadToken      // NEW: Raw token
     }
     
   } catch (error: any) {
@@ -280,5 +322,69 @@ export async function getOrderSummary(orderId: string) {
   } catch (error) {
     console.error('Error fetching order summary:', error)
     return null
+  }
+}
+
+/**
+ * Send order confirmation email WITH magic link
+ * @internal Helper function for sending emails after checkout
+ * Email serves as BACKUP - primary method is frontend popup
+ */
+async function sendOrderConfirmationWithMagicLink(data: {
+  customerName: string
+  customerEmail: string
+  orderId: string
+  dpAmount: number
+  subtotal: number
+  jastiperName: string
+  items: Array<{ name: string; quantity: number; price: number }>
+  uploadLink: string  // NEW: Magic link
+}): Promise<void> {
+  try {
+    const sendpulseService = getSendPulseService()
+
+    // Format data for email template
+    const emailData = {
+      customerName: data.customerName,
+      orderId: data.orderId,
+      orderDate: new Date().toLocaleDateString('id-ID', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }),
+      dpAmount: `Rp ${data.dpAmount.toLocaleString('id-ID')}`,
+      remainingAmount: `Rp ${(data.subtotal - data.dpAmount).toLocaleString('id-ID')}`,
+      jastiperName: data.jastiperName,
+      productList: data.items
+        .map(item => `${item.name} (${item.quantity}x)`)
+        .join(', '),
+      dashboardUrl: `https://jastipin.me/orders/${data.orderId}`,
+      magicLink: data.uploadLink  // NEW: Include magic link
+    }
+
+    // Render HTML with magic link
+    const html = EmailTemplateService.renderOrderConfirmationWithMagicLink(emailData)
+    const text = EmailTemplateService.renderOrderConfirmationWithMagicLinkText(emailData)
+
+    // Send email (as backup)
+    console.log(`[Email] Sending order confirmation with magic link to ${data.customerEmail}`)
+    console.log(`[Email] Magic link: ${data.uploadLink}`)
+    const result = await sendpulseService.sendEmail({
+      to: [{ name: data.customerName, email: data.customerEmail }],
+      subject: `Order Confirmation - ${data.orderId}`,
+      html,
+      text
+    })
+
+    if (result.success) {
+      console.log(`[Email] ✅ Order confirmation with magic link sent (backup)`)
+      console.log(`[Email] Message ID: ${result.messageId}`)
+    } else {
+      console.error(`[Email] ❌ Failed to send confirmation: ${result.error}`)
+    }
+  } catch (error) {
+    // Don't throw error - email failure should not fail checkout
+    console.error('[Email] Error sending order confirmation:', error)
   }
 }

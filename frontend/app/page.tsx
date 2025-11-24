@@ -9,6 +9,7 @@ import { Pricing } from "@/components/landing/pricing"
 import { FAQ } from "@/components/landing/faq"
 import { FinalCTA } from "@/components/landing/final-cta"
 import { Footer } from "@/components/landing/footer"
+import { FloatingUsernameInput } from "@/components/landing/floating-username-input"
 
 export default function Home() {
   return (
@@ -23,7 +24,7 @@ export default function Home() {
       <FAQ />
       <FinalCTA />
       <TrustBadges />
-      <Footer />
+      <FloatingUsernameInput />
     </main>
   )
 }

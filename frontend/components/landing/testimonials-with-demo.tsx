@@ -96,7 +96,7 @@ export function TestimonialsWithDemo() {
                 </div>
 
                 <Button asChild className="w-full bg-[#F26B8A] hover:bg-[#E05576] text-white">
-                  <Link href={`/${reviewer.demoSlug}`} target="_blank">
+                  <Link href={`/demo/${reviewer.demoSlug}`} target="_blank">
                     <ExternalLink className="w-4 h-4 mr-2" />
                     Lihat Profil Demo
                   </Link>

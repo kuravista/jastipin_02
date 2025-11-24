@@ -11,21 +11,18 @@ export function LiveDemoStrip() {
             <Sparkles className="w-5 h-5 text-violet-600" />
             <span className="font-semibold text-violet-900">Coba lihat contoh profil:</span>
           </div>
-          <Link
-            href="/demo/tina"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-lg border-2 border-violet-200 hover:border-violet-400 transition-colors font-mono text-violet-700 hover:text-violet-900"
-          >
-            jastipin.me/tina
-            <ExternalLink className="w-4 h-4" />
-          </Link>
-          <span className="text-sm text-violet-600">(Demo — tidak menerima transaksi)</span>
           <Button
+            asChild
             variant="outline"
             size="sm"
-            className="border-violet-300 text-violet-700 hover:bg-violet-100 bg-transparent"
+            className="border-violet-300 text-violet-700 hover:bg-violet-100 bg-transparent font-mono"
           >
-            Lihat Demo
+            <Link href="/tina" className="inline-flex items-center gap-2">
+              jastipin.me/tina
+              <ExternalLink className="w-4 h-4" />
+            </Link>
           </Button>
+          <span className="text-sm text-violet-600">(Demo — tidak menerima transaksi)</span>
         </div>
       </div>
     </section>

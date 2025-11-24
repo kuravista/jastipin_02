@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/components/ui/use-toast"
 import { apiPatch, apiDelete } from "@/lib/api-client"
+import { uploadImage } from "@/lib/image-upload"
 import { ImageIcon, Trash2, Calendar } from "lucide-react"
 
 interface EditTripDialogProps {
@@ -93,14 +94,32 @@ export function EditTripDialog({ open, onOpenChange, onSuccess, trip }: EditTrip
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+    if (!file || !trip?.id) return
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        variant: "destructive",
+        title: "File terlalu besar",
+        description: "Maksimal 5MB",
+      })
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      const { url } = await uploadImage(file, 'trips', trip.id)
+      setImagePreview(url)
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Gagal upload gambar",
+        description: error.message,
+      })
+    } finally {
+      setLoading(false)
     }
   }
 

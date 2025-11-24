@@ -9,7 +9,7 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
-    <header className="sticky top-4 z-50 mx-auto max-w-7xl px-4">
+    <header className="z-40 mx-auto max-w-7xl px-4 mt-4">
       <div className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border rounded-3xl shadow-lg">
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-between h-16">

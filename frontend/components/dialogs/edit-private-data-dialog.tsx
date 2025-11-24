@@ -6,21 +6,31 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { useToast } from "@/components/ui/use-toast"
-import { apiPatch, apiGet } from "@/lib/api-client"
+import { apiPatch, apiGet, apiPost, apiDelete } from "@/lib/api-client"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Pencil, Eye, EyeOff } from "lucide-react"
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import { Pencil, Eye, EyeOff, Plus, Trash2, Star } from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select'
 
 interface EditPrivateDataDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess?: () => void
+}
+
+interface BankAccount {
+  id: string
+  bankName: string
+  accountNumber: string
+  accountHolderName: string
+  isDefault: boolean
+  isPrimary: boolean
+  status: string
 }
 
 interface PrivateData {
@@ -36,10 +46,12 @@ interface PrivateData {
   originDistrictName?: string
   originPostalCode?: string
   originAddressText?: string
-  // Bank Account Fields
+  // Bank Account Fields (Legacy - for backward compatibility)
   bankName?: string
   accountNumber?: string
   accountHolderName?: string
+  // New bank accounts array
+  bankAccounts?: BankAccount[]
 }
 
 interface LocationOption {
@@ -69,6 +81,15 @@ export function EditPrivateDataDialog({ open, onOpenChange, onSuccess }: EditPri
     provinces: false,
     cities: false,
     districts: false,
+  })
+
+  // Bank Accounts State
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([])
+  const [showAddBankAccount, setShowAddBankAccount] = useState(false)
+  const [newBankAccount, setNewBankAccount] = useState({
+    bankName: "",
+    accountNumber: "",
+    accountHolderName: "",
   })
 
   useEffect(() => {
@@ -167,6 +188,9 @@ export function EditPrivateDataDialog({ open, onOpenChange, onSuccess }: EditPri
         accountNumber: profileData.accountNumber || "",
         accountHolderName: profileData.accountHolderName || "",
       })
+
+      // 6. Load bank accounts
+      setBankAccounts(profileData.bankAccounts || [])
 
     } catch (err) {
       console.error("Failed to load initial data", err)
@@ -300,6 +324,93 @@ export function EditPrivateDataDialog({ open, onOpenChange, onSuccess }: EditPri
 
   const isValidEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  }
+
+  // Bank Account Functions
+  const handleAddBankAccount = async () => {
+    if (!newBankAccount.bankName || !newBankAccount.accountNumber || !newBankAccount.accountHolderName) {
+      toast({
+        variant: "destructive",
+        title: "Gagal",
+        description: "Semua field rekening harus diisi",
+      })
+      return
+    }
+
+    setLoading(true)
+    try {
+      const response = await apiPost<{ data: BankAccount }>("/bank-accounts", {
+        ...newBankAccount,
+        isDefault: bankAccounts.length === 0 // First account is default
+      })
+
+      const newAccount = response.data
+      setBankAccounts([...bankAccounts, newAccount])
+      setNewBankAccount({ bankName: "", accountNumber: "", accountHolderName: "" })
+      setShowAddBankAccount(false)
+
+      toast({
+        title: "Berhasil",
+        description: "Rekening berhasil ditambahkan",
+      })
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Gagal",
+        description: err.message || "Gagal menambahkan rekening",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDeleteBankAccount = async (id: string) => {
+    if (!confirm("Yakin ingin menghapus rekening ini?")) return
+
+    setLoading(true)
+    try {
+      await apiDelete(`/bank-accounts/${id}`)
+      setBankAccounts(bankAccounts.filter(acc => acc.id !== id))
+
+      toast({
+        title: "Berhasil",
+        description: "Rekening berhasil dihapus",
+      })
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Gagal",
+        description: err.message || "Gagal menghapus rekening",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSetDefault = async (id: string) => {
+    setLoading(true)
+    try {
+      await apiPost(`/bank-accounts/${id}/set-default`, {})
+      setBankAccounts(
+        bankAccounts.map(acc => ({
+          ...acc,
+          isDefault: acc.id === id
+        }))
+      )
+
+      toast({
+        title: "Berhasil",
+        description: "Rekening default berhasil diubah",
+      })
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Gagal",
+        description: err.message || "Gagal mengubah rekening default",
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleConfirmEmailChange = async () => {
@@ -659,42 +770,144 @@ export function EditPrivateDataDialog({ open, onOpenChange, onSuccess }: EditPri
 
             {/* Tab 3: Rekening */}
             <TabsContent value="rekening" className="space-y-3">
-              <p className="text-xs text-gray-500">Data rekening untuk transfer pembayaran</p>
-              
-              <div>
-                <Label htmlFor="bankName" className="text-xs">Nama Bank</Label>
-                <Input
-                  id="bankName"
-                  value={formData.bankName || ''}
-                  onChange={(e) => handleInputChange("bankName", e.target.value)}
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-500">Kelola rekening bank untuk pembayaran</p>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => setShowAddBankAccount(true)}
+                  className="h-7 text-xs"
                   disabled={loading}
-                  className="mt-1 h-8 text-sm"
-                  placeholder="Contoh: BCA, Mandiri, BNI"
-                />
+                >
+                  <Plus className="w-3 h-3 mr-1" />
+                  Tambah
+                </Button>
               </div>
 
-              <div>
-                <Label htmlFor="accountNumber" className="text-xs">Nomor Rekening</Label>
-                <Input
-                  id="accountNumber"
-                  value={formData.accountNumber || ''}
-                  onChange={(e) => handleInputChange("accountNumber", e.target.value)}
-                  disabled={loading}
-                  className="mt-1 h-8 text-sm"
-                  placeholder="Contoh: 1234567890"
-                />
-              </div>
+              {/* Add Bank Account Form */}
+              {showAddBankAccount && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded space-y-2">
+                  <p className="text-xs font-semibold text-blue-900">Tambah Rekening Baru</p>
 
-              <div>
-                <Label htmlFor="accountHolderName" className="text-xs">Nama Pemilik Rekening</Label>
-                <Input
-                  id="accountHolderName"
-                  value={formData.accountHolderName || ''}
-                  onChange={(e) => handleInputChange("accountHolderName", e.target.value)}
-                  disabled={loading}
-                  className="mt-1 h-8 text-sm"
-                  placeholder="Nama sesuai rekening"
-                />
+                  <div>
+                    <Label htmlFor="newBankName" className="text-xs">Nama Bank</Label>
+                    <Input
+                      id="newBankName"
+                      value={newBankAccount.bankName}
+                      onChange={(e) => setNewBankAccount({...newBankAccount, bankName: e.target.value})}
+                      className="mt-0.5 h-8 text-sm"
+                      placeholder="BCA, Mandiri, BNI"
+                      disabled={loading}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="newAccountNumber" className="text-xs">Nomor Rekening</Label>
+                    <Input
+                      id="newAccountNumber"
+                      value={newBankAccount.accountNumber}
+                      onChange={(e) => setNewBankAccount({...newBankAccount, accountNumber: e.target.value})}
+                      className="mt-0.5 h-8 text-sm"
+                      placeholder="1234567890"
+                      disabled={loading}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="newAccountHolderName" className="text-xs">Nama Pemilik</Label>
+                    <Input
+                      id="newAccountHolderName"
+                      value={newBankAccount.accountHolderName}
+                      onChange={(e) => setNewBankAccount({...newBankAccount, accountHolderName: e.target.value})}
+                      className="mt-0.5 h-8 text-sm"
+                      placeholder="Nama sesuai rekening"
+                      disabled={loading}
+                    />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setShowAddBankAccount(false)
+                        setNewBankAccount({ bankName: "", accountNumber: "", accountHolderName: "" })
+                      }}
+                      disabled={loading}
+                      className="h-7 text-xs flex-1"
+                    >
+                      Batal
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleAddBankAccount}
+                      disabled={loading || !newBankAccount.bankName || !newBankAccount.accountNumber || !newBankAccount.accountHolderName}
+                      className="h-7 text-xs flex-1 bg-blue-600 hover:bg-blue-700"
+                    >
+                      {loading ? "Proses..." : "Simpan"}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Bank Accounts List */}
+              <div className="space-y-2">
+                {bankAccounts.length === 0 ? (
+                  <div className="p-4 text-center text-gray-500 text-xs border border-dashed rounded">
+                    Belum ada rekening terdaftar
+                  </div>
+                ) : (
+                  bankAccounts.map((account) => (
+                    <div
+                      key={account.id}
+                      className="p-3 border rounded-lg bg-white space-y-1"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold">{account.bankName}</p>
+                            {account.isDefault && (
+                              <span className="px-1.5 py-0.5 bg-green-100 text-green-700 text-[10px] rounded">
+                                Default
+                              </span>
+                            )}
+                            {account.isPrimary && (
+                              <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[10px] rounded">
+                                Utama
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-600">{account.accountNumber}</p>
+                          <p className="text-xs text-gray-500">{account.accountHolderName}</p>
+                        </div>
+                        <div className="flex gap-1">
+                          {!account.isDefault && (
+                            <button
+                              type="button"
+                              onClick={() => handleSetDefault(account.id)}
+                              className="p-1 hover:bg-gray-100 rounded transition-colors"
+                              title="Set sebagai default"
+                              disabled={loading}
+                            >
+                              <Star className="w-4 h-4 text-gray-400" />
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteBankAccount(account.id)}
+                            className="p-1 hover:bg-red-100 rounded transition-colors"
+                            title="Hapus rekening"
+                            disabled={loading}
+                          >
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </TabsContent>
           </Tabs>

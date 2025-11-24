@@ -211,10 +211,10 @@ model User {
   avatar      String?
   coverImage  String?
   coverPosition Int?      @default(50)
-  
+
   // Contact Information
   whatsappNumber String?
-  
+
   // Jastiper Origin Address
   originProvinceId   String?
   originProvinceName String?
@@ -224,19 +224,40 @@ model User {
   originDistrictName String?
   originPostalCode   String?
   originAddressText  String?
-  
-  // Bank Account Information
+
+  // Bank Account Information (LEGACY - Deprecated, use BankAccount relation)
   bankName           String?
   accountNumber      String?
   accountHolderName  String?
-  
+
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   SocialMedia SocialMedia[]
   Trip        Trip[]
+  BankAccount BankAccount[]
 
   @@index([email])
   @@index([slug])
+}
+
+model BankAccount {
+  id                 String    @id @default(cuid())
+  userId             String
+  bankName           String
+  accountNumber      String
+  accountHolderName  String
+  isDefault          Boolean   @default(false)
+  isPrimary          Boolean   @default(false)
+  status             String    @default("active")
+  verificationStatus String    @default("unverified")
+  verifiedAt         DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  User               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, accountNumber])
+  @@index([status])
+  @@index([userId])
 }
 
 model Guest {

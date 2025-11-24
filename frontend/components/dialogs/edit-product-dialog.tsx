@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/components/ui/use-toast"
 import { apiPatch, apiDelete } from "@/lib/api-client"
+import { uploadImage } from "@/lib/image-upload"
 import { Camera, Trash2 } from "lucide-react"
 
 interface EditProductDialogProps {
@@ -92,14 +93,25 @@ export function EditProductDialog({ open, onOpenChange, onSuccess, product }: Ed
     setError(null)
   }
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setPreviewImage(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+    if (!file || !product?.id) return
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Ukuran file maksimal 5MB')
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const { url } = await uploadImage(file, 'products', product.id)
+      setPreviewImage(url)
+    } catch (err: any) {
+      setError(err.message || 'Gagal mengupload gambar')
+    } finally {
+      setLoading(false)
     }
   }
 

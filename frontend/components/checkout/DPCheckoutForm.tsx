@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { AlertCircle, Loader2, X } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import AddressForm from './AddressForm'
+import UploadLinkDialog from './UploadLinkDialog'
 
 interface Product {
   id: string
@@ -66,6 +67,14 @@ export default function DPCheckoutForm({
   
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // Upload Link Dialog state
+  const [showUploadDialog, setShowUploadDialog] = useState(false)
+  const [uploadDialogData, setUploadDialogData] = useState<{
+    orderId: string
+    uploadLink: string
+    dpAmount: number
+  } | null>(null)
 
   useEffect(() => {
     loadGuestProfile()
@@ -180,13 +189,18 @@ export default function DPCheckoutForm({
         saveGuestProfile(data.data.guestId)
       }
 
+      // Show upload link dialog
+      setUploadDialogData({
+        orderId: data.data.orderId,
+        uploadLink: data.data.uploadLink,
+        dpAmount: data.data.dpAmount
+      })
+      setShowUploadDialog(true)
+
       // Handle success based on mode
       if (onSuccess) {
-        // Modal mode: call callback
+        // Modal mode: call callback (after dialog is shown)
         onSuccess(data.data)
-      } else {
-        // Page mode: redirect to payment
-        router.push(`/checkout/payment/${data.data.orderId}`)
       }
 
     } catch (err: any) {
@@ -421,35 +435,61 @@ export default function DPCheckoutForm({
   // Return based on mode
   if (mode === 'modal') {
     return (
-      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-          <div className="p-6 space-y-6">
-            {content}
+      <>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 space-y-6">
+              {content}
+            </div>
           </div>
         </div>
-      </div>
+
+        {/* Upload Link Dialog */}
+        {uploadDialogData && (
+          <UploadLinkDialog
+            open={showUploadDialog}
+            onOpenChange={setShowUploadDialog}
+            orderId={uploadDialogData.orderId}
+            uploadLink={uploadDialogData.uploadLink}
+            dpAmount={uploadDialogData.dpAmount}
+          />
+        )}
+      </>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-blue-50 py-8">
-      <div className="container max-w-2xl mx-auto px-4">
-        {/* Header */}
-        <div className="mb-6">
-          <button
-            onClick={() => router.back()}
-            className="text-sm text-gray-600 hover:text-gray-900 mb-2"
-          >
-            ← Kembali
-          </button>
-          <h1 className="text-2xl font-bold text-gray-900">{tripTitle || 'Checkout'}</h1>
-          <p className="text-sm text-gray-600">Checkout dengan sistem DP</p>
-        </div>
+    <>
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-blue-50 py-8">
+        <div className="container max-w-2xl mx-auto px-4">
+          {/* Header */}
+          <div className="mb-6">
+            <button
+              onClick={() => router.back()}
+              className="text-sm text-gray-600 hover:text-gray-900 mb-2"
+            >
+              ← Kembali
+            </button>
+            <h1 className="text-2xl font-bold text-gray-900">{tripTitle || 'Checkout'}</h1>
+            <p className="text-sm text-gray-600">Checkout dengan sistem DP</p>
+          </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {content}
-        </form>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {content}
+          </form>
+        </div>
       </div>
-    </div>
+
+      {/* Upload Link Dialog */}
+      {uploadDialogData && (
+        <UploadLinkDialog
+          open={showUploadDialog}
+          onOpenChange={setShowUploadDialog}
+          orderId={uploadDialogData.orderId}
+          uploadLink={uploadDialogData.uploadLink}
+          dpAmount={uploadDialogData.dpAmount}
+        />
+      )}
+    </>
   )
 }

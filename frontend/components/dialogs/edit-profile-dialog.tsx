@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { useToast } from "@/components/ui/use-toast"
 import { apiPost, apiPatch, apiGet } from "@/lib/api-client"
+import { uploadImage, getUserIdFromToken } from "@/lib/image-upload"
 import { Upload, Trash2, Camera } from "lucide-react"
 
 interface EditProfileDialogProps {
@@ -72,35 +73,39 @@ export function EditProfileDialog({ open, onOpenChange, onSuccess }: EditProfile
     setError(null)
   }
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'avatar' | 'coverImage') => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>, field: 'avatar' | 'coverImage') => {
     const file = e.target.files?.[0]
-    if (file) {
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setError("Ukuran file terlalu besar (Maksimal 5MB)")
-        return
+    if (!file) return
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Ukuran file terlalu besar (Maksimal 5MB)")
+      return
+    }
+
+    if (!file.type.startsWith('image/')) {
+      setError("Format file tidak didukung. Gunakan JPG/PNG.")
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const userId = getUserIdFromToken()
+      const type = field === 'avatar' ? 'avatars' : 'covers'
+      const { url } = await uploadImage(file, type, userId)
+
+      if (field === 'avatar') {
+        setAvatarPreview(url)
+      } else {
+        setCoverPreview(url)
       }
 
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        setError("Format file tidak didukung. Gunakan JPG/PNG.")
-        return
-      }
-
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        const result = reader.result as string
-        if (field === 'avatar') {
-          setAvatarPreview(result)
-        } else {
-          setCoverPreview(result)
-        }
-        // Note: In a real app, you might want to upload this first or send as base64
-        // For now assuming backend handles base64 or we send it directly
-        setFormData((prev: ProfileFormData) => ({ ...prev, [field]: result }))
-        setError(null)
-      }
-      reader.readAsDataURL(file)
+      setFormData((prev: ProfileFormData) => ({ ...prev, [field]: url }))
+    } catch (err: any) {
+      setError(err.message || 'Gagal mengupload gambar')
+    } finally {
+      setLoading(false)
     }
   }
 

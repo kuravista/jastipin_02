@@ -32,8 +32,11 @@ export interface CheckoutDPResponse {
   success: boolean
   data: {
     orderId: string
+    guestId: string
     dpAmount: number
     paymentLink: string
+    uploadLink: string
+    uploadToken: string
   }
   error?: string
 }

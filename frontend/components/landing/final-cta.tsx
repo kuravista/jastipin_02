@@ -15,7 +15,7 @@ export function FinalCTA() {
   }
 
   return (
-    <section className="py-12 md:py-20 bg-gradient-to-br from-[#F26B8A] to-[#E05576] text-white relative overflow-hidden">
+    <section data-section="final-cta" className="py-12 md:py-20 bg-gradient-to-br from-[#F26B8A] to-[#E05576] text-white relative overflow-hidden">
       <div className="absolute inset-0 bg-[url('/abstract-pattern-texture.jpg')] opacity-10" />
       <div className="container mx-auto px-4 relative">
         <div className="max-w-3xl mx-auto text-center space-y-6">

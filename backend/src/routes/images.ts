@@ -1,30 +1,15 @@
 /**
- * File Upload Handler with Cloudflare R2
- * Handles multipart form data parsing and uploads to R2
+ * Image Upload Routes
+ * POST /api/images/upload?type=avatar|cover|product|trip&entityId=xxx
  */
 
-import { Request } from 'express'
+import { Router, Request, Response } from 'express'
+import { authMiddleware } from '../middleware/auth.js'
 import { R2Service } from '../services/r2.service.js'
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
-const ALLOWED_MIMETYPES = [
-  'image/jpeg',
-  'image/jpg',
-  'image/png',
-  'application/pdf',
-]
+const router = Router()
 
-interface UploadedFile {
-  filename: string
-  url: string
-  thumbnailUrl?: string
-  size: number
-  mimetype: string
-}
-
-/**
- * Parse multipart form data and extract file
- */
+// Parse multipart file helper (reuse from file-upload.ts logic)
 function parseMultipartFile(req: Request): Promise<{
   buffer: Buffer
   filename: string
@@ -33,6 +18,7 @@ function parseMultipartFile(req: Request): Promise<{
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = []
     let fileSize = 0
+    const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
     const contentType = req.headers['content-type'] || ''
 
     if (!contentType.includes('multipart/form-data')) {
@@ -66,7 +52,8 @@ function parseMultipartFile(req: Request): Promise<{
         let mimetype = ''
 
         for (const part of parts) {
-          if (part.includes('Content-Disposition: form-data; name="file"')) {
+          if (part.includes('Content-Disposition: form-data; name="file"') ||
+              part.includes('Content-Disposition: form-data; name="image"')) {
             const headerEnd = part.indexOf('\r\n\r\n')
             const header = part.substring(0, headerEnd)
 
@@ -111,54 +98,71 @@ function parseMultipartFile(req: Request): Promise<{
 }
 
 /**
- * Handle file upload to Cloudflare R2
+ * POST /api/images/upload
+ * Upload image to R2
+ * Query params:
+ *   - type: 'avatars' | 'covers' | 'products' | 'trips'
+ *   - entityId: ID of the entity (userId, productId, tripId)
  */
-export async function handleFileUpload(
-  req: Request,
-  orderId: string
-): Promise<UploadedFile> {
+router.post('/upload', authMiddleware, async (req: Request, res: Response) => {
   try {
-    // Parse multipart form data
+    const type = req.query.type as string
+    const entityId = req.query.entityId as string
+
+    // Validate params
+    if (!type || !['avatars', 'covers', 'products', 'trips'].includes(type)) {
+      res.status(400).json({
+        error: 'Invalid or missing type parameter. Must be: avatars, covers, products, or trips',
+      })
+      return
+    }
+
+    if (!entityId) {
+      res.status(400).json({
+        error: 'Missing entityId parameter',
+      })
+      return
+    }
+
+    // Parse file
     const { buffer, filename, mimetype } = await parseMultipartFile(req)
 
-    // Validate file type
-    if (!ALLOWED_MIMETYPES.includes(mimetype)) {
-      throw new Error(
-        'Invalid file type. Only JPG, PNG, and PDF files are allowed'
-      )
+    // Validate file type (images only)
+    if (!mimetype.startsWith('image/')) {
+      res.status(400).json({
+        error: 'Invalid file type. Only images are allowed',
+      })
+      return
     }
 
     // Upload to R2
     const r2Service = new R2Service()
-    const result = await r2Service.uploadPaymentProof(
+    const result = await r2Service.uploadImage(
       buffer,
-      orderId,
+      type as 'avatars' | 'covers' | 'products' | 'trips',
+      entityId,
       filename,
       mimetype,
       {
         optimize: true,
-        maxWidth: 1920,
-        quality: 85,
-        generateThumbnail: true,
+        generateThumbnail: type === 'avatars' || type === 'products',
       }
     )
 
-    return {
-      filename: result.key,
+    res.json({
+      success: true,
       url: result.url,
       thumbnailUrl: result.thumbnailUrl,
+      key: result.key,
       size: result.size,
-      mimetype: result.contentType,
-    }
+      contentType: result.contentType,
+    })
   } catch (error: any) {
-    throw new Error(`Upload failed: ${error.message}`)
+    console.error('Image upload failed:', error)
+    res.status(500).json({
+      error: error.message || 'Failed to upload image',
+    })
   }
-}
+})
 
-/**
- * Delete payment proof from R2
- */
-export async function deletePaymentProof(proofUrl: string): Promise<void> {
-  const r2Service = new R2Service()
-  await r2Service.deletePaymentProof(proofUrl)
-}
+export default router

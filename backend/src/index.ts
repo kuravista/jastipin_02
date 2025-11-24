@@ -9,6 +9,7 @@ import cors from 'cors'
 
 import authRoutes from './routes/auth.js'
 import profileRoutes from './routes/profile.js'
+import bankAccountsRoutes from './routes/bank-accounts.js'
 import tripRoutes from './routes/trips.js'
 import productRoutes from './routes/products.js'
 import participantRoutes from './routes/participants.js'
@@ -23,6 +24,7 @@ import monitoringRoutes from './routes/monitoring.js'
 import webhooksRoutes from './routes/webhooks.js'
 import workersRoutes from './routes/workers.js'
 import uploadRoutes from './routes/upload.js'
+import imagesRoutes from './routes/images.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import { maintenanceMiddleware } from './middleware/maintenance.js'
 
@@ -30,11 +32,14 @@ const app: Express = express()
 const PORT = process.env.API_PORT || 4000
 
 // Middleware
-app.use(
-  express.json({
-    limit: '10mb',
-  })
-)
+// Parse JSON for most routes
+app.use((req, res, next) => {
+  // Skip body parsing for image upload routes to handle multipart manually
+  if (req.path.includes('/api/images/upload') || req.path.includes('/api/upload/')) {
+    return next()
+  }
+  express.json({ limit: '10mb' })(req, res, next)
+})
 
 // Serve uploaded files (static)
 app.use('/uploads', express.static('uploads'))
@@ -84,7 +89,9 @@ app.use('/api/monitoring', monitoringRoutes)
 app.use('/api/webhooks', webhooksRoutes)
 app.use('/api/workers', workersRoutes)
 app.use('/api/upload', uploadRoutes)
+app.use('/api/images', imagesRoutes)
 app.use('/api', profileRoutes)
+app.use('/api', bankAccountsRoutes)
 app.use('/api', tripRoutes)
 app.use('/api', productRoutes)
 app.use('/api', participantRoutes)

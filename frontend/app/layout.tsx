@@ -1,5 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
+import Script from "next/script"
 import { Poppins, Inter } from "next/font/google"
 import { AuthProvider } from "@/lib/auth-context"
 import { Toaster } from "@/components/ui/sonner"
@@ -47,11 +48,24 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <Script
+          src="//web.webpushs.com/js/push/f5be80477f0c908cb18284a4803a4d0e_1.js"
+          strategy="afterInteractive"
+          async
+        />
+      </head>
       <body className={`${inter.variable} ${poppins.variable} font-sans antialiased`}>
         <AuthProvider>
           {children}
           <Toaster position="bottom-center" richColors />
         </AuthProvider>
+        <Script
+          src="https://static.sppopups.com/assets/loader.js"
+          data-chats-widget-id="5340006e-dc13-44fb-b75d-99e826dcf2bd"
+          strategy="lazyOnload"
+          async
+        />
       </body>
     </html>
   )
