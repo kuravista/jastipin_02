@@ -29,8 +29,8 @@ export default function DashboardPage() {
   return (
     <AuthGuard>
       <div className="h-screen flex flex-col bg-gradient-to-br from-orange-50 via-white to-violet-50">
-        {/* Main Content - Scrollable */}
-        <div className="flex-1 overflow-y-auto">
+        {/* Main Content - Scrollable with padding bottom for navbar */}
+        <div className="flex-1 overflow-y-auto pb-20">
           <div className="container mx-auto px-4 py-6 max-w-2xl">
             {activeTab === "home" && <DashboardHome onNavigate={setActiveTab} />}
             {activeTab === "validasi" && <DashboardValidasi />}
@@ -41,8 +41,8 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Bottom Tab Navigation */}
-        <nav className="bg-white border-t border-gray-200 shadow-lg z-50 flex-shrink-0">
+        {/* Bottom Tab Navigation - Fixed */}
+        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
           <div className="container mx-auto max-w-2xl">
             <div className="grid grid-cols-4 h-16">
               <button

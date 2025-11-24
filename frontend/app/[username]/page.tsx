@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, use } from "react"
-import { notFound } from "next/navigation"
+import { notFound, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -67,6 +67,7 @@ interface ProfileData {
 
 export default function ProfilePage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = use(params)
+  const router = useRouter()
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -84,46 +85,8 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
   const [currentPage, setCurrentPage] = useState(1)
   const [cartItems, setCartItems] = useState<Array<{ product: any; quantity: number }>>([])
   const [showCart, setShowCart] = useState(false)
-  const [showDPCheckoutForm, setShowDPCheckoutForm] = useState(false)
-  const [isHydrated, setIsHydrated] = useState(false)
-  const [rememberMe, setRememberMe] = useState(true)
-  const [dpCheckoutForm, setDPCheckoutForm] = useState({
-    nama: "",
-    nomor: "",
-    email: "",
-    notes: "",
-  })
-  
-  // Load saved checkout data from localStorage on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('jastipin_guest_profile')
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved)
-          setDPCheckoutForm({
-            nama: parsed.name || "",
-            nomor: parsed.phone?.replace(/^62/, '') || "",
-            email: parsed.email || "",
-            notes: "",
-          })
-          setRememberMe(parsed.rememberMe ?? true)
-        } catch (e) {
-          console.error("Failed to parse saved guest profile:", e)
-        }
-      }
-      setIsHydrated(true)
-    }
-  }, [])
   
   const itemsPerPage = 10
-
-  // Calculate total price from cart
-  const totalPrice = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
-  
-  // Calculate DP amount (20% of total, minimum Rp 10,000)
-  const dpAmount = Math.max(Math.ceil(totalPrice * 0.2), 10000)
-  const remainingAmount = totalPrice - dpAmount
 
   // Clear cart dan reset page ketika user berganti trip
   useEffect(() => {
@@ -173,101 +136,6 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
       )
     }
   }
-
-  // Handle DP Checkout Submission (simplified form)
-  const handleDPCheckoutSubmit = async () => {
-    if (!dpCheckoutForm.nama || !dpCheckoutForm.nomor) {
-      toast.error("⚠️ Nama dan nomor WhatsApp harus diisi")
-      return
-    }
-
-    // Validate WhatsApp number format (harus min 9 digit: 8XXXXXXXXX)
-    if (!/^\d{9,}$/.test(dpCheckoutForm.nomor)) {
-      toast.error("⚠️ Nomor WhatsApp harus minimal 9 digit (contoh: 812345678)")
-      return
-    }
-    
-    // Format nomor dengan prefix 62
-    const formattedPhone = '62' + dpCheckoutForm.nomor
-
-    if (!cartItems.length) {
-      toast.error("⚠️ Keranjang kosong, tambahkan produk terlebih dahulu")
-      return
-    }
-
-    try {
-      const currentTrip = profile?.trips?.[currentTripIndex]
-      if (!currentTrip?.id) {
-        toast.error("❌ Trip tidak ditemukan")
-        return
-      }
-
-      // Format items untuk checkout
-      const checkoutItems = cartItems.map(item => ({
-        productId: item.product.id,
-        quantity: item.quantity,
-        priceAtOrder: item.product.price,
-        productType: item.product.type || 'goods',
-      }))
-
-      // Show loading toast
-      const loadingToast = toast.loading("⏳ Memproses checkout DP...")
-
-      // Call DP checkout API
-      const response = await apiPost(`/checkout/dp`, {
-        tripId: currentTrip.id,
-        participantName: dpCheckoutForm.nama,
-        participantPhone: formattedPhone,
-        participantEmail: dpCheckoutForm.email || undefined,
-        rememberMe: rememberMe,
-        items: checkoutItems,
-      })
-
-      // Dismiss loading toast
-      toast.dismiss(loadingToast)
-
-      // Save guest profile to localStorage if "Remember me" is checked
-      if (typeof window !== 'undefined' && response?.data?.guestId) {
-        if (rememberMe) {
-          localStorage.setItem('jastipin_guest_profile', JSON.stringify({
-            guestId: response.data.guestId,
-            name: dpCheckoutForm.nama,
-            phone: formattedPhone,
-            email: dpCheckoutForm.email || '',
-            rememberMe: true
-          }))
-        } else {
-          localStorage.removeItem('jastipin_guest_profile')
-        }
-      }
-
-      // Show success toast dengan detail
-      const message = response?.data?.invoiceId 
-        ? `✅ DP Checkout Berhasil!\n\nTrip: ${currentTrip.title}\nDP: Rp ${dpAmount.toLocaleString('id-ID')}\nInvoice: ${response.data.invoiceId}`
-        : `✅ DP Checkout Berhasil!\n\nTrip: ${currentTrip.title}\nDP: Rp ${dpAmount.toLocaleString('id-ID')}`
-      
-      toast.success(message, { duration: 5000 })
-      
-      // Reset cart and close modal (keep form data for next checkout)
-      setCartItems([])
-      setShowDPCheckoutForm(false)
-      setShowCart(false)
-      // NOTE: Form values (nama, nomor) are preserved from localStorage for next checkout
-    } catch (error: any) {
-      console.error("DP Checkout error:", error)
-      
-      // Parse error message
-      const errorMsg = error?.response?.data?.error || error.message || "Gagal membuat checkout DP"
-      const errorDetail = error?.response?.data?.details || ""
-      
-      const fullMessage = errorDetail 
-        ? `❌ Checkout DP Gagal\n\n${errorMsg}\n${errorDetail}`
-        : `❌ Checkout DP Gagal\n\n${errorMsg}`
-      
-      toast.error(fullMessage, { duration: 5000 })
-    }
-  }
-
 
 
   // Reset to page 1 when search query changes
@@ -322,9 +190,11 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
       return
     }
 
-    // Show DP checkout form (simplified: name + phone only)
-    // Keep existing form values (loaded from localStorage)
-    setShowDPCheckoutForm(true)
+    // Save cart to localStorage for checkout page
+    localStorage.setItem(`cart_${currentTrip.id}`, JSON.stringify(cartItems))
+
+    // Redirect to checkout page
+    router.push(`/checkout/dp/${currentTrip.id}`)
   }
 
   const handleProductClick = (product: any) => {
@@ -799,145 +669,6 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
             >
               Checkout Sekarang
             </Button>
-          </div>
-        </div>
-      )}
-
-      {/* DP Checkout Form Dialog - Simplified (Name + Phone Only) */}
-      {showDPCheckoutForm && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-6">
-            <h2 className="text-xl font-bold mb-2">Bayar Down Payment</h2>
-            <p className="text-sm text-gray-600 mb-4">Validasi lebih lanjut oleh Jastiper diperlukan</p>
-
-            {/* Order Summary with DP Breakdown */}
-            <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-lg p-4 mb-4 border border-orange-200">
-              <h3 className="font-semibold text-sm mb-3">Ringkasan Order:</h3>
-              
-              <div className="space-y-2 mb-3 pb-3 border-b border-orange-200">
-                {cartItems.map((item) => (
-                  <div key={item.product.id} className="flex justify-between text-sm">
-                    <div>
-                      <span className="font-medium">{item.product.title}</span>
-                      <span className="text-gray-500 ml-1">x{item.quantity}</span>
-                    </div>
-                    <span className="font-medium">Rp {(item.product.price * item.quantity).toLocaleString('id-ID')}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Subtotal:</span>
-                  <span className="font-medium">Rp {totalPrice.toLocaleString('id-ID')}</span>
-                </div>
-                <div className="flex justify-between pt-2 border-t border-orange-200">
-                  <span className="font-semibold text-orange-700">Down Payment (20%):</span>
-                  <span className="font-bold text-lg text-orange-600">Rp {dpAmount.toLocaleString('id-ID')}</span>
-                </div>
-                <div className="flex justify-between text-gray-600 text-xs pt-1">
-                  <span>Sisa pembayaran setelah validasi:</span>
-                  <span>Rp {remainingAmount.toLocaleString('id-ID')}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Form Fields */}
-            <div className="space-y-3 mb-4" key={`form-${isHydrated}`}>
-              <div>
-                <label className="block text-sm font-medium mb-1">Nama Lengkap</label>
-                <input
-                  key={`nama-${isHydrated}`}
-                  type="text"
-                  placeholder="Nama Anda"
-                  value={dpCheckoutForm.nama}
-                  onChange={(e) => setDPCheckoutForm({ ...dpCheckoutForm, nama: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
-                />
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-sm font-medium">Nomor WhatsApp</label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="w-4 h-4 accent-orange-500"
-                    />
-                    <span className="text-xs text-gray-600">Ingat saya</span>
-                  </label>
-                </div>
-                <div className="flex border border-gray-300 rounded-lg overflow-hidden focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
-                  <span className="bg-gray-100 px-3 py-2 text-sm font-medium text-gray-600 flex items-center whitespace-nowrap">+62</span>
-                  <input
-                    key={`nomor-${isHydrated}`}
-                    type="tel"
-                    placeholder="812345678"
-                    value={dpCheckoutForm.nomor}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, '')
-                      setDPCheckoutForm({ ...dpCheckoutForm, nomor: val })
-                    }}
-                    className="flex-1 border-0 outline-none focus:ring-0 px-3 py-2 text-sm"
-                  />
-                </div>
-                <p className="text-xs text-gray-500 mt-1">Contoh: 812345678 (tanpa +62)</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Email <span className="text-gray-500 text-xs">(Opsional)</span>
-                </label>
-                <input
-                  key={`email-${isHydrated}`}
-                  type="email"
-                  placeholder="email@example.com"
-                  value={dpCheckoutForm.email}
-                  onChange={(e) => setDPCheckoutForm({ ...dpCheckoutForm, email: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">Untuk notifikasi tambahan dan invoice</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Catatan / Keterangan (Opsional)</label>
-                <textarea
-                  placeholder="Contoh: Warna hitam, Size M..."
-                  value={dpCheckoutForm.notes}
-                  onChange={(e) => setDPCheckoutForm({ ...dpCheckoutForm, notes: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 resize-none h-12"
-                />
-              </div>
-            </div>
-
-            {/* Info Box */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-xs text-blue-800">
-              <p className="font-medium mb-1">ℹ️ Proses Selanjutnya:</p>
-              <ul className="space-y-1 ml-2 list-disc">
-                <li>Jastiper akan memvalidasi pesanan Anda</li>
-                <li>Alamat lengkap akan dikonfirmasi saat validasi</li>
-                <li>Anda akan diminta untuk pembayaran sisa setelah validasi</li>
-              </ul>
-            </div>
-
-            {/* Buttons */}
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowDPCheckoutForm(false)}
-                className="flex-1 bg-gray-300 hover:bg-gray-400 text-black font-medium py-2 px-3 rounded-lg transition"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleDPCheckoutSubmit}
-                disabled={!dpCheckoutForm.nama || !dpCheckoutForm.nomor || dpCheckoutForm.nomor.length < 9}
-                className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-2 px-3 rounded-lg transition"
-              >
-                Bayar DP: Rp {dpAmount.toLocaleString('id-ID')}
-              </button>
-            </div>
           </div>
         </div>
       )}

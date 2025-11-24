@@ -30,7 +30,7 @@ export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-24">
       {/* Header */}
       <div>
         <div className="flex items-center justify-between gap-4">
@@ -176,11 +176,11 @@ export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
         </div>
       </div>
 
-      {/* Section: Ringkasan Anda */}
+      {/* Section: Ringkasan Anda - Simplified (Top 2 Priorities Only) */}
       <div className="space-y-4">
-        <h2 className="text-lg font-bold text-gray-900">Ringkasan Anda</h2>
+        <h2 className="text-lg font-bold text-gray-900">Yang Perlu Diperhatikan</h2>
 
-        {/* Card Summary 1: Validasi */}
+        {/* Card Summary 1: Validasi (Priority 1) */}
         <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -204,7 +204,7 @@ export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
           </div>
         </div>
 
-        {/* Card Summary 2: Stok Produk */}
+        {/* Card Summary 2: Stok Produk (Priority 2) */}
         <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -222,29 +222,6 @@ export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
                 className="w-full border-[#F26B8A] text-[#F26B8A] hover:bg-pink-50"
               >
                 Lihat Detail
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Card Summary 3: Peserta Baru (Optional) */}
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
-              <Users className="w-6 h-6 text-blue-500" />
-            </div>
-            <div className="flex-1">
-              <div className="text-sm text-gray-600 mb-1">Peserta Baru</div>
-              <div className="text-lg font-bold text-gray-900 mb-3">
-                Ada <span className="text-blue-500">12</span> peserta baru bergabung di 'Jastip Jepang'
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full border-[#F26B8A] text-[#F26B8A] hover:bg-pink-50 bg-transparent"
-              >
-                Lihat Peserta
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
             </div>
