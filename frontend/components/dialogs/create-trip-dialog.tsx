@@ -88,6 +88,7 @@ export function CreateTripDialog({ open, onOpenChange, onSuccess }: CreateTripDi
   }
 
   const [loadingStep, setLoadingStep] = useState<string>("")
+  const [uploadProgress, setUploadProgress] = useState<number>(0)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -117,7 +118,14 @@ export function CreateTripDialog({ open, onOpenChange, onSuccess }: CreateTripDi
       // Upload image with real tripId if file selected
       if (selectedFile && tripId) {
         setLoadingStep("Mengupload gambar...")
-        const { url } = await uploadImage(selectedFile, 'trips', tripId)
+        setUploadProgress(0)
+        
+        const { url } = await uploadImage(
+          selectedFile, 
+          'trips', 
+          tripId,
+          (progress) => setUploadProgress(progress.percent)
+        )
         
         setLoadingStep("Memperbarui trip...")
         // Update trip with image URL
@@ -125,6 +133,7 @@ export function CreateTripDialog({ open, onOpenChange, onSuccess }: CreateTripDi
       }
       
       setLoadingStep("")
+      setUploadProgress(0)
       
       toast({
         title: "Trip berhasil dibuat",
@@ -149,6 +158,7 @@ export function CreateTripDialog({ open, onOpenChange, onSuccess }: CreateTripDi
       onSuccess?.()
     } catch (error: any) {
       setLoadingStep("")
+      setUploadProgress(0)
       toast({
         variant: "destructive",
         title: "Gagal membuat trip",
@@ -325,6 +335,21 @@ export function CreateTripDialog({ open, onOpenChange, onSuccess }: CreateTripDi
             )}
           </div>
 
+          {loading && uploadProgress > 0 && uploadProgress < 100 && (
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-xs text-gray-600">
+                <span>Mengupload gambar...</span>
+                <span className="font-medium">{uploadProgress}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                <div 
+                  className="bg-[#FB923C] h-2 transition-all duration-300 ease-out"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            </div>
+          )}
+
           <Button 
             type="submit" 
             className="w-full bg-[#FB923C] hover:bg-[#EA7C2C] h-10 font-semibold text-sm" 
@@ -337,6 +362,7 @@ export function CreateTripDialog({ open, onOpenChange, onSuccess }: CreateTripDi
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
                 {loadingStep || "Menyimpan..."}
+                {uploadProgress > 0 && ` (${uploadProgress}%)`}
               </span>
             ) : "Simpan Trip"}
           </Button>

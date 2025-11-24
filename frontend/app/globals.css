@@ -146,3 +146,40 @@
     font-family: var(--font-heading);
   }
 }
+
+/* Mobile Fullscreen Styles - Hide Address Bar & Enhance UX */
+@media screen and (max-width: 768px) {
+  html {
+    height: 100%;
+    overflow: auto;
+  }
+
+  body {
+    min-height: 100vh;
+    /* iOS Safari fullscreen viewport */
+    min-height: -webkit-fill-available;
+    /* Support for safe areas (notch) */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent pull-to-refresh on mobile */
+  body {
+    overscroll-behavior-y: contain;
+  }
+
+  /* Hide scrollbars on mobile for cleaner look */
+  *::-webkit-scrollbar {
+    width: 0px;
+    height: 0px;
+    background: transparent;
+  }
+}
+
+/* iOS PWA Status Bar */
+@supports (-webkit-touch-callout: none) {
+  body {
+    padding-top: constant(safe-area-inset-top);
+    padding-top: env(safe-area-inset-top);
+  }
+}

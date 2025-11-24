@@ -4,8 +4,8 @@
  */
 
 import { PrismaClient } from '@prisma/client'
-import { calculateDPAmount } from './price-calculator.service'
-import { GuestService } from './guest.service'
+import { calculateDPAmount } from './price-calculator.service.js'
+import { GuestService } from './guest.service.js'
 import { getSendPulseService } from './email/sendpulse.service.js'
 import { EmailTemplateService } from './email/email-template.service.js'
 import { TokenService } from './token.service.js'

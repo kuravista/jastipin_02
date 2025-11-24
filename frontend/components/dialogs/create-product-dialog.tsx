@@ -67,6 +67,7 @@ export function CreateProductDialog({ open, onOpenChange, onSuccess, preselected
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loadingStep, setLoadingStep] = useState<string>("")
+  const [uploadProgress, setUploadProgress] = useState<number>(0)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -144,7 +145,14 @@ export function CreateProductDialog({ open, onOpenChange, onSuccess, preselected
       // Upload image with real productId if file selected
       if (selectedFile && productId) {
         setLoadingStep("Mengupload gambar...")
-        const { url } = await uploadImage(selectedFile, 'products', productId)
+        setUploadProgress(0)
+        
+        const { url } = await uploadImage(
+          selectedFile, 
+          'products', 
+          productId,
+          (progress) => setUploadProgress(progress.percent)
+        )
         
         setLoadingStep("Memperbarui produk...")
         // Update product with real image URL
@@ -152,6 +160,7 @@ export function CreateProductDialog({ open, onOpenChange, onSuccess, preselected
       }
       
       setLoadingStep("")
+      setUploadProgress(0)
       
       toast({
         title: "Produk Berhasil Dibuat!",
@@ -174,6 +183,7 @@ export function CreateProductDialog({ open, onOpenChange, onSuccess, preselected
       onSuccess?.()
     } catch (err: any) {
       setLoadingStep("")
+      setUploadProgress(0)
       const errorMsg = err.message || "Gagal membuat produk"
       setError(errorMsg)
       toast({
@@ -359,6 +369,21 @@ export function CreateProductDialog({ open, onOpenChange, onSuccess, preselected
             />
           </div>
 
+          {loading && uploadProgress > 0 && uploadProgress < 100 && (
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-xs text-gray-600">
+                <span>Mengupload gambar...</span>
+                <span className="font-medium">{uploadProgress}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                <div 
+                  className="bg-[#FB923C] h-2 transition-all duration-300 ease-out"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            </div>
+          )}
+
           <Button type="submit" className="w-full bg-[#FB923C] hover:bg-[#EA7C2C] h-10 font-semibold" disabled={loading}>
             {loading ? (
               <span className="flex items-center gap-2">
@@ -367,6 +392,7 @@ export function CreateProductDialog({ open, onOpenChange, onSuccess, preselected
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
                 {loadingStep || "Menyimpan..."}
+                {uploadProgress > 0 && ` (${uploadProgress}%)`}
               </span>
             ) : "Simpan Produk"}
           </Button>

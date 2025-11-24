@@ -1,7 +1,8 @@
 # Files Edited - Guest Checkout Implementation
 
-**Task:** Guest Checkout & Notification Flow - Phase 1-4 Implementation  
+**Task:** Guest Checkout & Notification Flow - Phase 1-4 Implementation
 **Date:** 21 November 2025
+**Last Updated:** 24 November 2025 (SendPulse + Magic Link + UX fixes)
 
 ## Backend Changes
 
@@ -419,17 +420,73 @@ if (response?.data?.guestId) {
 
 ---
 
+## Latest Updates (24 Nov 2025)
+
+### SendPulse Email Integration
+**Files Added:**
+- `/app/backend/src/services/email/sendpulse.service.ts` - SendPulse REST API client with OAuth 2.0
+
+**Files Modified:**
+- `/app/backend/src/services/email/email-template.service.ts` (lines 687-974)
+  - Added `renderOrderConfirmationWithMagicLink()` - HTML email template
+  - Added `renderOrderConfirmationWithMagicLinkText()` - Plain text version
+- `/app/backend/src/services/checkout-dp.service.ts` (lines 7-15, 43-52, 244-270)
+  - Imported TokenService
+  - Generate magic link token after order creation
+  - Send email via SendPulse with magic link
+  - Return `uploadLink` and `uploadToken` in response
+
+### Frontend Magic Link Dialog
+**File Added:**
+- `/app/frontend/components/checkout/UploadLinkDialog.tsx` (NEW, ~120 lines)
+  - Emerald/green success theme
+  - Copy-to-clipboard functionality with toast
+  - Navigate to upload page button
+  - Email backup notice
+
+**File Modified:**
+- `/app/frontend/components/checkout/DPCheckoutForm.tsx`
+  - Integrated UploadLinkDialog component
+  - Show dialog after successful checkout with magic link
+
+### UX Improvements - Error Messages
+**File Modified:**
+- `/app/frontend/app/order/upload/[token]/page.tsx` (lines 15-46, 177-209)
+  - Added `translateError()` helper function
+  - Friendly Indonesian error messages with emojis
+  - Contextual hints for each error type
+
+### UX Improvements - Navigation
+**Files Modified:**
+- `/app/backend/src/routes/upload.ts` (lines 55-77)
+  - Added jastiperSlug query and response
+  - Query through Order → Trip → User to get Jastiper's slug
+- `/app/frontend/app/order/upload/[token]/page.tsx` (lines 60, 78, 168-169, 311-312)
+  - Store jastiperSlug from validate response
+  - Update "Kembali" buttons to navigate to Jastiper profile
+
+### Bug Fixes (24 Nov 2025)
+1. ✅ **Body Parser Issue** - `/app/backend/src/index.ts` line 39
+   - Changed regex to only skip file upload endpoints (CUID format)
+2. ✅ **Token Already Used** - `/app/backend/src/services/token.service.ts` lines 172-176, 210
+   - Moved usedCount increment from verifyChallenge to revokeToken
+3. ✅ **Base64 Email Content** - `/app/backend/src/services/email/sendpulse.service.ts`
+   - Removed Base64 encoding, SendPulse accepts HTML directly
+
 ## Known Issues / TODO
 1. ✅ ~~File upload handler~~ - IMPLEMENTED (local storage, will migrate to R2)
 2. ✅ ~~Generate token endpoint~~ - IMPLEMENTED with authentication
 3. ✅ ~~Email not saving~~ - FIXED (21 Nov 2025)
 4. ✅ ~~Route handler missing fields~~ - FIXED (21 Nov 2025)
 5. ✅ ~~Participant email NULL~~ - FIXED (21 Nov 2025)
-6. Payment link in checkout response is mocked - needs real payment gateway integration
-7. Service worker for push notifications not yet implemented (Phase 5)
-8. No automated tests yet (Phase 6)
-9. No admin UI to generate upload tokens (only API endpoint, can use Postman/curl)
-10. npm install multer failed - used custom implementation instead
+6. ✅ ~~SendPulse email integration~~ - IMPLEMENTED (24 Nov 2025)
+7. ✅ ~~Magic link popup after checkout~~ - IMPLEMENTED (24 Nov 2025)
+8. ✅ ~~User-friendly error messages~~ - IMPLEMENTED (24 Nov 2025)
+9. ✅ ~~Navigation to Jastiper profile~~ - FIXED (24 Nov 2025)
+10. Payment link in checkout response is mocked - needs real payment gateway integration
+11. Service worker for push notifications not yet implemented (Phase 5)
+12. No automated tests yet (Phase 6)
+13. npm install multer failed - used custom implementation instead
 
 ## Security Considerations Implemented
 - ✅ SHA256 hashing for guest contact info (privacy)

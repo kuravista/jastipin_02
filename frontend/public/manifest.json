@@ -1,0 +1,23 @@
+{
+  "name": "Jastipin.me - Otomatisasi Jastip",
+  "short_name": "Jastipin",
+  "description": "Otomatisasi bisnis jastip via WhatsApp",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FB923C",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icon-light-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

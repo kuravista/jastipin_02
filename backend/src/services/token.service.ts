@@ -169,15 +169,25 @@ export class TokenService {
       return { verified: false, error: 'Invalid verification code' }
     }
 
-    // Increment usedCount on successful verification
+    // Don't increment usedCount here - only increment after successful upload
+    // This allows user to verify and then upload without token being consumed
+
+    // Return success with order ID
+    return { verified: true, orderId: validation.orderId }
+  }
+
+  /**
+   * Mark token as used (increment usedCount)
+   * Should be called after successful file upload
+   * @param token - Raw token string
+   */
+  async markTokenAsUsed(token: string): Promise<void> {
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex')
+
     await this.db.guestAccessToken.update({
       where: { tokenHash },
       data: { usedCount: { increment: 1 } },
     })
-
-    // Return success with order ID
-    return { verified: true, orderId: validation.orderId }
   }
 
   /**
@@ -202,10 +212,13 @@ export class TokenService {
       throw error
     }
 
-    // Mark as revoked
+    // Mark as revoked AND increment usedCount
     await this.db.guestAccessToken.update({
       where: { tokenHash },
-      data: { revokedAt: new Date() },
+      data: {
+        revokedAt: new Date(),
+        usedCount: { increment: 1 }
+      },
     })
   }
 }

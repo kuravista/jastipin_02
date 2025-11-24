@@ -5,6 +5,7 @@ import { Poppins, Inter } from "next/font/google"
 import { AuthProvider } from "@/lib/auth-context"
 import { Toaster } from "@/components/ui/sonner"
 import "./globals.css"
+import "@/lib/mobile-fullscreen"
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -39,6 +40,24 @@ export const metadata: Metadata = {
     ],
     apple: "/apple-icon.png",
   },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Jastipin.me",
+  },
+}
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#FB923C" },
+    { media: "(prefers-color-scheme: dark)", color: "#EA7C2C" },
+  ],
 }
 
 export default function RootLayout({

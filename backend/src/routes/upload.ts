@@ -52,9 +52,28 @@ router.get('/validate', validateLimiter, async (req: Request, res: Response) => 
       return
     }
 
+    // Get jastiper slug from order
+    let jastiperSlug = null
+    if (result.orderId) {
+      const order = await db.order.findUnique({
+        where: { id: result.orderId },
+        include: {
+          Trip: {
+            include: {
+              User: {
+                select: { slug: true }
+              }
+            }
+          }
+        }
+      })
+      jastiperSlug = order?.Trip?.User?.slug || null
+    }
+
     res.json({
       valid: true,
       challenge: result.challenge,
+      jastiperSlug,
     })
   } catch (error: any) {
     const status = error.status || 500

@@ -1,9 +1,9 @@
 # Guest Checkout Implementation - Final Status Report
 
-**Project:** Guest Checkout & Secure Upload Flow  
-**Status:** Phase 1-4 COMPLETE ✅  
-**Date Completed:** 21 November 2025  
-**Last Updated:** 21 November 2025 (Email bug fix)
+**Project:** Guest Checkout & Secure Upload Flow
+**Status:** Phase 1-4 COMPLETE ✅
+**Date Completed:** 21 November 2025
+**Last Updated:** 24 November 2025 (SendPulse + Magic Link + UX Improvements)
 
 ---
 
@@ -18,6 +18,10 @@ Successfully implemented a complete guest checkout system with email persistence
 - ✅ Challenge-response verification (last 4 digits WhatsApp)
 - ✅ File upload with Bearer token authentication
 - ✅ Cross-device guest recognition via phone hash
+- ✅ SendPulse email integration with magic link backup
+- ✅ Frontend popup with magic link after checkout
+- ✅ User-friendly error messages in Bahasa Indonesia
+- ✅ Smart navigation back to Jastiper profile page
 
 ---
 
@@ -127,6 +131,72 @@ model Participant {
 - [ ] Automated unit tests
 
 **Status:** PENDING - Manual testing in progress
+
+---
+
+## 📧 SendPulse Email Integration (24 Nov 2025)
+
+### Implementation Details
+
+**Email Service:**
+- SendPulse REST API integration via `sendpulse-api` npm package
+- OAuth 2.0 authentication with API credentials
+- HTML + Plain text email templates with responsive design
+- SPF configuration for no-reply@jastipin.me to avoid spam
+
+**Magic Link Flow:**
+1. Guest completes checkout → Backend generates secure token
+2. Frontend shows popup with magic link (primary UX)
+3. Email sent via SendPulse with magic link (backup)
+4. User clicks link → Validates token → Verifies phone → Uploads proof
+
+**Files Added/Modified:**
+- `/app/backend/src/services/email/sendpulse.service.ts` - SendPulse API client
+- `/app/backend/src/services/email/email-template.service.ts` - Added `renderOrderConfirmationWithMagicLink()` methods
+- `/app/backend/src/services/checkout-dp.service.ts` - Integrated TokenService and email sending
+- `/app/frontend/components/checkout/UploadLinkDialog.tsx` (NEW) - Popup dialog with copy-to-clipboard
+- `/app/frontend/components/checkout/DPCheckoutForm.tsx` - Integrated upload link dialog
+
+**Status:** ✅ COMPLETE - Emails delivered successfully, HTML rendering working
+
+---
+
+## 🎨 UX Improvements (24 Nov 2025)
+
+### Bug #2: Confusing Error Messages
+**Problem:** Technical English error messages not user-friendly
+**Solution:** Created `translateError()` helper with friendly Indonesian messages
+
+**Error Translations:**
+- "Token revoked" → "✅ Bukti Pembayaran Sudah Diupload" with explanation
+- "Token expired" → "⏰ Link Sudah Kadaluarsa" with 7-day validity info
+- "Invalid token" → "❌ Link Tidak Valid" with troubleshooting hints
+
+**File:** `/app/frontend/app/order/upload/[token]/page.tsx` lines 15-46
+
+### Bug #3: Body Parser Configuration
+**Problem:** JSON body was undefined for verify endpoint
+**Root Cause:** Body parser regex skipped all `/api/upload/*` routes
+**Solution:** Changed regex to CUID-specific `/\/api\/upload\/cm[a-z0-9]{23}$/`
+
+**File:** `/app/backend/src/index.ts` line 39
+
+### Bug #4: Token Already Used
+**Problem:** Token consumed after phone verification, before upload
+**Root Cause:** `verifyChallenge()` incremented `usedCount` too early
+**Solution:** Moved increment to `revokeToken()` called after successful upload
+
+**File:** `/app/backend/src/services/token.service.ts` lines 172-176, 210
+
+### Bug #5: Wrong Navigation After Upload
+**Problem:** "Kembali" button redirected to homepage instead of Jastiper profile
+**Solution:** Added `jastiperSlug` to validate endpoint response, frontend uses it for navigation
+
+**Files Modified:**
+- `/app/backend/src/routes/upload.ts` lines 55-77 - Query and return jastiperSlug
+- `/app/frontend/app/order/upload/[token]/page.tsx` lines 60, 78, 168-169, 311-312 - Store and use jastiperSlug
+
+**Status:** ✅ ALL FIXED - Better UX with friendly messages and correct navigation
 
 ---
 

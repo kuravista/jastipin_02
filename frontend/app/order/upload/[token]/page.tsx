@@ -11,6 +11,40 @@ import { AlertCircle, Loader2, CheckCircle2, Upload } from 'lucide-react'
 
 type UploadStep = 'validating' | 'challenge' | 'upload' | 'success' | 'error'
 
+// Helper function to translate error messages
+const translateError = (error: string): { title: string; message: string; hint?: string } => {
+  const errorLower = error.toLowerCase()
+
+  if (errorLower.includes('token revoked') || errorLower.includes('already used')) {
+    return {
+      title: '✅ Bukti Pembayaran Sudah Diupload',
+      message: 'Link ini sudah pernah digunakan untuk mengupload bukti pembayaran. Setiap link hanya bisa digunakan satu kali untuk keamanan.',
+      hint: 'Jika Anda ingin mengupload ulang, silakan hubungi Jastiper Anda.'
+    }
+  }
+
+  if (errorLower.includes('expired') || errorLower.includes('kadaluarsa')) {
+    return {
+      title: '⏰ Link Sudah Kadaluarsa',
+      message: 'Link upload ini sudah tidak berlaku. Link hanya valid selama 7 hari setelah checkout.',
+      hint: 'Silakan hubungi Jastiper Anda untuk mendapatkan link baru.'
+    }
+  }
+
+  if (errorLower.includes('invalid token')) {
+    return {
+      title: '❌ Link Tidak Valid',
+      message: 'Link yang Anda gunakan tidak valid atau salah. Pastikan Anda menggunakan link yang lengkap dari email atau popup checkout.',
+      hint: 'Salin link lengkap dari email konfirmasi yang Anda terima.'
+    }
+  }
+
+  return {
+    title: 'Link Tidak Valid',
+    message: error || 'Terjadi kesalahan saat memvalidasi link.'
+  }
+}
+
 export default function GuestUploadPage() {
   const params = useParams()
   const router = useRouter()
@@ -23,6 +57,7 @@ export default function GuestUploadPage() {
   const [challengeResponse, setChallengeResponse] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [jastiperSlug, setJastiperSlug] = useState<string | null>(null)
 
   useEffect(() => {
     validateToken()
@@ -40,6 +75,7 @@ export default function GuestUploadPage() {
       }
 
       setChallenge(data.challenge)
+      setJastiperSlug(data.jastiperSlug)
       setStep('challenge')
     } catch (err: any) {
       setError(err.message || 'Gagal memvalidasi token')
@@ -141,19 +177,32 @@ export default function GuestUploadPage() {
   }
 
   if (step === 'error') {
+    const errorInfo = translateError(error)
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-blue-50 px-4">
         <Card className="w-full max-w-md">
           <CardHeader>
             <div className="flex items-center space-x-2">
-              <AlertCircle className="w-6 h-6 text-red-500" />
-              <CardTitle className="text-red-500">Link Tidak Valid</CardTitle>
+              <AlertCircle className="w-6 h-6 text-amber-500" />
+              <CardTitle className="text-gray-900">{errorInfo.title}</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-gray-600">{error}</p>
-            <Button variant="outline" onClick={() => router.push('/')} className="w-full">
-              Kembali ke Beranda
+            <div className="space-y-3">
+              <p className="text-gray-700 leading-relaxed">{errorInfo.message}</p>
+
+              {errorInfo.hint && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-800">
+                    <strong>💡 Saran:</strong> {errorInfo.hint}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <Button variant="outline" onClick={() => router.push(jastiperSlug ? `/${jastiperSlug}` : '/')} className="w-full">
+              Kembali ke {jastiperSlug ? 'Profil Jastiper' : 'Beranda'}
             </Button>
           </CardContent>
         </Card>
@@ -308,8 +357,8 @@ export default function GuestUploadPage() {
             <p className="text-center text-gray-600">
               Bukti pembayaran Anda telah diterima. Jastiper akan segera memverifikasi pembayaran Anda.
             </p>
-            <Button onClick={() => router.push('/')} className="w-full">
-              Kembali ke Beranda
+            <Button onClick={() => router.push(jastiperSlug ? `/${jastiperSlug}` : '/')} className="w-full">
+              Kembali ke {jastiperSlug ? 'Profil Jastiper' : 'Beranda'}
             </Button>
           </CardContent>
         </Card>

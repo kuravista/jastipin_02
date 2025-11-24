@@ -34,8 +34,9 @@ const PORT = process.env.API_PORT || 4000
 // Middleware
 // Parse JSON for most routes
 app.use((req, res, next) => {
-  // Skip body parsing for image upload routes to handle multipart manually
-  if (req.path.includes('/api/images/upload') || req.path.includes('/api/upload/')) {
+  // Skip body parsing ONLY for multipart file upload endpoints (with CUID orderId format)
+  // Allow JSON parsing for /api/upload/validate and /api/upload/verify
+  if (req.path.includes('/api/images/upload') || req.path.match(/\/api\/upload\/cm[a-z0-9]{23}$/)) {
     return next()
   }
   express.json({ limit: '10mb' })(req, res, next)

@@ -4,7 +4,7 @@
  */
 
 import express, { type Router } from 'express'
-import { getMemoryStats, getHealthStatus, getActiveLocks, cleanupExpiredLocks } from '../services/stock-lock.service'
+import { getMemoryStats, getHealthStatus, getActiveLocks, cleanupExpiredLocks } from '../services/stock-lock.service.js'
 
 const router: Router = express.Router()
 
