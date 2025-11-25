@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Label } from '@/components/ui/label'
 import { 
   Select, 
@@ -43,13 +43,25 @@ export default function AddressForm({ value, onChange, required = true }: Addres
   const [cities, setCities] = useState<LocationOption[]>([])
   const [districts, setDistricts] = useState<LocationOption[]>([])
   const [villages, setVillages] = useState<LocationOption[]>([])
-  
+
   const [loading, setLoading] = useState({
     provinces: false,
     cities: false,
     districts: false,
     villages: false
   })
+
+  // Track if this is initial data load to prevent clearing loaded data
+  const isInitialLoadRef = useRef(true)
+  const hasLoadedDataRef = useRef(false)
+
+  // Mark as loaded when we receive full address data
+  useEffect(() => {
+    if (value.provinceId && value.cityId && value.districtId) {
+      hasLoadedDataRef.current = true
+      isInitialLoadRef.current = false
+    }
+  }, [value.provinceId, value.cityId, value.districtId])
 
   // Fetch provinces on mount
   useEffect(() => {
@@ -147,6 +159,16 @@ export default function AddressForm({ value, onChange, required = true }: Addres
   }
 
   const handleProvinceChange = (provinceId: string) => {
+    // Don't trigger onChange if value hasn't actually changed
+    if (provinceId === value.provinceId || (provinceId === '' && !value.provinceId)) {
+      return
+    }
+
+    // Don't clear data if this is just loading existing data
+    if (hasLoadedDataRef.current && provinceId === value.provinceId) {
+      return
+    }
+
     const province = provinces.find(p => p.id === provinceId)
     onChange({
       ...value,
@@ -162,6 +184,16 @@ export default function AddressForm({ value, onChange, required = true }: Addres
   }
 
   const handleCityChange = (cityId: string) => {
+    // Don't trigger onChange if value hasn't actually changed
+    if (cityId === value.cityId || (cityId === '' && !value.cityId)) {
+      return
+    }
+
+    // Don't clear data if this is just loading existing data
+    if (hasLoadedDataRef.current && cityId === value.cityId) {
+      return
+    }
+
     const city = cities.find(c => c.id === cityId)
     onChange({
       ...value,
@@ -175,6 +207,16 @@ export default function AddressForm({ value, onChange, required = true }: Addres
   }
 
   const handleDistrictChange = (districtId: string) => {
+    // Don't trigger onChange if value hasn't actually changed
+    if (districtId === value.districtId || (districtId === '' && !value.districtId)) {
+      return
+    }
+
+    // Don't clear data if this is just loading existing data
+    if (hasLoadedDataRef.current && districtId === value.districtId) {
+      return
+    }
+
     const district = districts.find(d => d.id === districtId)
     onChange({
       ...value,
@@ -186,12 +228,21 @@ export default function AddressForm({ value, onChange, required = true }: Addres
   }
 
   const handleVillageChange = (villageId: string) => {
+    // Don't trigger onChange if value hasn't actually changed
+    if (villageId === value.villageId || (villageId === '' && !value.villageId)) {
+      return
+    }
+
     const village = villages.find(v => v.id === villageId)
     onChange({
       ...value,
       villageId,
       villageName: village?.name || ''
     })
+  }
+
+  const handleTextFieldChange = (field: string, newValue: string) => {
+    onChange({ ...value, [field]: newValue })
   }
 
   return (
@@ -205,7 +256,7 @@ export default function AddressForm({ value, onChange, required = true }: Addres
           <Input
             id="recipientName"
             value={value.recipientName || ''}
-            onChange={(e) => onChange({ ...value, recipientName: e.target.value })}
+            onChange={(e) => handleTextFieldChange('recipientName', e.target.value)}
             placeholder="Nama lengkap penerima"
             required={required}
           />
@@ -220,7 +271,7 @@ export default function AddressForm({ value, onChange, required = true }: Addres
             id="phone"
             type="tel"
             value={value.phone || ''}
-            onChange={(e) => onChange({ ...value, phone: e.target.value })}
+            onChange={(e) => handleTextFieldChange('phone', e.target.value)}
             placeholder="08123456789"
             required={required}
           />
@@ -339,7 +390,7 @@ export default function AddressForm({ value, onChange, required = true }: Addres
         <Textarea
           id="addressText"
           value={value.addressText || ''}
-          onChange={(e) => onChange({ ...value, addressText: e.target.value })}
+          onChange={(e) => handleTextFieldChange('addressText', e.target.value)}
           placeholder="Jl. Contoh No. 123, RT/RW 01/02, Patokan: Dekat masjid..."
           rows={3}
           required={required}
@@ -358,7 +409,7 @@ export default function AddressForm({ value, onChange, required = true }: Addres
           id="postalCode"
           type="text"
           value={value.postalCode || ''}
-          onChange={(e) => onChange({ ...value, postalCode: e.target.value })}
+          onChange={(e) => handleTextFieldChange('postalCode', e.target.value)}
           placeholder="12345"
           maxLength={5}
         />

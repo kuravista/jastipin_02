@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -35,9 +34,11 @@ interface DPCheckoutFormProps {
   mode?: 'page' | 'modal'
   onSuccess?: (data: any) => void
   onCancel?: () => void
+  jastiperSlug?: string // NEW: For redirect after upload
 }
 
 const GUEST_PROFILE_KEY = 'jastipin_guest_profile'
+const GUEST_ADDRESS_KEY = 'jastipin_guest_address'
 
 interface GuestProfile {
   guestId: string
@@ -47,26 +48,44 @@ interface GuestProfile {
   rememberMe: boolean
 }
 
-export default function DPCheckoutForm({ 
-  tripId, 
+interface SavedAddress {
+  recipientName: string
+  phone: string
+  provinceId: string
+  provinceName: string
+  cityId: string
+  cityName: string
+  districtId: string
+  districtName: string
+  villageId?: string
+  villageName?: string
+  addressText: string
+  postalCode?: string
+}
+
+export default function DPCheckoutForm({
+  tripId,
   tripTitle,
-  products, 
+  products,
   items,
   mode = 'page',
   onSuccess,
-  onCancel
+  onCancel,
+  jastiperSlug
 }: DPCheckoutFormProps) {
-  const router = useRouter()
-  
   const [participantName, setParticipantName] = useState('')
   const [participantPhone, setParticipantPhone] = useState('')
   const [participantEmail, setParticipantEmail] = useState('')
   const [rememberMe, setRememberMe] = useState(true)
   const [notes, setNotes] = useState('')
   const [address, setAddress] = useState<any>({})
-  
+  const [sameAsBuyer, setSameAsBuyer] = useState(false)
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // Check if any product requires address (type = goods)
+  const requiresAddress = products.some(p => p.type === 'goods')
 
   // Upload Link Dialog state
   const [showUploadDialog, setShowUploadDialog] = useState(false)
@@ -74,11 +93,24 @@ export default function DPCheckoutForm({
     orderId: string
     uploadLink: string
     dpAmount: number
+    bankAccount?: {
+      bankName: string
+      accountNumber: string
+      accountHolderName: string
+    } | null
+    participantPhone?: string
+    jastiperSlug?: string
   } | null>(null)
 
   useEffect(() => {
     loadGuestProfile()
   }, [])
+
+  useEffect(() => {
+    if (requiresAddress) {
+      loadGuestAddress()
+    }
+  }, [requiresAddress])
 
   const loadGuestProfile = () => {
     try {
@@ -95,9 +127,26 @@ export default function DPCheckoutForm({
     }
   }
 
+  const loadGuestAddress = async () => {
+    try {
+      const stored = localStorage.getItem(GUEST_ADDRESS_KEY)
+      if (stored) {
+        const savedAddress: SavedAddress = JSON.parse(stored)
+
+        // Use a small delay to ensure AddressForm is mounted and ready
+        await new Promise(resolve => setTimeout(resolve, 100))
+
+        setAddress(savedAddress)
+      }
+    } catch (err) {
+      console.error('Failed to load guest address:', err)
+    }
+  }
+
   const saveGuestProfile = (guestId: string) => {
     if (!rememberMe) {
       localStorage.removeItem(GUEST_PROFILE_KEY)
+      localStorage.removeItem(GUEST_ADDRESS_KEY)
       return
     }
 
@@ -115,8 +164,45 @@ export default function DPCheckoutForm({
     }
   }
 
-  // Check if any product requires address (type = goods)
-  const requiresAddress = products.some(p => p.type === 'goods')
+  const saveGuestAddress = () => {
+    if (!rememberMe || !requiresAddress) {
+      localStorage.removeItem(GUEST_ADDRESS_KEY)
+      return
+    }
+
+    try {
+      const savedAddress: SavedAddress = {
+        recipientName: address.recipientName || '',
+        phone: address.phone || '',
+        provinceId: address.provinceId || '',
+        provinceName: address.provinceName || '',
+        cityId: address.cityId || '',
+        cityName: address.cityName || '',
+        districtId: address.districtId || '',
+        districtName: address.districtName || '',
+        villageId: address.villageId,
+        villageName: address.villageName,
+        addressText: address.addressText || '',
+        postalCode: address.postalCode
+      }
+      localStorage.setItem(GUEST_ADDRESS_KEY, JSON.stringify(savedAddress))
+    } catch (err) {
+      console.error('Failed to save guest address:', err)
+    }
+  }
+
+  const handleSameAsBuyerChange = (checked: boolean) => {
+    setSameAsBuyer(checked)
+
+    if (checked) {
+      // Copy data from buyer info to address
+      setAddress({
+        ...address,
+        recipientName: participantName,
+        phone: participantPhone
+      })
+    }
+  }
 
   // Calculate subtotal
   const subtotal = items.reduce((sum, item) => {
@@ -184,23 +270,27 @@ export default function DPCheckoutForm({
         throw new Error(data.error || 'Checkout failed')
       }
 
-      // Save guest profile to localStorage
-      if (data.data.guestId) {
-        saveGuestProfile(data.data.guestId)
+      // Save guest profile and address to localStorage
+      if (data.guestId) {
+        saveGuestProfile(data.guestId)
+        saveGuestAddress()
       }
 
       // Show upload link dialog
       setUploadDialogData({
-        orderId: data.data.orderId,
-        uploadLink: data.data.uploadLink,
-        dpAmount: data.data.dpAmount
+        orderId: data.orderId,
+        uploadLink: data.uploadLink,
+        dpAmount: data.dpAmount,
+        bankAccount: data.bankAccount,
+        participantPhone: participantPhone, // Pass phone for auto-verify
+        jastiperSlug: jastiperSlug // Pass jastiper slug for redirect
       })
       setShowUploadDialog(true)
 
       // Handle success based on mode
       if (onSuccess) {
         // Modal mode: call callback (after dialog is shown)
-        onSuccess(data.data)
+        onSuccess(data)
       }
 
     } catch (err: any) {
@@ -334,7 +424,22 @@ export default function DPCheckoutForm({
               Alamat untuk pengiriman barang
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            {/* Same as Buyer Checkbox */}
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="sameAsBuyer"
+                checked={sameAsBuyer}
+                onCheckedChange={handleSameAsBuyerChange}
+              />
+              <Label
+                htmlFor="sameAsBuyer"
+                className="text-sm font-normal cursor-pointer"
+              >
+                Sama dengan Informasi Pembeli
+              </Label>
+            </div>
+
             <AddressForm
               value={address}
               onChange={setAddress}
@@ -460,25 +565,9 @@ export default function DPCheckoutForm({
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-blue-50 py-8">
-        <div className="container max-w-2xl mx-auto px-4">
-          {/* Header */}
-          <div className="mb-6">
-            <button
-              onClick={() => router.back()}
-              className="text-sm text-gray-600 hover:text-gray-900 mb-2"
-            >
-              ← Kembali
-            </button>
-            <h1 className="text-2xl font-bold text-gray-900">{tripTitle || 'Checkout'}</h1>
-            <p className="text-sm text-gray-600">Checkout dengan sistem DP</p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {content}
-          </form>
-        </div>
-      </div>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {content}
+      </form>
 
       {/* Upload Link Dialog */}
       {uploadDialogData && (
@@ -488,6 +577,9 @@ export default function DPCheckoutForm({
           orderId={uploadDialogData.orderId}
           uploadLink={uploadDialogData.uploadLink}
           dpAmount={uploadDialogData.dpAmount}
+          bankAccount={uploadDialogData.bankAccount}
+          participantPhone={uploadDialogData.participantPhone}
+          jastiperSlug={uploadDialogData.jastiperSlug}
         />
       )}
     </>

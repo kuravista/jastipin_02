@@ -3,7 +3,7 @@
 **Project:** Guest Checkout & Secure Upload Flow
 **Status:** Phase 1-4 COMPLETE ✅
 **Date Completed:** 21 November 2025
-**Last Updated:** 24 November 2025 (SendPulse + Magic Link + UX Improvements)
+**Last Updated:** 25 November 2025 (Address Form Persistence + Copy Buyer Info)
 
 ---
 
@@ -22,6 +22,9 @@ Successfully implemented a complete guest checkout system with email persistence
 - ✅ Frontend popup with magic link after checkout
 - ✅ User-friendly error messages in Bahasa Indonesia
 - ✅ Smart navigation back to Jastiper profile page
+- ✅ **NEW (25 Nov):** Address form auto-save to localStorage
+- ✅ **NEW (25 Nov):** Copy buyer info to shipping address
+- ✅ **NEW (25 Nov):** Fixed location dropdowns (province, city, district)
 
 ---
 

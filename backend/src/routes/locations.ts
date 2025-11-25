@@ -22,11 +22,17 @@ const router: Router = express.Router()
 router.get('/provinces', async (_req, res) => {
   try {
     const provinces = await getProvinces()
-    
+
+    // Transform 'code' to 'id' for frontend compatibility
+    const transformed = provinces.map(p => ({
+      id: p.code,
+      name: p.name
+    }))
+
     res.json({
       success: true,
-      count: provinces.length,
-      data: provinces
+      count: transformed.length,
+      data: transformed
     })
   } catch (error: any) {
     res.status(500).json({
@@ -43,7 +49,7 @@ router.get('/provinces', async (_req, res) => {
 router.get('/regencies/:provinceId', async (req, res) => {
   try {
     const { provinceId } = req.params
-    
+
     if (!provinceId) {
       res.status(400).json({
         success: false,
@@ -51,13 +57,19 @@ router.get('/regencies/:provinceId', async (req, res) => {
       })
       return
     }
-    
+
     const cities = await getCitiesByProvince(provinceId)
-    
+
+    // Transform 'code' to 'id' for frontend compatibility
+    const transformed = cities.map(c => ({
+      id: c.code,
+      name: c.name
+    }))
+
     res.json({
       success: true,
-      count: cities.length,
-      data: cities
+      count: transformed.length,
+      data: transformed
     })
   } catch (error: any) {
     res.status(500).json({
@@ -74,7 +86,7 @@ router.get('/regencies/:provinceId', async (req, res) => {
 router.get('/districts/:cityId', async (req, res) => {
   try {
     const { cityId } = req.params
-    
+
     if (!cityId) {
       res.status(400).json({
         success: false,
@@ -82,13 +94,19 @@ router.get('/districts/:cityId', async (req, res) => {
       })
       return
     }
-    
+
     const districts = await getDistrictsByCity(cityId)
-    
+
+    // Transform 'code' to 'id' for frontend compatibility
+    const transformed = districts.map(d => ({
+      id: d.code,
+      name: d.name
+    }))
+
     res.json({
       success: true,
-      count: districts.length,
-      data: districts
+      count: transformed.length,
+      data: transformed
     })
   } catch (error: any) {
     res.status(500).json({
@@ -105,7 +123,7 @@ router.get('/districts/:cityId', async (req, res) => {
 router.get('/villages/:districtId', async (req, res) => {
   try {
     const { districtId } = req.params
-    
+
     if (!districtId) {
       res.status(400).json({
         success: false,
@@ -113,13 +131,19 @@ router.get('/villages/:districtId', async (req, res) => {
       })
       return
     }
-    
+
     const villages = await getVillagesByDistrict(districtId)
-    
+
+    // Transform 'code' to 'id' for frontend compatibility
+    const transformed = villages.map(v => ({
+      id: v.code,
+      name: v.name
+    }))
+
     res.json({
       success: true,
-      count: villages.length,
-      data: villages
+      count: transformed.length,
+      data: transformed
     })
   } catch (error: any) {
     res.status(500).json({
