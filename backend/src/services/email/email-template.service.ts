@@ -9,6 +9,40 @@ import {
   PaymentReceivedData
 } from '../../types/email.types.js'
 
+/**
+ * Shared compact email styles
+ */
+const compactStyles = `
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.5; color: #374151; margin: 0; padding: 0; background: #f3f4f6; }
+  .wrap { max-width: 520px; margin: 16px auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .head { padding: 20px; text-align: center; color: #fff; }
+  .head h1 { margin: 0; font-size: 20px; font-weight: 600; }
+  .body { padding: 20px; }
+  .hi { font-size: 15px; margin-bottom: 12px; }
+  .box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin: 14px 0; }
+  .box-title { font-weight: 600; font-size: 14px; margin-bottom: 10px; color: #111827; }
+  .row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; border-bottom: 1px solid #e5e7eb; }
+  .row:last-child { border-bottom: none; }
+  .label { color: #6b7280; }
+  .val { color: #111827; font-weight: 500; text-align: right; }
+  .amt { font-size: 18px; font-weight: 700; color: #4f46e5; }
+  .info { background: #eef2ff; border-left: 3px solid #4f46e5; padding: 12px 14px; border-radius: 6px; margin: 14px 0; font-size: 13px; }
+  .info-green { background: #ecfdf5; border-left-color: #10b981; }
+  .info-warn { background: #fffbeb; border-left-color: #f59e0b; }
+  .info b { display: block; margin-bottom: 6px; color: #1f2937; }
+  .info ol { margin: 0; padding-left: 18px; }
+  .info li { margin: 4px 0; color: #374151; }
+  .cta { text-align: center; margin: 18px 0; }
+  .btn { display: inline-block; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px; }
+  .btn-primary { background: #4f46e5; color: #fff !important; }
+  .btn-green { background: #10b981; color: #fff !important; }
+  .btn-ghost { background: #f3f4f6; color: #4f46e5 !important; }
+  .note { font-size: 12px; color: #6b7280; text-align: center; margin-top: 14px; }
+  .foot { background: #f9fafb; padding: 14px; text-align: center; font-size: 11px; color: #9ca3af; border-top: 1px solid #e5e7eb; }
+  .foot b { color: #6b7280; }
+  @media (max-width: 540px) { .wrap { margin: 0; border-radius: 0; } .row { flex-direction: column; } .val { text-align: left; margin-top: 2px; } }
+`
+
 export class EmailTemplateService {
   /**
    * Render Order Confirmation Email (HTML)
@@ -20,195 +54,46 @@ export class EmailTemplateService {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Order Confirmation</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      margin: 0;
-      padding: 0;
-      background-color: #f5f5f5;
-    }
-    .container {
-      max-width: 600px;
-      margin: 20px auto;
-      background: white;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    .header {
-      background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
-      color: white;
-      padding: 30px 20px;
-      text-align: center;
-    }
-    .header h1 {
-      margin: 0;
-      font-size: 28px;
-      font-weight: 600;
-    }
-    .content {
-      padding: 30px 20px;
-    }
-    .greeting {
-      font-size: 16px;
-      margin-bottom: 20px;
-    }
-    .order-details {
-      background: #F9FAFB;
-      padding: 20px;
-      border-radius: 8px;
-      margin: 20px 0;
-      border: 1px solid #E5E7EB;
-    }
-    .order-details h3 {
-      margin-top: 0;
-      color: #4F46E5;
-      font-size: 18px;
-    }
-    .detail-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px solid #E5E7EB;
-    }
-    .detail-row:last-child {
-      border-bottom: none;
-    }
-    .detail-label {
-      font-weight: 600;
-      color: #6B7280;
-    }
-    .detail-value {
-      color: #111827;
-      text-align: right;
-    }
-    .amount {
-      font-size: 24px;
-      font-weight: bold;
-      color: #4F46E5;
-    }
-    .next-steps {
-      background: #EEF2FF;
-      padding: 20px;
-      border-radius: 8px;
-      margin: 20px 0;
-      border-left: 4px solid #4F46E5;
-    }
-    .next-steps h3 {
-      margin-top: 0;
-      color: #4F46E5;
-    }
-    .next-steps ol {
-      margin: 10px 0;
-      padding-left: 20px;
-    }
-    .next-steps li {
-      margin: 8px 0;
-      color: #374151;
-    }
-    .button {
-      display: inline-block;
-      padding: 14px 28px;
-      background: #4F46E5;
-      color: white !important;
-      text-decoration: none;
-      border-radius: 6px;
-      font-weight: 600;
-      margin: 20px 0;
-      text-align: center;
-    }
-    .button:hover {
-      background: #4338CA;
-    }
-    .button-container {
-      text-align: center;
-      margin: 30px 0;
-    }
-    .footer {
-      text-align: center;
-      padding: 20px;
-      background: #F9FAFB;
-      font-size: 13px;
-      color: #6B7280;
-      border-top: 1px solid #E5E7EB;
-    }
-    .footer p {
-      margin: 5px 0;
-    }
-    @media only screen and (max-width: 600px) {
-      .container {
-        margin: 0;
-        border-radius: 0;
-      }
-      .content {
-        padding: 20px 15px;
-      }
-      .detail-row {
-        flex-direction: column;
-      }
-      .detail-value {
-        text-align: left;
-        margin-top: 4px;
-      }
-    }
-  </style>
+  <title>Konfirmasi Pesanan</title>
+  <style>${compactStyles}</style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>✅ Order Confirmed!</h1>
+  <div class="wrap">
+    <div class="head" style="background: linear-gradient(135deg, #4f46e5, #7c3aed);">
+      <h1>✅ Pesanan Dikonfirmasi</h1>
     </div>
-    <div class="content">
-      <p class="greeting">Hi <strong>${data.customerName}</strong>,</p>
-      <p>Thank you for your order! Your Jastiper <strong>${data.jastiperName}</strong> has received your request and will validate it soon.</p>
+    <div class="body">
+      <p class="hi">Halo <b>${data.customerName}</b>,</p>
+      <p style="font-size: 14px; margin-bottom: 14px;">Terima kasih atas pesanan Anda! Jastiper <b>${data.jastiperName}</b> telah menerima permintaan Anda dan akan segera memprosesnya.</p>
 
-      <div class="order-details">
-        <h3>📦 Order Details</h3>
-        <div class="detail-row">
-          <span class="detail-label">Order ID:</span>
-          <span class="detail-value"><strong>${data.orderId}</strong></span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Date:</span>
-          <span class="detail-value">${data.orderDate}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Products:</span>
-          <span class="detail-value">${data.productList}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">DP Paid:</span>
-          <span class="detail-value amount">${data.dpAmount}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Remaining:</span>
-          <span class="detail-value">${data.remainingAmount}</span>
-        </div>
+      <div class="box">
+        <div class="box-title">📦 Detail Pesanan</div>
+        <div class="row"><span class="label">ID Pesanan</span><span class="val">${data.orderCode}</span></div>
+        <div class="row"><span class="label">Tanggal</span><span class="val">${data.orderDate}</span></div>
+        <div class="row"><span class="label">Produk</span><span class="val">${data.productList}</span></div>
+        <div class="row"><span class="label">DP Dibayar</span><span class="val amt">${data.dpAmount}</span></div>
+        <div class="row"><span class="label">Sisa Pembayaran</span><span class="val">${data.remainingAmount}</span></div>
       </div>
 
-      <div class="next-steps">
-        <h3>🚀 What's Next?</h3>
+      <div class="info">
+        <b>🚀 Langkah Selanjutnya</b>
         <ol>
-          <li>Your Jastiper will validate your order within 1-2 days</li>
-          <li>You'll receive a payment link for the remaining amount</li>
-          <li>Upload your payment proof using the magic link we'll send you</li>
-          <li>Track your order status in real-time</li>
+          <li>Jastiper akan memvalidasi pesanan dalam 1-2 hari</li>
+          <li>Anda akan menerima tautan pembayaran untuk sisa tagihan</li>
+          <li>Unggah bukti pembayaran melalui tautan yang dikirimkan</li>
+          <li>Pantau status pesanan secara real-time</li>
         </ol>
       </div>
 
-      <div class="button-container">
-        <a href="${data.dashboardUrl}" class="button">View Order Status</a>
+      <div class="cta">
+        <a href="${data.dashboardUrl}" class="btn btn-primary">Lihat Status Pesanan</a>
       </div>
 
-      <p style="margin-top: 30px; color: #6B7280;">If you have any questions, please contact your Jastiper directly.</p>
+      <p class="note">Jika ada pertanyaan, silakan hubungi Jastiper Anda secara langsung.</p>
     </div>
-    <div class="footer">
-      <p><strong>Jastipin</strong> - Your Trusted Jastip Platform</p>
-      <p>&copy; 2025 Jastipin. All rights reserved.</p>
-      <p style="margin-top: 10px;">This is an automated email. Please do not reply to this message.</p>
+    <div class="foot">
+      <b>Jastipin</b> — Platform Jastip Terpercaya<br>
+      © 2025 Jastipin. Email otomatis, tidak perlu dibalas.
     </div>
   </div>
 </body>
@@ -221,35 +106,34 @@ export class EmailTemplateService {
    */
   static renderOrderConfirmationText(data: OrderConfirmationData): string {
     return `
-Order Confirmed!
+PESANAN DIKONFIRMASI ✅
 
-Hi ${data.customerName},
+Halo ${data.customerName},
 
-Thank you for your order! Your Jastiper ${data.jastiperName} has received your request and will validate it soon.
+Terima kasih atas pesanan Anda! Jastiper ${data.jastiperName} telah menerima permintaan Anda dan akan segera memprosesnya.
 
-ORDER DETAILS
-=============
-Order ID: ${data.orderId}
-Date: ${data.orderDate}
-Products: ${data.productList}
-DP Paid: ${data.dpAmount}
-Remaining: ${data.remainingAmount}
+DETAIL PESANAN
+--------------
+ID Pesanan: ${data.orderCode}
+Tanggal: ${data.orderDate}
+Produk: ${data.productList}
+DP Dibayar: ${data.dpAmount}
+Sisa Pembayaran: ${data.remainingAmount}
 
-WHAT'S NEXT?
-============
-1. Your Jastiper will validate your order within 1-2 days
-2. You'll receive a payment link for the remaining amount
-3. Upload your payment proof using the magic link we'll send you
-4. Track your order status in real-time
+LANGKAH SELANJUTNYA
+-------------------
+1. Jastiper akan memvalidasi pesanan dalam 1-2 hari
+2. Anda akan menerima tautan pembayaran untuk sisa tagihan
+3. Unggah bukti pembayaran melalui tautan yang dikirimkan
+4. Pantau status pesanan secara real-time
 
-View your order: ${data.dashboardUrl}
+Lihat pesanan: ${data.dashboardUrl}
 
-If you have any questions, please contact your Jastiper directly.
+Jika ada pertanyaan, silakan hubungi Jastiper Anda.
 
 ---
-Jastipin - Your Trusted Jastip Platform
-© 2025 Jastipin. All rights reserved.
-This is an automated email. Please do not reply to this message.
+Jastipin - Platform Jastip Terpercaya
+© 2025 Jastipin. Email otomatis, tidak perlu dibalas.
     `.trim()
   }
 
@@ -263,168 +147,47 @@ This is an automated email. Please do not reply to this message.
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Payment Link</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      margin: 0;
-      padding: 0;
-      background-color: #f5f5f5;
-    }
-    .container {
-      max-width: 600px;
-      margin: 20px auto;
-      background: white;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    .header {
-      background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-      color: white;
-      padding: 30px 20px;
-      text-align: center;
-    }
-    .header h1 {
-      margin: 0;
-      font-size: 28px;
-      font-weight: 600;
-    }
-    .content {
-      padding: 30px 20px;
-    }
-    .amount-box {
-      background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-      color: white;
-      padding: 30px;
-      border-radius: 8px;
-      text-align: center;
-      margin: 20px 0;
-    }
-    .amount {
-      font-size: 36px;
-      font-weight: bold;
-      margin: 10px 0;
-    }
-    .amount-label {
-      font-size: 14px;
-      opacity: 0.9;
-    }
-    .warning {
-      background: #FEF3C7;
-      padding: 15px 20px;
-      border-left: 4px solid #F59E0B;
-      margin: 20px 0;
-      border-radius: 4px;
-    }
-    .warning strong {
-      color: #D97706;
-    }
-    .steps {
-      background: #F0FDF4;
-      padding: 20px;
-      border-radius: 8px;
-      margin: 20px 0;
-      border-left: 4px solid #10B981;
-    }
-    .steps h3 {
-      margin-top: 0;
-      color: #059669;
-    }
-    .steps ol {
-      margin: 10px 0;
-      padding-left: 20px;
-    }
-    .steps li {
-      margin: 8px 0;
-      color: #374151;
-    }
-    .button {
-      display: inline-block;
-      padding: 16px 32px;
-      background: #10B981;
-      color: white !important;
-      text-decoration: none;
-      border-radius: 6px;
-      font-weight: 600;
-      font-size: 18px;
-      margin: 20px 0;
-    }
-    .button:hover {
-      background: #059669;
-    }
-    .button-container {
-      text-align: center;
-      margin: 30px 0;
-    }
-    .security-note {
-      background: #F3F4F6;
-      padding: 15px;
-      border-radius: 6px;
-      font-size: 13px;
-      color: #6B7280;
-      margin: 20px 0;
-    }
-    .footer {
-      text-align: center;
-      padding: 20px;
-      background: #F9FAFB;
-      font-size: 13px;
-      color: #6B7280;
-      border-top: 1px solid #E5E7EB;
-    }
-    @media only screen and (max-width: 600px) {
-      .container {
-        margin: 0;
-        border-radius: 0;
-      }
-      .amount {
-        font-size: 28px;
-      }
-    }
-  </style>
+  <title>Pembayaran Diperlukan</title>
+  <style>${compactStyles}</style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>💳 Payment Required</h1>
+  <div class="wrap">
+    <div class="head" style="background: linear-gradient(135deg, #10b981, #059669);">
+      <h1>💳 Pembayaran Diperlukan</h1>
     </div>
-    <div class="content">
-      <p>Hi <strong>${data.customerName}</strong>,</p>
-      <p>Great news! Your order <strong>${data.orderId}</strong> has been validated by ${data.jastiperName}.</p>
+    <div class="body">
+      <p class="hi">Halo <b>${data.customerName}</b>,</p>
+      <p style="font-size: 14px; margin-bottom: 14px;">Kabar baik! Pesanan <b>${data.orderCode}</b> telah divalidasi oleh ${data.jastiperName}.</p>
 
-      <div class="amount-box">
-        <div class="amount-label">Amount Due</div>
-        <div class="amount">${data.remainingAmount}</div>
+      <div class="box" style="text-align: center; background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: none;">
+        <div style="font-size: 12px; opacity: 0.9;">Total Tagihan</div>
+        <div style="font-size: 28px; font-weight: 700; margin: 6px 0;">${data.remainingAmount}</div>
       </div>
 
-      <div class="warning">
-        <strong>⏰ Payment Deadline:</strong> ${data.deadline}
+      <div class="info info-warn">
+        <b>⏰ Batas Waktu: ${data.deadline}</b>
+        Mohon segera lakukan pembayaran sebelum batas waktu untuk menghindari pembatalan.
       </div>
 
-      <div class="steps">
-        <h3>📸 How to Upload Payment Proof:</h3>
+      <div class="info info-green">
+        <b>📸 Cara Unggah Bukti Pembayaran</b>
         <ol>
-          <li>Transfer <strong>${data.remainingAmount}</strong> to the account provided by your Jastiper</li>
-          <li>Click the button below to open the upload page</li>
-          <li>Enter the last 4 digits of your WhatsApp number for verification</li>
-          <li>Upload a clear photo of your payment receipt</li>
+          <li>Transfer <b>${data.remainingAmount}</b> ke rekening Jastiper</li>
+          <li>Klik tombol di bawah untuk membuka halaman unggah</li>
+          <li>Masukkan 4 digit terakhir nomor WhatsApp untuk verifikasi</li>
+          <li>Unggah foto bukti transfer yang jelas</li>
         </ol>
       </div>
 
-      <div class="button-container">
-        <a href="${data.magicLink}" class="button">📤 Upload Payment Proof</a>
+      <div class="cta">
+        <a href="${data.magicLink}" class="btn btn-green">📤 Unggah Bukti Pembayaran</a>
       </div>
 
-      <div class="security-note">
-        🔒 <strong>Security:</strong> This link is valid for 7 days and can only be used once. Keep it safe and do not share with others.
-      </div>
+      <p class="note">🔒 Tautan ini berlaku 7 hari dan hanya dapat digunakan satu kali. Jaga kerahasiaannya.</p>
     </div>
-    <div class="footer">
-      <p><strong>Jastipin</strong> - Your Trusted Jastip Platform</p>
-      <p>&copy; 2025 Jastipin. All rights reserved.</p>
+    <div class="foot">
+      <b>Jastipin</b> — Platform Jastip Terpercaya<br>
+      © 2025 Jastipin. Email otomatis, tidak perlu dibalas.
     </div>
   </div>
 </body>
@@ -437,27 +200,29 @@ This is an automated email. Please do not reply to this message.
    */
   static renderPaymentLinkText(data: PaymentLinkData): string {
     return `
-Payment Required
+PEMBAYARAN DIPERLUKAN 💳
 
-Hi ${data.customerName},
+Halo ${data.customerName},
 
-Great news! Your order ${data.orderId} has been validated by ${data.jastiperName}.
+Kabar baik! Pesanan ${data.orderCode} telah divalidasi oleh ${data.jastiperName}.
 
-AMOUNT DUE: ${data.remainingAmount}
+TOTAL TAGIHAN: ${data.remainingAmount}
 
-⏰ PAYMENT DEADLINE: ${data.deadline}
+⏰ BATAS WAKTU: ${data.deadline}
+Mohon segera lakukan pembayaran sebelum batas waktu.
 
-HOW TO UPLOAD PAYMENT PROOF:
-1. Transfer ${data.remainingAmount} to the account provided by your Jastiper
-2. Open this link: ${data.magicLink}
-3. Enter the last 4 digits of your WhatsApp number for verification
-4. Upload a clear photo of your payment receipt
+CARA UNGGAH BUKTI PEMBAYARAN
+----------------------------
+1. Transfer ${data.remainingAmount} ke rekening Jastiper
+2. Buka tautan: ${data.magicLink}
+3. Masukkan 4 digit terakhir nomor WhatsApp untuk verifikasi
+4. Unggah foto bukti transfer yang jelas
 
-🔒 SECURITY: This link is valid for 7 days and can only be used once.
+🔒 Tautan berlaku 7 hari dan hanya dapat digunakan satu kali.
 
 ---
-Jastipin - Your Trusted Jastip Platform
-© 2025 Jastipin. All rights reserved.
+Jastipin - Platform Jastip Terpercaya
+© 2025 Jastipin. Email otomatis, tidak perlu dibalas.
     `.trim()
   }
 
@@ -471,175 +236,44 @@ Jastipin - Your Trusted Jastip Platform
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Payment Received</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      margin: 0;
-      padding: 0;
-      background-color: #f5f5f5;
-    }
-    .container {
-      max-width: 600px;
-      margin: 20px auto;
-      background: white;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    .header {
-      background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-      color: white;
-      padding: 30px 20px;
-      text-align: center;
-    }
-    .header h1 {
-      margin: 0;
-      font-size: 28px;
-      font-weight: 600;
-    }
-    .content {
-      padding: 30px 20px;
-    }
-    .checkmark {
-      text-align: center;
-      font-size: 64px;
-      margin: 20px 0;
-    }
-    .success-message {
-      text-align: center;
-      font-size: 20px;
-      color: #059669;
-      font-weight: 600;
-      margin: 20px 0;
-    }
-    .receipt-box {
-      background: white;
-      padding: 25px;
-      border: 2px dashed #10B981;
-      border-radius: 8px;
-      margin: 30px 0;
-    }
-    .receipt-box h3 {
-      margin-top: 0;
-      color: #059669;
-      border-bottom: 2px solid #10B981;
-      padding-bottom: 10px;
-    }
-    .receipt-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 10px 0;
-      border-bottom: 1px solid #E5E7EB;
-    }
-    .receipt-row:last-child {
-      border-bottom: none;
-      font-weight: bold;
-      color: #059669;
-      font-size: 18px;
-    }
-    .receipt-label {
-      font-weight: 600;
-      color: #6B7280;
-    }
-    .receipt-value {
-      color: #111827;
-      text-align: right;
-    }
-    .next-steps {
-      background: #F0FDF4;
-      padding: 20px;
-      border-radius: 8px;
-      margin: 20px 0;
-      border-left: 4px solid #10B981;
-    }
-    .next-steps h3 {
-      margin-top: 0;
-      color: #059669;
-    }
-    .next-steps ol {
-      margin: 10px 0;
-      padding-left: 20px;
-    }
-    .next-steps li {
-      margin: 8px 0;
-      color: #374151;
-    }
-    .footer {
-      text-align: center;
-      padding: 20px;
-      background: #F9FAFB;
-      font-size: 13px;
-      color: #6B7280;
-      border-top: 1px solid #E5E7EB;
-    }
-    @media only screen and (max-width: 600px) {
-      .container {
-        margin: 0;
-        border-radius: 0;
-      }
-      .checkmark {
-        font-size: 48px;
-      }
-      .receipt-row {
-        flex-direction: column;
-      }
-      .receipt-value {
-        text-align: left;
-        margin-top: 4px;
-      }
-    }
-  </style>
+  <title>Pembayaran Diterima</title>
+  <style>${compactStyles}</style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>✅ Payment Received!</h1>
+  <div class="wrap">
+    <div class="head" style="background: linear-gradient(135deg, #10b981, #059669);">
+      <h1>✅ Pembayaran Diterima</h1>
     </div>
-    <div class="content">
-      <div class="checkmark">✨</div>
-      <p class="success-message">Thank you, ${data.customerName}!</p>
-      <p style="text-align: center;">Your payment has been successfully received and verified.</p>
+    <div class="body">
+      <div style="text-align: center; font-size: 48px; margin: 10px 0;">🎉</div>
+      <p style="text-align: center; font-size: 16px; font-weight: 600; color: #059669; margin-bottom: 6px;">Terima kasih, ${data.customerName}!</p>
+      <p style="text-align: center; font-size: 14px; color: #6b7280; margin-bottom: 16px;">Pembayaran Anda telah berhasil diterima dan diverifikasi.</p>
 
-      <div class="receipt-box">
-        <h3>🧾 Payment Receipt</h3>
-        <div class="receipt-row">
-          <span class="receipt-label">Order ID:</span>
-          <span class="receipt-value"><strong>${data.orderId}</strong></span>
-        </div>
-        <div class="receipt-row">
-          <span class="receipt-label">Receipt Number:</span>
-          <span class="receipt-value">${data.receiptNumber}</span>
-        </div>
-        <div class="receipt-row">
-          <span class="receipt-label">Jastiper:</span>
-          <span class="receipt-value">${data.jastiperName}</span>
-        </div>
-        <div class="receipt-row">
-          <span class="receipt-label">Amount Paid:</span>
-          <span class="receipt-value">${data.amountPaid}</span>
-        </div>
+      <div class="box" style="border: 2px dashed #10b981;">
+        <div class="box-title">🧾 Bukti Pembayaran</div>
+        <div class="row"><span class="label">ID Pesanan</span><span class="val">${data.orderCode}</span></div>
+        <div class="row"><span class="label">No. Kwitansi</span><span class="val">${data.receiptNumber}</span></div>
+        <div class="row"><span class="label">Jastiper</span><span class="val">${data.jastiperName}</span></div>
+        <div class="row"><span class="label">Jumlah Dibayar</span><span class="val" style="color: #059669; font-weight: 700;">${data.amountPaid}</span></div>
       </div>
 
-      <div class="next-steps">
-        <h3>🚀 What Happens Next?</h3>
+      <div class="info info-green">
+        <b>🚀 Proses Selanjutnya</b>
         <ol>
-          <li>Your Jastiper will start processing your order</li>
-          <li>You'll receive updates as your order progresses</li>
-          <li>Track your shipment once items are purchased and shipped</li>
-          <li>Get delivery notifications when your package arrives</li>
+          <li>Jastiper akan mulai memproses pesanan Anda</li>
+          <li>Anda akan menerima notifikasi perkembangan pesanan</li>
+          <li>Lacak pengiriman setelah barang dikirim</li>
+          <li>Terima notifikasi saat paket tiba</li>
         </ol>
       </div>
 
-      <p style="margin-top: 30px; text-align: center; color: #059669; font-weight: 600;">
-        Thank you for using Jastipin! 🎉
+      <p style="text-align: center; color: #059669; font-weight: 600; font-size: 15px; margin-top: 16px;">
+        Terima kasih telah menggunakan Jastipin! 🙏
       </p>
     </div>
-    <div class="footer">
-      <p><strong>Jastipin</strong> - Your Trusted Jastip Platform</p>
-      <p>&copy; 2025 Jastipin. All rights reserved.</p>
+    <div class="foot">
+      <b>Jastipin</b> — Platform Jastip Terpercaya<br>
+      © 2025 Jastipin. Email otomatis, tidak perlu dibalas.
     </div>
   </div>
 </body>
@@ -652,31 +286,31 @@ Jastipin - Your Trusted Jastip Platform
    */
   static renderPaymentReceivedText(data: PaymentReceivedData): string {
     return `
-Payment Received!
+PEMBAYARAN DITERIMA ✅
 
-Thank you, ${data.customerName}!
+Terima kasih, ${data.customerName}!
 
-Your payment has been successfully received and verified.
+Pembayaran Anda telah berhasil diterima dan diverifikasi.
 
-PAYMENT RECEIPT
-===============
-Order ID: ${data.orderId}
-Receipt Number: ${data.receiptNumber}
+BUKTI PEMBAYARAN
+----------------
+ID Pesanan: ${data.orderCode}
+No. Kwitansi: ${data.receiptNumber}
 Jastiper: ${data.jastiperName}
-Amount Paid: ${data.amountPaid}
+Jumlah Dibayar: ${data.amountPaid}
 
-WHAT HAPPENS NEXT?
-==================
-1. Your Jastiper will start processing your order
-2. You'll receive updates as your order progresses
-3. Track your shipment once items are purchased and shipped
-4. Get delivery notifications when your package arrives
+PROSES SELANJUTNYA
+------------------
+1. Jastiper akan mulai memproses pesanan Anda
+2. Anda akan menerima notifikasi perkembangan pesanan
+3. Lacak pengiriman setelah barang dikirim
+4. Terima notifikasi saat paket tiba
 
-Thank you for using Jastipin!
+Terima kasih telah menggunakan Jastipin! 🙏
 
 ---
-Jastipin - Your Trusted Jastip Platform
-© 2025 Jastipin. All rights reserved.
+Jastipin - Platform Jastip Terpercaya
+© 2025 Jastipin. Email otomatis, tidak perlu dibalas.
     `.trim()
   }
 
@@ -691,235 +325,58 @@ Jastipin - Your Trusted Jastip Platform
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Order Confirmation</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      margin: 0;
-      padding: 0;
-      background-color: #f5f5f5;
-    }
-    .container {
-      max-width: 600px;
-      margin: 20px auto;
-      background: white;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    .header {
-      background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
-      color: white;
-      padding: 30px 20px;
-      text-align: center;
-    }
-    .header h1 {
-      margin: 0;
-      font-size: 28px;
-      font-weight: 600;
-    }
-    .content {
-      padding: 30px 20px;
-    }
-    .greeting {
-      font-size: 16px;
-      margin-bottom: 20px;
-    }
-    .order-details {
-      background: #F9FAFB;
-      padding: 20px;
-      border-radius: 8px;
-      margin: 20px 0;
-      border: 1px solid #E5E7EB;
-    }
-    .order-details h3 {
-      margin-top: 0;
-      color: #4F46E5;
-      font-size: 18px;
-    }
-    .detail-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px solid #E5E7EB;
-    }
-    .detail-row:last-child {
-      border-bottom: none;
-    }
-    .detail-label {
-      font-weight: 600;
-      color: #6B7280;
-    }
-    .detail-value {
-      color: #111827;
-      text-align: right;
-    }
-    .amount {
-      font-size: 24px;
-      font-weight: bold;
-      color: #4F46E5;
-    }
-    .magic-link-section {
-      background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-      color: white;
-      padding: 25px;
-      border-radius: 8px;
-      margin: 20px 0;
-      text-align: center;
-    }
-    .magic-link-section h3 {
-      margin-top: 0;
-      font-size: 20px;
-      margin-bottom: 10px;
-    }
-    .magic-link-section p {
-      margin: 10px 0;
-      opacity: 0.95;
-    }
-    .button {
-      display: inline-block;
-      padding: 14px 28px;
-      background: white;
-      color: #059669 !important;
-      text-decoration: none;
-      border-radius: 6px;
-      font-weight: 600;
-      margin: 15px 0 10px 0;
-      text-align: center;
-      font-size: 16px;
-    }
-    .button:hover {
-      background: #F0FDF4;
-    }
-    .backup-note {
-      background: #FEF3C7;
-      padding: 15px 20px;
-      border-left: 4px solid #F59E0B;
-      margin: 20px 0;
-      border-radius: 4px;
-      font-size: 14px;
-    }
-    .backup-note strong {
-      color: #D97706;
-    }
-    .next-steps {
-      background: #EEF2FF;
-      padding: 20px;
-      border-radius: 8px;
-      margin: 20px 0;
-      border-left: 4px solid #4F46E5;
-    }
-    .next-steps h3 {
-      margin-top: 0;
-      color: #4F46E5;
-    }
-    .next-steps ol {
-      margin: 10px 0;
-      padding-left: 20px;
-    }
-    .next-steps li {
-      margin: 8px 0;
-      color: #374151;
-    }
-    .button-container {
-      text-align: center;
-      margin: 30px 0;
-    }
-    .footer {
-      text-align: center;
-      padding: 20px;
-      background: #F9FAFB;
-      font-size: 13px;
-      color: #6B7280;
-      border-top: 1px solid #E5E7EB;
-    }
-    .footer p {
-      margin: 5px 0;
-    }
-    @media only screen and (max-width: 600px) {
-      .container {
-        margin: 0;
-        border-radius: 0;
-      }
-      .content {
-        padding: 20px 15px;
-      }
-      .detail-row {
-        flex-direction: column;
-      }
-      .detail-value {
-        text-align: left;
-        margin-top: 4px;
-      }
-    }
-  </style>
+  <title>Konfirmasi Pesanan</title>
+  <style>${compactStyles}</style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>✅ Order Confirmed!</h1>
+  <div class="wrap">
+    <div class="head" style="background: linear-gradient(135deg, #4f46e5, #7c3aed);">
+      <h1>✅ Pesanan Dikonfirmasi</h1>
     </div>
-    <div class="content">
-      <p class="greeting">Hi <strong>${data.customerName}</strong>,</p>
-      <p>Thank you for your order! Your Jastiper <strong>${data.jastiperName}</strong> has received your request.</p>
+    <div class="body">
+      <p class="hi">Halo <b>${data.customerName}</b>,</p>
+      <p style="font-size: 14px; margin-bottom: 14px;">Terima kasih atas pesanan Anda! Jastiper <b>${data.jastiperName}</b> telah menerima permintaan Anda.</p>
 
-      <div class="order-details">
-        <h3>📦 Order Details</h3>
-        <div class="detail-row">
-          <span class="detail-label">Order ID:</span>
-          <span class="detail-value"><strong>${data.orderId}</strong></span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Date:</span>
-          <span class="detail-value">${data.orderDate}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Products:</span>
-          <span class="detail-value">${data.productList}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">DP Paid:</span>
-          <span class="detail-value amount">${data.dpAmount}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Remaining:</span>
-          <span class="detail-value">${data.remainingAmount}</span>
-        </div>
+      <div class="box">
+        <div class="box-title">📦 Detail Pesanan</div>
+        <div class="row"><span class="label">ID Pesanan</span><span class="val">${data.orderCode}</span></div>
+        <div class="row"><span class="label">Tanggal</span><span class="val">${data.orderDate}</span></div>
+        <div class="row"><span class="label">Produk</span><span class="val">${data.productList}</span></div>
+        <div class="row"><span class="label">DP Dibayar</span><span class="val amt">${data.dpAmount}</span></div>
+        <div class="row"><span class="label">Sisa Pembayaran</span><span class="val">${data.remainingAmount}</span></div>
       </div>
 
-      <div class="magic-link-section">
-        <h3>📤 Upload Payment Proof</h3>
-        <p>Click the button below to upload your payment proof (DP receipt)</p>
-        <a href="${data.magicLink}" class="button">Upload Payment Proof</a>
-        <p style="font-size: 13px; margin-top: 15px;">This link is valid for 7 days and is secure for your order only.</p>
+      <div class="box" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: none; text-align: center;">
+        <div style="font-weight: 600; margin-bottom: 8px;">📤 Unggah Bukti Pembayaran DP</div>
+        <p style="font-size: 13px; margin: 0 0 12px 0; opacity: 0.95;">Klik tombol di bawah untuk mengunggah bukti transfer DP Anda</p>
+        <a href="${data.magicLink}" class="btn" style="background: #fff; color: #059669 !important;">Unggah Bukti Pembayaran</a>
+        <p style="font-size: 11px; margin-top: 10px; opacity: 0.85;">Tautan berlaku 7 hari dan aman untuk pesanan Anda.</p>
       </div>
 
-      <div class="backup-note">
-        <strong>💡 Note:</strong> This email is sent as a backup. If you already uploaded your payment proof on the website after checkout, you can ignore this email.
+      <div class="info info-warn">
+        <b>💡 Catatan</b>
+        Email ini dikirim sebagai cadangan. Jika Anda sudah mengunggah bukti pembayaran di website setelah checkout, Anda dapat mengabaikan email ini.
       </div>
 
-      <div class="next-steps">
-        <h3>🚀 What's Next?</h3>
+      <div class="info">
+        <b>🚀 Langkah Selanjutnya</b>
         <ol>
-          <li>Upload your DP payment proof using the link above</li>
-          <li>Your Jastiper will validate your order within 1-2 days</li>
-          <li>You'll receive final amount and payment details</li>
-          <li>Track your order status in real-time</li>
+          <li>Unggah bukti pembayaran DP melalui tautan di atas</li>
+          <li>Jastiper akan memvalidasi pesanan dalam 1-2 hari</li>
+          <li>Anda akan menerima detail jumlah akhir dan pembayaran</li>
+          <li>Pantau status pesanan secara real-time</li>
         </ol>
       </div>
 
-      <div class="button-container">
-        <a href="${data.dashboardUrl}" style="display: inline-block; padding: 12px 24px; background: #F3F4F6; color: #4F46E5 !important; text-decoration: none; border-radius: 6px; font-weight: 600;">View Order Status</a>
+      <div class="cta">
+        <a href="${data.dashboardUrl}" class="btn btn-ghost">Lihat Status Pesanan</a>
       </div>
 
-      <p style="margin-top: 30px; color: #6B7280;">If you have any questions, please contact your Jastiper directly.</p>
+      <p class="note">Jika ada pertanyaan, silakan hubungi Jastiper Anda secara langsung.</p>
     </div>
-    <div class="footer">
-      <p><strong>Jastipin</strong> - Your Trusted Jastip Platform</p>
-      <p>&copy; 2025 Jastipin. All rights reserved.</p>
-      <p style="margin-top: 10px;">This is an automated email. Please do not reply to this message.</p>
+    <div class="foot">
+      <b>Jastipin</b> — Platform Jastip Terpercaya<br>
+      © 2025 Jastipin. Email otomatis, tidak perlu dibalas.
     </div>
   </div>
 </body>
@@ -932,44 +389,43 @@ Jastipin - Your Trusted Jastip Platform
    */
   static renderOrderConfirmationWithMagicLinkText(data: OrderConfirmationData & { magicLink: string }): string {
     return `
-Order Confirmed!
+PESANAN DIKONFIRMASI ✅
 
-Hi ${data.customerName},
+Halo ${data.customerName},
 
-Thank you for your order! Your Jastiper ${data.jastiperName} has received your request.
+Terima kasih atas pesanan Anda! Jastiper ${data.jastiperName} telah menerima permintaan Anda.
 
-ORDER DETAILS
-=============
-Order ID: ${data.orderId}
-Date: ${data.orderDate}
-Products: ${data.productList}
-DP Paid: ${data.dpAmount}
-Remaining: ${data.remainingAmount}
+DETAIL PESANAN
+--------------
+ID Pesanan: ${data.orderCode}
+Tanggal: ${data.orderDate}
+Produk: ${data.productList}
+DP Dibayar: ${data.dpAmount}
+Sisa Pembayaran: ${data.remainingAmount}
 
-UPLOAD PAYMENT PROOF
-====================
-Click this link to upload your DP payment proof:
+UNGGAH BUKTI PEMBAYARAN DP
+--------------------------
+Klik tautan ini untuk mengunggah bukti transfer DP Anda:
 ${data.magicLink}
 
-This link is valid for 7 days and is secure for your order only.
+Tautan berlaku 7 hari dan aman untuk pesanan Anda.
 
-💡 NOTE: This email is sent as a backup. If you already uploaded your payment proof on the website after checkout, you can ignore this email.
+💡 CATATAN: Email ini dikirim sebagai cadangan. Jika Anda sudah mengunggah bukti pembayaran di website setelah checkout, Anda dapat mengabaikan email ini.
 
-WHAT'S NEXT?
-============
-1. Upload your DP payment proof using the link above
-2. Your Jastiper will validate your order within 1-2 days
-3. You'll receive final amount and payment details
-4. Track your order status in real-time
+LANGKAH SELANJUTNYA
+-------------------
+1. Unggah bukti pembayaran DP melalui tautan di atas
+2. Jastiper akan memvalidasi pesanan dalam 1-2 hari
+3. Anda akan menerima detail jumlah akhir dan pembayaran
+4. Pantau status pesanan secara real-time
 
-View your order: ${data.dashboardUrl}
+Lihat pesanan: ${data.dashboardUrl}
 
-If you have any questions, please contact your Jastiper directly.
+Jika ada pertanyaan, silakan hubungi Jastiper Anda.
 
 ---
-Jastipin - Your Trusted Jastip Platform
-© 2025 Jastipin. All rights reserved.
-This is an automated email. Please do not reply to this message.
+Jastipin - Platform Jastip Terpercaya
+© 2025 Jastipin. Email otomatis, tidak perlu dibalas.
     `.trim()
   }
 }

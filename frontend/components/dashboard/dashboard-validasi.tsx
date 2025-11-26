@@ -7,24 +7,43 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { AlertCircle, Calculator, CheckCircle, CheckCircle2, Loader2, Package, XCircle, Search, FileText, ChevronUp, MapPin, User, Image as ImageIcon, ExternalLink, Calendar, ChevronDown, TrendingUp } from 'lucide-react'
+import { AlertCircle, Calculator, CheckCircle, CheckCircle2, Loader2, Package, XCircle, Search, FileText, ChevronUp, MapPin, User, Image as ImageIcon, ExternalLink, Calendar, ChevronDown, TrendingUp, Filter, Download, FileSpreadsheet, Tag } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle
 } from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { getApiUrl } from '@/lib/config'
+import { toast } from 'sonner'
+import { exportToExcel, exportShippingLabels, type ExportOrder, type SenderInfo } from '@/lib/export-utils'
+import { useAuth } from '@/lib/auth-context'
 
 interface Order {
   id: string
+  orderCode: string | null
   status: string
   dpAmount: number
   totalPrice: number
   dpPaidAt: string | null
   proofUrl: string | null
+  dpProofUrl: string | null
+  finalProofUrl: string | null
   createdAt: string
   Participant: {
     name: string
@@ -48,6 +67,7 @@ interface Order {
     districtName: string
     cityName: string
     provinceName: string
+    postalCode?: string | null
   } | null
   Trip?: {
     id: string
@@ -63,11 +83,13 @@ interface ShippingOption {
 }
 
 export default function JastiperValidationDashboard() {
+  const { user } = useAuth()
   const [orders, setOrders] = useState<Order[]>([])
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState(false)
   const [error, setError] = useState('')
+  const [exporting, setExporting] = useState(false)
 
   // Filter and search
   const [activeFilter, setActiveFilter] = useState('perlu-validasi')
@@ -95,6 +117,7 @@ export default function JastiperValidationDashboard() {
   // Proof preview
   const [showProofPreview, setShowProofPreview] = useState(false)
   const [selectedProofUrl, setSelectedProofUrl] = useState<string | null>(null)
+  const [selectedProofType, setSelectedProofType] = useState<string>('Bukti Transfer')
 
   useEffect(() => {
     setCurrentPage(1) // Reset to page 1 when filter changes
@@ -142,7 +165,11 @@ export default function JastiperValidationDashboard() {
       } else if (activeFilter === 'perlu-validasi') {
         params.append('status', 'awaiting_validation')
       } else if (activeFilter === 'sudah-validasi') {
-        params.append('status', 'validated')
+        params.append('status', 'awaiting_final_payment')
+      } else if (activeFilter === 'cek-pelunasan') {
+        params.append('status', 'awaiting_final_validation')
+      } else if (activeFilter === 'selesai') {
+        params.append('status', 'paid')
       }
       // If activeFilter === 'semua', no status parameter = fetch all orders
       
@@ -263,7 +290,7 @@ export default function JastiperValidationDashboard() {
 
       // Refresh orders
       await fetchOrders()
-      
+
       // Reset form for this order
       setExpandedOrderId(null)
       setShippingFees(prev => {
@@ -286,11 +313,76 @@ export default function JastiperValidationDashboard() {
         delete newState[orderId]
         return newState
       })
-      
-      alert(action === 'accept' ? 'Pesanan berhasil divalidasi!' : 'Pesanan ditolak')
+
+      // Show toast notification instead of alert
+      if (action === 'accept') {
+        toast.success('Pesanan berhasil divalidasi!', {
+          description: 'Email notifikasi telah dikirim ke customer',
+          duration: 5000,
+        })
+      } else {
+        toast.error('Pesanan ditolak', {
+          description: 'Customer akan menerima notifikasi penolakan',
+          duration: 5000,
+        })
+      }
 
     } catch (err: any) {
       setError(err.message || 'Terjadi kesalahan')
+      toast.error('Gagal memvalidasi pesanan', {
+        description: err.message || 'Terjadi kesalahan',
+        duration: 5000,
+      })
+    } finally {
+      setProcessing(false)
+    }
+  }
+
+  const handleApproveFinal = async (orderId: string, action: 'accept' | 'reject') => {
+    setProcessing(true)
+    setError('')
+
+    try {
+      const response = await fetch(`${getApiUrl()}/orders/${orderId}/approve-final`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          action,
+          rejectionReason: action === 'reject' ? 'Bukti pembayaran final tidak valid' : undefined
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Final approval failed')
+      }
+
+      // Refresh orders
+      await fetchOrders()
+
+      // Reset expanded order
+      setExpandedOrderId(null)
+
+      // Show toast notification
+      if (action === 'accept') {
+        toast.success('Pembayaran final disetujui!', {
+          description: 'Order telah selesai dan ditandai sebagai lunas',
+          duration: 5000,
+        })
+      } else {
+        toast.error('Pembayaran final ditolak', {
+          description: 'Customer perlu upload ulang bukti pembayaran',
+          duration: 5000,
+        })
+      }
+
+    } catch (err: any) {
+      setError(err.message || 'Terjadi kesalahan')
+      toast.error('Gagal memproses approval', {
+        description: err.message || 'Terjadi kesalahan',
+        duration: 5000,
+      })
     } finally {
       setProcessing(false)
     }
@@ -344,62 +436,214 @@ export default function JastiperValidationDashboard() {
     }
   }
 
+  /**
+   * Fetch all orders for export (without pagination)
+   */
+  const fetchAllOrdersForExport = async (): Promise<ExportOrder[]> => {
+    try {
+      const params = new URLSearchParams()
+      
+      // Add status filter based on active filter
+      if (activeFilter === 'belum-bayar') {
+        params.append('status', 'pending_dp')
+      } else if (activeFilter === 'perlu-validasi') {
+        params.append('status', 'awaiting_validation')
+      } else if (activeFilter === 'sudah-validasi') {
+        params.append('status', 'awaiting_final_payment')
+      } else if (activeFilter === 'cek-pelunasan') {
+        params.append('status', 'awaiting_final_validation')
+      } else if (activeFilter === 'selesai') {
+        params.append('status', 'paid')
+      }
+      
+      // Add search query
+      if (searchQuery.trim()) {
+        params.append('search', searchQuery.trim())
+      }
+      
+      // Fetch with max allowed limit (backend allows max 500)
+      params.append('limit', '500')
+      params.append('offset', '0')
+      
+      const endpoint = `${getApiUrl()}/orders?${params.toString()}`
+      
+      const response = await fetch(endpoint, {
+        headers: getAuthHeaders()
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch orders for export')
+      }
+      
+      const data = await response.json()
+      return data.data || []
+    } catch (err) {
+      console.error('Error fetching orders for export:', err)
+      throw err
+    }
+  }
+
+  /**
+   * Handle Excel export
+   */
+  const handleExportExcel = async () => {
+    setExporting(true)
+    try {
+      const allOrders = await fetchAllOrdersForExport()
+      
+      if (allOrders.length === 0) {
+        toast.error('Tidak ada data', {
+          description: 'Tidak ada order untuk di-export',
+          duration: 3000
+        })
+        return
+      }
+
+      exportToExcel(allOrders, 'jastipin-orders')
+      
+      toast.success('Export berhasil!', {
+        description: `${allOrders.length} order telah di-export ke Excel`,
+        duration: 3000
+      })
+    } catch (err) {
+      toast.error('Gagal export', {
+        description: 'Terjadi kesalahan saat export data',
+        duration: 3000
+      })
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  /**
+   * Handle shipping label export (PDF)
+   */
+  const handleExportLabels = async () => {
+    setExporting(true)
+    try {
+      // Build sender info from user profile
+      const senderInfo: SenderInfo = {
+        name: user?.profileName || user?.slug || 'Jastiper',
+        phone: user?.whatsappNumber || '-',
+        address: user?.originAddressText || user?.originDistrictName || '-',
+        city: user?.originCityName || '-',
+        province: user?.originProvinceName || '-',
+        postalCode: user?.originPostalCode
+      }
+
+      // Check if sender has origin address configured
+      if (!user?.originCityName) {
+        toast.error('Alamat Asal Belum Diatur', {
+          description: 'Silakan atur alamat asal Anda di pengaturan profil terlebih dahulu',
+          duration: 5000
+        })
+        return
+      }
+
+      const allOrders = await fetchAllOrdersForExport()
+      const result = exportShippingLabels(allOrders, senderInfo, 'jastipin-labels')
+      
+      if (result.success) {
+        toast.success('Label berhasil dibuat!', {
+          description: result.message,
+          duration: 3000
+        })
+      } else {
+        toast.error('Tidak ada label', {
+          description: result.message,
+          duration: 3000
+        })
+      }
+    } catch (err) {
+      toast.error('Gagal membuat label', {
+        description: 'Terjadi kesalahan saat membuat label pengiriman',
+        duration: 3000
+      })
+    } finally {
+      setExporting(false)
+    }
+  }
+
   const pendingCount = orders.filter(o => o.status === 'awaiting_validation').length
 
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="mb-4">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Validasi Order</h1>
-        <p className="text-sm text-gray-600 mt-1">Kelola semua order yang masuk</p>
+      <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Validasi Order</h1>
+          <p className="text-sm text-gray-600 mt-1">Kelola semua order yang masuk</p>
+        </div>
+        
+        {/* Export Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-9 gap-2"
+              disabled={exporting || loading}
+            >
+              {exporting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+              <span>Export</span>
+              <ChevronDown className="w-3 h-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem 
+              onClick={handleExportExcel}
+              disabled={exporting}
+              className="cursor-pointer"
+            >
+              <FileSpreadsheet className="w-4 h-4 mr-2 text-green-600" />
+              <span>Export Excel</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={handleExportLabels}
+              disabled={exporting}
+              className="cursor-pointer"
+            >
+              <Tag className="w-4 h-4 mr-2 text-blue-600" />
+              <span>Export Label</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <Input
-          type="text"
-          placeholder="Cari nama, nomor HP, atau No. Order..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9 h-10 text-sm bg-white"
-        />
-      </div>
+      {/* Search & Filter */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        {/* Search */}
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Cari nama, nomor HP, atau No. Order..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 h-10 text-sm bg-white"
+          />
+        </div>
 
-      {/* Filter Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        <Button
-          onClick={() => setActiveFilter('semua')}
-          variant={activeFilter === 'semua' ? 'default' : 'outline'}
-          className={activeFilter === 'semua' ? 'bg-[#F26B8A] hover:bg-[#E05576]' : ''}
-          size="sm"
-        >
-          Semua
-        </Button>
-        <Button
-          onClick={() => setActiveFilter('belum-bayar')}
-          variant={activeFilter === 'belum-bayar' ? 'default' : 'outline'}
-          className={activeFilter === 'belum-bayar' ? 'bg-[#F26B8A] hover:bg-[#E05576]' : ''}
-          size="sm"
-        >
-          Belum Bayar
-        </Button>
-        <Button
-          onClick={() => setActiveFilter('perlu-validasi')}
-          variant={activeFilter === 'perlu-validasi' ? 'default' : 'outline'}
-          className={activeFilter === 'perlu-validasi' ? 'bg-[#F26B8A] hover:bg-[#E05576]' : ''}
-          size="sm"
-        >
-          Perlu Validasi {pendingCount > 0 && `(${pendingCount})`}
-        </Button>
-        <Button
-          onClick={() => setActiveFilter('sudah-validasi')}
-          variant={activeFilter === 'sudah-validasi' ? 'default' : 'outline'}
-          className={activeFilter === 'sudah-validasi' ? 'bg-[#F26B8A] hover:bg-[#E05576]' : ''}
-          size="sm"
-        >
-          Sudah Validasi
-        </Button>
+        {/* Filter Select */}
+        <Select value={activeFilter} onValueChange={setActiveFilter}>
+          <SelectTrigger className="w-full sm:w-[220px] h-10 bg-white">
+            <SelectValue placeholder="Filter status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="semua">Semua Order</SelectItem>
+            <SelectItem value="belum-bayar">Belum Bayar</SelectItem>
+            <SelectItem value="perlu-validasi">
+              Perlu Validasi {pendingCount > 0 && `(${pendingCount})`}
+            </SelectItem>
+            <SelectItem value="sudah-validasi">Sudah Validasi</SelectItem>
+            <SelectItem value="cek-pelunasan">Cek Pelunasan</SelectItem>
+            <SelectItem value="selesai">Selesai</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {error && (
@@ -435,8 +679,8 @@ export default function JastiperValidationDashboard() {
         <div className="space-y-3">
         {filteredOrders.map((order) => {
           const isExpanded = expandedOrderId === order.id
-          const isValidated = activeFilter === 'sudah-validasi' || order.status === 'validated'
-          
+          const isValidated = order.status === 'paid'
+
           return (
             <div 
               key={order.id} 
@@ -462,7 +706,11 @@ export default function JastiperValidationDashboard() {
                       <div>
                         <div className="font-semibold text-gray-900 text-sm">{order.Participant.name}</div>
                         <div className="text-xs text-gray-500 flex items-center gap-1">
-                          {order.Participant.phone}
+                          {order.orderCode ? (
+                            <span className="font-mono text-[10px] bg-gray-100 px-1.5 py-0.5 rounded">{order.orderCode}</span>
+                          ) : (
+                            order.Participant.phone
+                          )}
                         </div>
                       </div>
                     </div>
@@ -473,13 +721,19 @@ export default function JastiperValidationDashboard() {
                         className={`text-[10px] px-2 py-0.5 h-5 ${
                           order.status === 'pending_dp' ? 'bg-red-100 text-red-700 hover:bg-red-200 border-red-200' :
                           order.status === 'awaiting_validation' ? 'bg-orange-100 text-orange-700 hover:bg-orange-200 border-orange-200' :
-                          'bg-green-100 text-green-700 hover:bg-green-200 border-green-200'
+                          order.status === 'awaiting_final_payment' ? 'bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-200' :
+                          order.status === 'awaiting_final_validation' ? 'bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-200' :
+                          order.status === 'paid' ? 'bg-green-100 text-green-700 hover:bg-green-200 border-green-200' :
+                          'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200'
                         }`}
                         variant="outline"
                       >
                         {order.status === 'pending_dp' ? 'Belum Bayar' :
                          order.status === 'awaiting_validation' ? 'Validasi' :
-                         'Selesai'}
+                         order.status === 'awaiting_final_payment' ? 'Divalidasi' :
+                         order.status === 'awaiting_final_validation' ? 'Cek Lunas' :
+                         order.status === 'paid' ? 'Selesai' :
+                         order.status}
                       </Badge>
                     </div>
                   </div>
@@ -504,15 +758,21 @@ export default function JastiperValidationDashboard() {
                       className={`text-xs font-normal ${
                         order.status === 'pending_dp' ? 'bg-red-50 text-red-700 border-red-200' :
                         order.status === 'awaiting_validation' ? 'bg-orange-50 text-orange-700 border-orange-200' :
-                        'bg-green-50 text-green-700 border-green-200'
+                        order.status === 'awaiting_final_payment' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                        order.status === 'awaiting_final_validation' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                        order.status === 'paid' ? 'bg-green-50 text-green-700 border-green-200' :
+                        'bg-gray-50 text-gray-700 border-gray-200'
                       }`}
                       variant="outline"
                     >
                       {order.status === 'pending_dp' ? 'Belum Bayar' :
                        order.status === 'awaiting_validation' ? 'Perlu Validasi' :
-                       'Sudah Validasi'}
+                       order.status === 'awaiting_final_payment' ? 'Sudah Validasi' :
+                       order.status === 'awaiting_final_validation' ? 'Cek Pelunasan' :
+                       order.status === 'paid' ? 'Selesai' :
+                       order.status}
                     </Badge>
-                    {order.proofUrl && (
+                    {(order.dpProofUrl || order.finalProofUrl || order.proofUrl) && (
                       <div className="w-2 h-2 rounded-full bg-green-500" title="Bukti Transfer Ada" />
                     )}
                   </div>
@@ -595,51 +855,119 @@ export default function JastiperValidationDashboard() {
                         {/* Proof Section */}
                         <div className="bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
                           <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Bukti Pembayaran</h4>
-                          {order.proofUrl ? (
-                            <div className="flex items-center justify-between p-3 bg-green-50 border border-green-100 rounded-lg">
-                              <div className="flex items-center gap-3">
-                                <div className="p-2 bg-white rounded-md border border-green-100 shadow-sm">
-                                  <ImageIcon className="w-4 h-4 text-green-600" />
+                          {(() => {
+                            // Determine which proof URL to show based on order status
+                            let proofUrl: string | null = null
+                            let proofLabel = 'Bukti Tersedia'
+
+                            if (order.status === 'awaiting_validation' && order.dpProofUrl) {
+                              proofUrl = order.dpProofUrl
+                              proofLabel = 'Bukti DP'
+                            } else if (order.status === 'awaiting_final_payment' && order.dpProofUrl) {
+                              proofUrl = order.dpProofUrl
+                              proofLabel = 'Bukti DP'
+                            } else if (order.status === 'awaiting_final_validation' && order.finalProofUrl) {
+                              proofUrl = order.finalProofUrl
+                              proofLabel = 'Bukti Pelunasan'
+                            } else if (order.status === 'paid' && order.finalProofUrl) {
+                              proofUrl = order.finalProofUrl
+                              proofLabel = 'Bukti Pelunasan'
+                            } else if (order.proofUrl) {
+                              // Fallback to legacy proofUrl
+                              proofUrl = order.proofUrl
+                            }
+
+                            return proofUrl ? (
+                              <div className="flex items-center justify-between p-3 bg-green-50 border border-green-100 rounded-lg">
+                                <div className="flex items-center gap-3">
+                                  <div className="p-2 bg-white rounded-md border border-green-100 shadow-sm">
+                                    <ImageIcon className="w-4 h-4 text-green-600" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-medium text-green-900">{proofLabel}</p>
+                                    <p className="text-xs text-green-600">Diunggah oleh pembeli</p>
+                                  </div>
                                 </div>
-                                <div>
-                                  <p className="text-sm font-medium text-green-900">Bukti Tersedia</p>
-                                  <p className="text-xs text-green-600">Diunggah oleh pembeli</p>
-                                </div>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedProofUrl(proofUrl);
+                                    setSelectedProofType(proofLabel);
+                                    setShowProofPreview(true);
+                                  }}
+                                  className="h-8 text-xs bg-white hover:bg-green-50 border-green-200 text-green-700"
+                                >
+                                  <ExternalLink className="w-3 h-3 mr-1.5" />
+                                  Lihat
+                                </Button>
                               </div>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedProofUrl(order.proofUrl);
-                                  setShowProofPreview(true);
-                                }}
-                                className="h-8 text-xs bg-white hover:bg-green-50 border-green-200 text-green-700"
-                              >
-                                <ExternalLink className="w-3 h-3 mr-1.5" />
-                                Lihat
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-100 rounded-lg text-gray-500">
-                              <AlertCircle className="w-4 h-4" />
-                              <span className="text-sm">Belum ada bukti transfer</span>
-                            </div>
-                          )}
+                            ) : (
+                              <div className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-100 rounded-lg text-gray-500">
+                                <AlertCircle className="w-4 h-4" />
+                                <span className="text-sm">Belum ada bukti transfer</span>
+                              </div>
+                            )
+                          })()}
                         </div>
 
                         {/* Action Section */}
                         <div className="bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
                           <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Tindakan</h4>
-                          
-                          {isValidated ? (
+
+                          {/* Show final payment approval for awaiting_final_validation */}
+                          {order.status === 'awaiting_final_validation' ? (
+                            <div className="space-y-3">
+                              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                                <p className="text-xs font-medium text-amber-900 mb-1">Menunggu Approval Pelunasan</p>
+                                <p className="text-xs text-amber-700">Customer telah upload bukti pelunasan. Periksa dan validasi pembayaran.</p>
+                              </div>
+
+                              <div className="flex gap-2">
+                                <Button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleApproveFinal(order.id, 'accept');
+                                  }}
+                                  disabled={processing}
+                                  className="flex-1 h-9 bg-green-600 hover:bg-green-700 text-white text-sm"
+                                >
+                                  {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-1.5" />}
+                                  Terima
+                                </Button>
+                                <Button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleApproveFinal(order.id, 'reject');
+                                  }}
+                                  disabled={processing}
+                                  variant="outline"
+                                  className="flex-1 h-9 border-red-200 text-red-700 hover:bg-red-50 text-sm"
+                                >
+                                  <XCircle className="w-4 h-4 mr-1.5" />
+                                  Tolak
+                                </Button>
+                              </div>
+                            </div>
+                          ) : order.status === 'awaiting_final_payment' ? (
+                            <div className="flex flex-col items-center justify-center py-4 text-center space-y-3">
+                              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                <CheckCircle2 className="w-6 h-6 text-blue-600" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-900">DP Telah Divalidasi</p>
+                                <p className="text-xs text-gray-500">Menunggu customer upload bukti pelunasan</p>
+                              </div>
+                            </div>
+                          ) : isValidated ? (
                             <div className="flex flex-col items-center justify-center py-4 text-center space-y-3">
                               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                                 <CheckCircle2 className="w-6 h-6 text-green-600" />
                               </div>
                               <div>
-                                <p className="font-medium text-gray-900">Order Telah Divalidasi</p>
-                                <p className="text-xs text-gray-500">Invoice telah dikirim ke pembeli</p>
+                                <p className="font-medium text-gray-900">Order Telah Selesai</p>
+                                <p className="text-xs text-gray-500">Pembayaran lunas dan transaksi selesai</p>
                               </div>
                               <Button
                                 variant="outline"
@@ -879,7 +1207,7 @@ export default function JastiperValidationDashboard() {
       <Dialog open={showProofPreview} onOpenChange={setShowProofPreview}>
         <DialogContent className="max-w-3xl max-h-[90vh]">
           <DialogHeader>
-            <DialogTitle className="text-lg">Bukti Transfer DP</DialogTitle>
+            <DialogTitle className="text-lg">{selectedProofType}</DialogTitle>
             <DialogDescription className="text-sm">
               Preview bukti pembayaran yang diupload oleh customer
             </DialogDescription>

@@ -9,6 +9,7 @@ import { GuestService } from './guest.service.js'
 import { getSendPulseService } from './email/sendpulse.service.js'
 import { EmailTemplateService } from './email/email-template.service.js'
 import { TokenService } from './token.service.js'
+import { generateOrderCode } from '../utils/order-code.js'
 
 const db = new PrismaClient()
 const guestService = new GuestService(db)
@@ -225,9 +226,13 @@ export async function processCheckoutDP(
     // 7. Create order with items (transaction)
     const order = await db.$transaction(async (tx) => {
       
+      // Generate unique order code
+      const orderCode = generateOrderCode()
+      
       // Create order
       const newOrder = await tx.order.create({
         data: {
+          orderCode,
           tripId: request.tripId,
           participantId: participant!.id,
           guestId: guest.id,
@@ -273,6 +278,7 @@ export async function processCheckoutDP(
         customerName: request.participantName,
         customerEmail: request.participantEmail,
         orderId: order.id,
+        orderCode: order.orderCode || `#${order.id.slice(0, 8).toUpperCase()}`,
         dpAmount,
         subtotal,
         jastiperName: trip.User?.profileName || trip.User?.slug || 'Jastiper',
@@ -371,6 +377,7 @@ async function sendOrderConfirmationWithMagicLink(data: {
   customerName: string
   customerEmail: string
   orderId: string
+  orderCode: string
   dpAmount: number
   subtotal: number
   jastiperName: string
@@ -384,6 +391,7 @@ async function sendOrderConfirmationWithMagicLink(data: {
     const emailData = {
       customerName: data.customerName,
       orderId: data.orderId,
+      orderCode: data.orderCode,
       orderDate: new Date().toLocaleDateString('id-ID', {
         weekday: 'long',
         year: 'numeric',
@@ -409,7 +417,7 @@ async function sendOrderConfirmationWithMagicLink(data: {
     console.log(`[Email] Magic link: ${data.uploadLink}`)
     const result = await sendpulseService.sendEmail({
       to: [{ name: data.customerName, email: data.customerEmail }],
-      subject: `Order Confirmation - ${data.orderId}`,
+      subject: `Order Confirmation - ${data.orderCode}`,
       html,
       text
     })

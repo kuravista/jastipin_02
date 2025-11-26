@@ -31,6 +31,9 @@ const db = new PrismaClient()
 import { TokenService } from '../services/token.service.js'
 const tokenService = new TokenService(db)
 
+// Import EmailTriggerService for notifications
+import { EmailTriggerService } from '../services/email/email-trigger.service.js'
+
 /**
  * POST /trips/:tripId/orders
  * Create order for a product (guest or participant)
@@ -398,6 +401,280 @@ router.post(
 )
 
 /**
+ * POST /orders/:orderId/approve-final
+ * Jastiper approves final payment proof
+ * Auth: Jastiper only
+ */
+router.post(
+  '/orders/:orderId/approve-final',
+  authMiddleware,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { orderId } = req.params
+      const { action } = req.body
+      const jastiperId = req.user?.id
+
+      if (!jastiperId) {
+        res.status(401).json({ error: 'Unauthorized' })
+        return
+      }
+
+      if (!action || !['accept', 'reject'].includes(action)) {
+        res.status(400).json({ error: 'Action must be "accept" or "reject"' })
+        return
+      }
+
+      // Get order with trip info
+      const order = await db.order.findUnique({
+        where: { id: orderId },
+        include: {
+          Trip: {
+            select: {
+              jastiperId: true
+            }
+          }
+        }
+      })
+
+      if (!order) {
+        res.status(404).json({ error: 'Order not found' })
+        return
+      }
+
+      // Verify ownership
+      if (order.Trip?.jastiperId !== jastiperId) {
+        res.status(403).json({ error: 'Unauthorized: Not the trip owner' })
+        return
+      }
+
+      // Check order status
+      if (order.status !== 'awaiting_final_validation') {
+        res.status(400).json({
+          error: `Order cannot be approved in status: ${order.status}`
+        })
+        return
+      }
+
+      // Update order based on action
+      let updateData: any = {
+        validatedAt: new Date(),
+        validatedBy: jastiperId
+      }
+
+      if (action === 'accept') {
+        updateData.status = 'paid'
+      } else {
+        updateData.status = 'awaiting_final_payment'
+        updateData.finalProofUrl = null
+        updateData.finalPaidAt = null
+        updateData.rejectionReason = req.body.rejectionReason || 'Bukti pembayaran final ditolak'
+      }
+
+      const updatedOrder = await db.order.update({
+        where: { id: orderId },
+        data: updateData,
+        include: {
+          Participant: true,
+          OrderItem: {
+            include: {
+              Product: true
+            }
+          }
+        }
+      })
+
+      // Send notification to customer
+      if (action === 'reject') {
+        // Send rejection email with new magic link for re-upload
+        EmailTriggerService.sendFinalPaymentRejectedEmail(
+          orderId,
+          updateData.rejectionReason
+        ).catch(error => {
+          console.error('[FinalApproval] Failed to send rejection email:', error)
+          // Don't fail the request if email fails
+        })
+      }
+
+      console.log(`[FinalApproval] Order ${orderId} final payment ${action === 'accept' ? 'approved' : 'rejected'}`)
+
+      res.json({
+        success: true,
+        order: updatedOrder,
+        message: action === 'accept'
+          ? 'Final payment approved successfully'
+          : 'Final payment rejected'
+      })
+
+    } catch (error: any) {
+      console.error('Final approval error:', error)
+      res.status(500).json({ error: error.message || 'Final approval failed' })
+    }
+  }
+)
+
+/**
+ * GET /orders/:orderId/invoice
+ * Get invoice data for an order
+ * Public endpoint
+ */
+router.get(
+  '/orders/:orderId/invoice',
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { orderId } = req.params
+
+      const order = await db.order.findUnique({
+        where: { id: orderId },
+        include: {
+          Participant: {
+            select: {
+              name: true,
+              phone: true,
+              email: true,
+              address: true
+            }
+          },
+          Address: {
+            select: {
+              recipientName: true,
+              phone: true,
+              addressText: true,
+              districtName: true,
+              cityName: true,
+              provinceName: true,
+              postalCode: true
+            }
+          },
+          Trip: {
+            include: {
+              User: {
+                select: {
+                  profileName: true,
+                  slug: true,
+                  whatsappNumber: true,
+                  email: true
+                }
+              }
+            }
+          },
+          OrderItem: {
+            include: {
+              Product: {
+                select: {
+                  title: true
+                }
+              }
+            }
+          }
+        }
+      })
+
+      if (!order) {
+        res.status(404).json({ error: 'Order not found' })
+        return
+      }
+
+      // Fetch guest if exists
+      let guest = null
+      if (order.guestId) {
+        guest = await db.guest.findUnique({
+          where: { id: order.guestId },
+          select: {
+            name: true,
+            email: true,
+            phone: true
+          }
+        })
+      }
+
+      // Calculate subtotal from order items
+      const subtotal = order.OrderItem.reduce((sum, item) => {
+        return sum + (item.priceAtOrder * item.quantity)
+      }, 0)
+
+      // Prepare shipping address
+      let shippingAddress = '-'
+      if (order.Address) {
+        const parts = [
+          order.Address.addressText,
+          order.Address.districtName,
+          order.Address.cityName,
+          order.Address.provinceName,
+          order.Address.postalCode
+        ].filter(Boolean)
+        shippingAddress = parts.join(', ')
+      } else if (order.Participant?.address) {
+        shippingAddress = order.Participant.address
+      }
+
+      // Prepare invoice data
+      const invoiceData = {
+        invoiceId: order.id,
+        invoiceNumber: order.orderCode || `INV/${new Date(order.createdAt).getFullYear()}/${String(new Date(order.createdAt).getMonth() + 1).padStart(2, '0')}/${order.id.slice(0, 8).toUpperCase()}`,
+        orderCode: order.orderCode,
+        date: new Date(order.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
+        validatedDate: order.validatedAt ? new Date(order.validatedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : null,
+        status: order.status === 'paid' ? 'Lunas' : order.status === 'awaiting_final_payment' ? 'Menunggu Pelunasan' : 'Proses',
+
+        // Customer info
+        customer: {
+          name: order.Participant?.name || guest?.name || 'Customer',
+          whatsapp: order.Participant?.phone || guest?.phone || '-',
+          address: order.Participant?.address || '-',
+          email: order.Participant?.email || guest?.email || '-'
+        },
+
+        // Shipping address
+        shippingAddress: shippingAddress,
+        recipientName: order.Address?.recipientName || order.Participant?.name || guest?.name || 'Customer',
+        recipientPhone: order.Address?.phone || order.Participant?.phone || guest?.phone || '-',
+
+        // Jastiper info
+        jastiper: {
+          name: order.Trip?.User?.profileName || order.Trip?.User?.slug || 'Jastiper',
+          username: order.Trip?.User?.slug || '',
+          whatsapp: order.Trip?.User?.whatsappNumber || '-',
+          email: order.Trip?.User?.email || '-',
+          businessAddress: order.Trip?.title || 'International'
+        },
+
+        // Products
+        items: order.OrderItem.map(item => ({
+          id: item.id,
+          name: item.Product?.title || 'Product',
+          quantity: item.quantity,
+          price: item.priceAtOrder,
+          subtotal: item.priceAtOrder * item.quantity
+        })),
+
+        // Payment summary
+        subtotal: subtotal,
+        shippingFee: order.shippingFee || 0,
+        serviceFee: order.serviceFee || 0,
+        platformCommission: order.platformCommission || 0,
+        total: order.totalPrice || 0,
+        dpAmount: order.dpAmount || 0,
+        finalAmount: order.finalAmount || 0,
+
+        // Payment info
+        paymentMethod: 'Transfer Bank',
+        dpPaidAt: order.dpPaidAt ? new Date(order.dpPaidAt).toLocaleString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : null,
+        finalPaidAt: order.finalPaidAt ? new Date(order.finalPaidAt).toLocaleString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : null
+      }
+
+      res.json({
+        success: true,
+        invoice: invoiceData
+      })
+
+    } catch (error: any) {
+      console.error('Get invoice error:', error)
+      res.status(500).json({ error: error.message || 'Failed to get invoice' })
+    }
+  }
+)
+
+/**
  * GET /orders/:orderId/breakdown
  * Get price breakdown for an order
  * Public endpoint (for participant to see breakdown)
@@ -668,11 +945,14 @@ router.get(
         where: whereClause,
         select: {
           id: true,
+          orderCode: true,
           status: true,
           dpAmount: true,
           totalPrice: true,
           dpPaidAt: true,
-          proofUrl: true, // Include proof URL for validation dashboard
+          proofUrl: true, // Legacy field
+          dpProofUrl: true, // DP payment proof
+          finalProofUrl: true, // Final payment proof
           createdAt: true,
           shippingFee: true,
           serviceFee: true,
@@ -708,7 +988,8 @@ router.get(
               districtId: true,
               districtName: true,
               cityName: true,
-              provinceName: true
+              provinceName: true,
+              postalCode: true
             }
           },
           Trip: {
@@ -720,9 +1001,11 @@ router.get(
             }
           }
         },
-        orderBy: {
-          dpPaidAt: 'asc' // oldest first (FIFO)
-        },
+        orderBy: [
+          { dpPaidAt: 'asc' },
+          { createdAt: 'desc' },
+          { id: 'asc' }
+        ],
         take: limit,
         skip: offset
       })

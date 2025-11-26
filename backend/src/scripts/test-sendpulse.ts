@@ -91,6 +91,7 @@ async function test2_OrderConfirmation() {
     const orderData = {
       customerName: 'John Doe',
       orderId: 'ORD-TEST-001',
+      orderCode: 'JST-ABC123-XY',
       orderDate: new Date().toLocaleDateString('id-ID', {
         weekday: 'long',
         year: 'numeric',
@@ -137,6 +138,7 @@ async function test3_PaymentLink() {
     const paymentData = {
       customerName: 'John Doe',
       orderId: 'ORD-TEST-001',
+      orderCode: 'JST-ABC123-XY',
       remainingAmount: 'Rp 800.000',
       deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('id-ID', {
         weekday: 'long',
@@ -183,6 +185,7 @@ async function test4_PaymentReceived() {
     const paymentReceivedData = {
       customerName: 'John Doe',
       orderId: 'ORD-TEST-001',
+      orderCode: 'JST-ABC123-XY',
       amountPaid: 'Rp 800.000',
       receiptNumber: 'RCPT-2025-11-24-001',
       jastiperName: 'Tina Jastip'

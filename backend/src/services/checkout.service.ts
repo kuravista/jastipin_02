@@ -4,6 +4,7 @@
  */
 
 import { PrismaClient } from '@prisma/client'
+import { generateOrderCode } from '../utils/order-code.js'
 
 const db = new PrismaClient()
 
@@ -150,6 +151,7 @@ export async function processCheckout(
 
       const order = await db.order.create({
         data: {
+          orderCode: generateOrderCode(),
           participantId: participant.id,
           productId: item.productId,
           quantity: item.quantity,

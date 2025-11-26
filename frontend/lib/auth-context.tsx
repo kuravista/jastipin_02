@@ -17,6 +17,15 @@ export interface User {
   profileBio?: string
   avatar?: string
   coverImage?: string
+  whatsappNumber?: string
+  originProvinceId?: string
+  originProvinceName?: string
+  originCityId?: string
+  originCityName?: string
+  originDistrictId?: string
+  originDistrictName?: string
+  originPostalCode?: string
+  originAddressText?: string
 }
 
 interface AuthContextType {

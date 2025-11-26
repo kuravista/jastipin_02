@@ -51,12 +51,15 @@ model FeesConfig {
 
 model Order {
   id                 String      @id @default(cuid())
+  orderCode          String?     @unique  // Format: JST-XXXXXX-XX (random + checksum)
   participantId      String
   guestId            String?
   productId          String?
   quantity           Int         @default(1)
   totalPrice         Int         @default(0)
-  proofUrl           String?
+  proofUrl           String?     // Legacy field - will be deprecated, use dpProofUrl or finalProofUrl
+  dpProofUrl         String?     // DP payment proof upload URL
+  finalProofUrl      String?     // Final payment proof upload URL
   status             String      @default("pending_dp")
   notes              String?
   createdAt          DateTime    @default(now())

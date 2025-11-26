@@ -6,6 +6,7 @@
 import { PrismaClient } from '@prisma/client'
 import { calculatePriceBreakdown, OrderItemInput } from './price-calculator.service'
 import { releaseStock } from './stock-lock.service'
+import { EmailTriggerService } from './email/email-trigger.service.js'
 
 const db = new PrismaClient()
 
@@ -151,9 +152,14 @@ export async function validateOrder(
     // 8. TODO: Create payment link for remaining amount
     const paymentLink = `https://payment.jastipin.me/final/${updatedOrder.id}`
     
-    // 9. TODO: Send notification to participant with breakdown
+    // 9. Send email notification to customer (async, non-blocking)
+    EmailTriggerService.sendOrderValidatedEmail(updatedOrder.id).catch(error => {
+      console.error('[Validation] Failed to send email notification:', error)
+      // Don't fail the validation if email fails
+    })
+
     console.log(`[Notification] Order ${updatedOrder.id} validated. Final amount: Rp${breakdown.remainingAmount}`)
-    
+
     return {
       success: true,
       order: updatedOrder,

@@ -165,21 +165,56 @@ router.post('/:orderId', async (req: Request, res: Response) => {
     const uploadedFile = await handleFileUpload(req, orderId)
     const proofUrl = uploadedFile.url
 
-    // Update order with proof URL
+    // Get current order to check status
+    const currentOrder = await db.order.findUnique({
+      where: { id: orderId },
+      select: { status: true }
+    })
+
+    if (!currentOrder) {
+      res.status(404).json({ error: 'Order not found' })
+      return
+    }
+
+    // Update order with proof URL and change status based on current order status
+    const updateData: any = {
+      updatedAt: new Date(),
+    }
+
+    // Handle different order statuses
+    if (currentOrder.status === 'pending_dp') {
+      // DP payment proof upload
+      updateData.dpProofUrl = proofUrl
+      updateData.status = 'awaiting_validation'
+      updateData.dpPaidAt = new Date()
+    } else if (currentOrder.status === 'awaiting_final_payment') {
+      // Final payment proof upload - wait for jastiper approval
+      updateData.finalProofUrl = proofUrl
+      updateData.status = 'awaiting_final_validation'
+      updateData.finalPaidAt = new Date()
+    } else {
+      // For other statuses, update legacy proofUrl field
+      updateData.proofUrl = proofUrl
+    }
+
     const order = await db.order.update({
       where: { id: orderId },
-      data: {
-        proofUrl,
-        updatedAt: new Date(),
-      },
+      data: updateData,
     })
 
     // Revoke token after successful upload
     await tokenService.revokeToken(token)
 
+    // Return the appropriate proof URL based on the updated order status
+    const returnedProofUrl = order.status === 'awaiting_validation'
+      ? order.dpProofUrl
+      : order.status === 'paid'
+        ? order.finalProofUrl
+        : order.proofUrl
+
     res.json({
       success: true,
-      proofUrl: order.proofUrl,
+      proofUrl: returnedProofUrl,
       thumbnailUrl: uploadedFile.thumbnailUrl,
       filename: uploadedFile.filename,
       size: uploadedFile.size,

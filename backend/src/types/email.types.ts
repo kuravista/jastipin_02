@@ -56,6 +56,7 @@ export enum EmailTemplate {
 export interface OrderConfirmationData {
   customerName: string
   orderId: string
+  orderCode: string  // Display code (JST-XXXXXX-XX)
   orderDate: string
   dpAmount: string
   remainingAmount: string
@@ -67,6 +68,7 @@ export interface OrderConfirmationData {
 export interface PaymentLinkData {
   customerName: string
   orderId: string
+  orderCode: string  // Display code (JST-XXXXXX-XX)
   remainingAmount: string
   deadline: string
   magicLink: string
@@ -76,6 +78,7 @@ export interface PaymentLinkData {
 export interface PaymentReceivedData {
   customerName: string
   orderId: string
+  orderCode: string  // Display code (JST-XXXXXX-XX)
   amountPaid: string
   receiptNumber: string
   jastiperName: string
