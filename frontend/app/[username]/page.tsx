@@ -241,7 +241,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-violet-50">
       {/* Demo Banner */}
-      {!error && (
+      {/* {!error && (
         <Link href="/">
           <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white py-3 px-4 text-center cursor-pointer hover:from-orange-600 hover:to-orange-700 transition-all duration-200 active:opacity-90">
             <p className="text-sm font-medium">
@@ -249,7 +249,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
             </p>
           </div>
         </Link>
-      )}
+      )} */}
 
       <div className="relative w-full h-48 overflow-hidden rounded-b-3xl">
         {profile.user.coverImage ? (
@@ -303,78 +303,107 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
               )}
             </div>
 
-            <div className="relative">
-              {/* Current Trip Card - Full Overlay */}
-              <div className="overflow-hidden border-2 border-orange-500 shadow-md rounded-lg">
-                {/* Image + Content Overlay */}
-                <div className="relative h-80 bg-white">
-                  {/* Image */}
-                  <img
-                    src={profile.trips[currentTripIndex].image || "/placeholder.svg?height=320&width=400"}
-                    alt={profile.trips[currentTripIndex].title}
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                  
-                  {/* White Gradient Overlay - from top to bottom */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-white/0 via-white/20 to-white/80"></div>
-                  
-                  {/* Status Badge */}
-                  <Badge className="absolute top-3 right-3 bg-green-500 text-sm">{profile.trips[currentTripIndex].status}</Badge>
-                  
-                  {/* Trip Counter */}
-                  <div className="absolute top-3 left-3 text-white text-xs font-semibold bg-black/50 px-2 py-1 rounded">
-                    {currentTripIndex + 1} / {profile.trips.length}
+            <div className="relative group">
+              {/* Current Trip Card - Compact Horizontal Design */}
+              <div className="overflow-hidden border border-orange-100 shadow-lg rounded-2xl bg-white">
+                <div className="flex h-40 sm:h-44">
+                  {/* Image Section */}
+                  <div className="relative w-1/3 sm:w-2/5 flex-shrink-0">
+                    <img
+                      src={profile.trips[currentTripIndex].image || "/placeholder.svg?height=320&width=400"}
+                      alt={profile.trips[currentTripIndex].title}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent" />
+                    
+                    {/* Status Badge */}
+                    <div className="absolute top-2 left-2">
+                      <Badge className="bg-white/90 text-black hover:bg-white text-[10px] px-2 h-5 shadow-sm backdrop-blur-sm border-0">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 animate-pulse"></span>
+                        {profile.trips[currentTripIndex].status}
+                      </Badge>
+                    </div>
                   </div>
-                  
-                  {/* Content: 2 Columns - OVERLAY at bottom */}
-                  <div className="absolute bottom-0 left-0 right-0 flex bg-black/50">
-                    {/* Left: Text Content */}
-                    <div className="flex-1 p-3 text-white space-y-1 flex flex-col justify-between min-w-0">
-                      <div>
-                        <h1 className="font-bold text-sm line-clamp-1">{profile.trips[currentTripIndex].title}</h1>
-                        {profile.trips[currentTripIndex].description && (
-                          <p className="text-xs text-gray-200 line-clamp-2 mt-0.5">{profile.trips[currentTripIndex].description}</p>
-                        )}
+
+                  {/* Content Section */}
+                  <div className="flex-1 p-3 sm:p-4 flex flex-col justify-between min-w-0 bg-white">
+                    <div>
+                      <div className="flex justify-between items-start gap-2">
+                        <h3 className="font-bold text-sm sm:text-base line-clamp-2 leading-tight text-gray-900">
+                          {profile.trips[currentTripIndex].title}
+                        </h3>
+                        <span className="text-[10px] font-medium text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded-md whitespace-nowrap flex-shrink-0 border border-gray-100">
+                          {currentTripIndex + 1} / {profile.trips.length}
+                        </span>
                       </div>
+                      
+                      {profile.trips[currentTripIndex].description && (
+                        <p className="text-xs text-gray-500 line-clamp-2 mt-1.5 leading-relaxed">
+                          {profile.trips[currentTripIndex].description}
+                        </p>
+                      )}
                     </div>
 
-                    {/* Right: Button + Deadline */}
-                    <div className="flex flex-col items-end justify-between p-3 flex-shrink-0">
-                      <Button className="bg-orange-500 hover:bg-orange-600 text-white hover:text-white h-8 px-3 text-xs font-semibold">
+                    <div className="flex items-end justify-between gap-2 mt-2">
+                      <div className="space-y-1">
+                        {profile.trips[currentTripIndex].deadline && (
+                          <div className="flex items-center gap-1.5 text-gray-500 text-xs">
+                            <Calendar className="w-3.5 h-3.5 text-orange-400" />
+                            <span className="font-medium">
+                              {new Date(profile.trips[currentTripIndex].deadline!).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1.5 text-gray-500 text-xs">
+                          <Package className="w-3.5 h-3.5 text-blue-400" />
+                          <span className="font-medium">
+                            {profile.trips[currentTripIndex].spotsLeft} Slot
+                          </span>
+                        </div>
+                      </div>
+
+                      <Button 
+                        className="bg-orange-500 hover:bg-orange-600 text-white h-8 px-4 text-xs font-semibold shadow-orange-100 shadow-lg rounded-full"
+                      >
                         Ikut
                       </Button>
-                      {profile.trips[currentTripIndex].deadline && (
-                        <div className="flex items-center gap-1 text-white text-xs whitespace-nowrap">
-                          <Calendar className="w-3 h-3 flex-shrink-0" />
-                          <span className="hidden sm:inline">{new Date(profile.trips[currentTripIndex].deadline!).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' })}</span>
-                          <span className="sm:hidden">{new Date(profile.trips[currentTripIndex].deadline!).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Navigation Buttons */}
+              {/* Navigation Buttons - Integrated into the card sides for cleaner look */}
               {profile.trips.length > 1 && (
-                <div className="flex gap-2 mt-3 justify-center">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentTripIndex((currentTripIndex - 1 + profile.trips!.length) % profile.trips!.length)}
-                    className="h-9 w-9 p-0"
+                <>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentTripIndex((currentTripIndex - 1 + profile.trips!.length) % profile.trips!.length);
+                    }}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white shadow-md flex items-center justify-center text-gray-700 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 z-10"
                   >
                     <ChevronLeft className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentTripIndex((currentTripIndex + 1) % profile.trips!.length)}
-                    className="h-9 w-9 p-0"
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentTripIndex((currentTripIndex + 1) % profile.trips!.length);
+                    }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white shadow-md flex items-center justify-center text-gray-700 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 z-10"
                   >
                     <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </div>
+                  </button>
+                  
+                  {/* Mobile Navigation Dots */}
+                  <div className="flex justify-center gap-1.5 mt-3 sm:hidden">
+                    {profile.trips.map((_: Trip, idx: number) => (
+                      <div 
+                        key={idx}
+                        className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentTripIndex ? 'bg-orange-500 w-3' : 'bg-gray-300'}`}
+                      />
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           </div>

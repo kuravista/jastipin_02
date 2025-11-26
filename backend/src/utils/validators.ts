@@ -66,6 +66,7 @@ export const updateProfileSchema = z.object({
   originCityName: z.string().optional(),
   originDistrictId: z.string().optional(),
   originDistrictName: z.string().optional(),
+  originRajaOngkirDistrictId: z.string().optional(),
   originPostalCode: z.string()
     .regex(/^[0-9]{5}$/, 'Kode pos harus 5 digit')
     .optional()

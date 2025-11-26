@@ -216,14 +216,15 @@ model User {
   whatsappNumber String?
 
   // Jastiper Origin Address
-  originProvinceId   String?
-  originProvinceName String?
-  originCityId       String?
-  originCityName     String?
-  originDistrictId   String?
-  originDistrictName String?
-  originPostalCode   String?
-  originAddressText  String?
+  originProvinceId         String?
+  originProvinceName       String?
+  originCityId             String?
+  originCityName           String?
+  originDistrictId         String?
+  originDistrictName       String?
+  originRajaOngkirDistrictId String?  // RajaOngkir district ID for shipping calculation
+  originPostalCode         String?
+  originAddressText        String?
 
   // Bank Account Information (LEGACY - Deprecated, use BankAccount relation)
   bankName           String?

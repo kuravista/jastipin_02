@@ -30,6 +30,7 @@ interface AddressData {
   villageName?: string
   addressText: string
   postalCode?: string
+  rajaOngkirDistrictId?: string  // RajaOngkir ID for shipping calculation
 }
 
 interface AddressFormProps {
@@ -206,7 +207,7 @@ export default function AddressForm({ value, onChange, required = true }: Addres
     })
   }
 
-  const handleDistrictChange = (districtId: string) => {
+  const handleDistrictChange = async (districtId: string) => {
     // Don't trigger onChange if value hasn't actually changed
     if (districtId === value.districtId || (districtId === '' && !value.districtId)) {
       return
@@ -218,13 +219,40 @@ export default function AddressForm({ value, onChange, required = true }: Addres
     }
 
     const district = districts.find(d => d.id === districtId)
-    onChange({
+    const updatedAddress = {
       ...value,
       districtId,
       districtName: district?.name || '',
       villageId: '',
       villageName: ''
-    })
+    }
+
+    // Fetch RajaOngkir ID based on location name
+    if (value.cityName && value.provinceName && district?.name) {
+      try {
+        const searchQuery = `${district.name}, ${value.cityName}, ${value.provinceName}`
+        console.log('[RajaOngkir] Fetching ID for:', searchQuery)
+
+        const response = await fetch(`/api/locations/rajaongkir/search?query=${encodeURIComponent(searchQuery)}`)
+        const data = await response.json()
+
+        console.log('[RajaOngkir] Search result:', data)
+
+        if (data.success && data.data && data.data.length > 0) {
+          // Use the first result's district ID
+          const rajaOngkirId = data.data[0].districtId || data.data[0].id
+          updatedAddress.rajaOngkirDistrictId = rajaOngkirId
+          console.log('[RajaOngkir] Set ID to:', rajaOngkirId)
+        } else {
+          console.warn('[RajaOngkir] No results found')
+        }
+      } catch (error) {
+        console.error('[RajaOngkir] Failed to fetch ID:', error)
+        // Continue without RajaOngkir ID - not critical for address input
+      }
+    }
+
+    onChange(updatedAddress)
   }
 
   const handleVillageChange = (villageId: string) => {

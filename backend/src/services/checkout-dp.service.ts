@@ -33,6 +33,7 @@ export interface CheckoutDPRequest {
     villageId?: string
     villageName?: string
     postalCode?: string
+    rajaOngkirDistrictId?: string
   }
   items: Array<{
     productId: string
@@ -49,6 +50,11 @@ export interface CheckoutDPResponse {
   paymentLink?: string
   uploadLink?: string  // NEW: Magic link for upload
   uploadToken?: string // NEW: Raw token for frontend
+  bankAccount?: {
+    bankName: string
+    accountNumber: string
+    accountHolderName: string
+  } | null
   error?: string
 }
 
@@ -170,10 +176,21 @@ export async function processCheckoutDP(
       }
     }
     
-    // 5. Create address if provided
+    // 5. Create address if provided (with auto RajaOngkir mapping)
     let addressId: string | null = null
-    
+
     if (request.address) {
+      // Auto-map to RajaOngkir district ID only if not provided by frontend
+      let rajaOngkirDistrictId = request.address.rajaOngkirDistrictId
+
+      if (!rajaOngkirDistrictId) {
+        const { autoMapToRajaOngkir } = await import('./rajaongkir.service.js')
+        rajaOngkirDistrictId = await autoMapToRajaOngkir(
+          request.address.cityName,
+          request.address.districtName
+        ) || undefined
+      }
+
       const newAddress = await db.address.create({
         data: {
           participantId: participant!.id,
@@ -189,10 +206,11 @@ export async function processCheckoutDP(
           villageId: request.address.villageId || null,
           villageName: request.address.villageName || null,
           postalCode: request.address.postalCode || null,
+          rajaOngkirDistrictId: rajaOngkirDistrictId || null,
           isDefault: true // first address is default
         }
       })
-      
+
       addressId = newAddress.id
     }
     
@@ -270,7 +288,21 @@ export async function processCheckoutDP(
       })
     }
 
-    // 10. Return response with upload link for frontend popup
+    // 10. Get jastiper's primary bank account for display
+    const bankAccount = await db.bankAccount.findFirst({
+      where: {
+        userId: trip.jastiperId,
+        status: 'active',
+        isPrimary: true
+      },
+      select: {
+        bankName: true,
+        accountNumber: true,
+        accountHolderName: true
+      }
+    })
+
+    // 11. Return response with upload link for frontend popup
     return {
       success: true,
       orderId: order.id,
@@ -278,7 +310,12 @@ export async function processCheckoutDP(
       dpAmount,
       paymentLink: `https://payment.jastipin.me/dp/${order.id}`,
       uploadLink,      // NEW: For frontend popup
-      uploadToken      // NEW: Raw token
+      uploadToken,     // NEW: Raw token
+      bankAccount: bankAccount ? {
+        bankName: bankAccount.bankName,
+        accountNumber: bankAccount.accountNumber,
+        accountHolderName: bankAccount.accountHolderName
+      } : null
     }
     
   } catch (error: any) {

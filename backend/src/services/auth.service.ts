@@ -220,6 +220,7 @@ export class AuthService {
       originCityName?: string
       originDistrictId?: string
       originDistrictName?: string
+      originRajaOngkirDistrictId?: string
       originPostalCode?: string
       originAddressText?: string
       bankName?: string
@@ -247,9 +248,29 @@ export class AuthService {
       }
     }
 
+    // Auto-map to RajaOngkir district ID only if not provided by frontend
+    let rajaOngkirDistrictId: string | null | undefined = profileData.originRajaOngkirDistrictId
+
+    // Only auto-map if frontend didn't provide RajaOngkir ID
+    if (!rajaOngkirDistrictId && profileData.originCityName && profileData.originDistrictName) {
+      try {
+        const { autoMapToRajaOngkir } = await import('../services/rajaongkir.service.js')
+        rajaOngkirDistrictId = await autoMapToRajaOngkir(
+          profileData.originCityName,
+          profileData.originDistrictName
+        )
+      } catch (error) {
+        console.error('[Profile Update] Failed to map RajaOngkir district:', error)
+        // Continue without RajaOngkir mapping - not critical for profile update
+      }
+    }
+
     const user = await this.db.user.update({
       where: { id: userId },
-      data: profileData,
+      data: {
+        ...profileData,
+        originRajaOngkirDistrictId: rajaOngkirDistrictId || null
+      },
       select: {
         id: true,
         email: true,
@@ -266,6 +287,7 @@ export class AuthService {
         originCityName: true,
         originDistrictId: true,
         originDistrictName: true,
+        originRajaOngkirDistrictId: true,
         originPostalCode: true,
         originAddressText: true,
         bankName: true,

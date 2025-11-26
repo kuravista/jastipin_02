@@ -20,6 +20,10 @@ interface Trip {
   id: string
   title: string
   paymentType: string
+  jastiper?: {
+    slug: string
+    name: string
+  }
 }
 
 export default function DPCheckoutPage() {
@@ -44,22 +48,22 @@ export default function DPCheckoutPage() {
   const fetchTripAndProducts = async () => {
     try {
       setLoading(true)
-      
-      // Fetch trip details
-      const tripData = await apiGet(`/trips/${tripId}`)
-      
+
+      // Fetch trip details (PUBLIC endpoint - no auth required)
+      const tripData = await apiGet(`/trips/${tripId}/public`)
+
       // Check if trip supports DP payment
       if (tripData.paymentType !== "dp") {
         // Redirect to regular checkout if trip doesn't support DP
         router.push(`/${tripData.jastiper?.slug || ""}`)
         return
       }
-      
+
       setTrip(tripData)
-      
-      // Parse items from URL
+
+      // Parse items from URL params OR localStorage
       let items: Array<{ productId: string; quantity: number }> = []
-      
+
       if (itemsParam) {
         // Multiple items from cart: "prod1:2,prod2:1"
         items = itemsParam.split(",").map(item => {
@@ -70,20 +74,37 @@ export default function DPCheckoutPage() {
         // Single product: "prod1"
         items = [{ productId: productsParam, quantity: 1 }]
       } else {
-        setError("No products selected")
-        return
+        // Try to load from localStorage (new flow from profile page)
+        const savedCart = localStorage.getItem(`cart_${tripId}`)
+        if (savedCart) {
+          try {
+            const cartData = JSON.parse(savedCart)
+            // Convert from cart format { product: {...}, quantity: number } to items format
+            items = cartData.map((item: any) => ({
+              productId: item.product.id,
+              quantity: item.quantity
+            }))
+          } catch (e) {
+            console.error('Failed to parse cart from localStorage:', e)
+          }
+        }
+
+        if (items.length === 0) {
+          setError("No products selected")
+          return
+        }
       }
-      
+
       setCartItems(items)
-      
+
       // Fetch product details
       const productIds = items.map(i => i.productId)
       const productsData = await apiGet(`/trips/${tripId}/products`, {
         params: { ids: productIds.join(",") }
       })
-      
+
       setProducts(productsData)
-      
+
     } catch (err: any) {
       console.error("Failed to fetch trip/products:", err)
       setError(err.message || "Failed to load checkout")
@@ -141,6 +162,7 @@ export default function DPCheckoutPage() {
           tripId={tripId}
           products={products}
           items={cartItems}
+          jastiperSlug={trip.jastiper?.slug}
         />
       </div>
     </div>

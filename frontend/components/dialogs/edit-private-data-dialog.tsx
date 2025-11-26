@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -46,6 +46,7 @@ interface PrivateData {
   originDistrictName?: string
   originPostalCode?: string
   originAddressText?: string
+  originRajaOngkirDistrictId?: string  // RajaOngkir ID for shipping calculation
   // Bank Account Fields (Legacy - for backward compatibility)
   bankName?: string
   accountNumber?: string
@@ -55,7 +56,8 @@ interface PrivateData {
 }
 
 interface LocationOption {
-  code: string
+  id: string
+  code?: string // Optional for backward compatibility
   name: string
 }
 
@@ -92,86 +94,111 @@ export function EditPrivateDataDialog({ open, onOpenChange, onSuccess }: EditPri
     accountHolderName: "",
   })
 
+  // Address Edit Mode State
+  const [isEditingAddress, setIsEditingAddress] = useState(false)
+
+  // Prevent double loading in React strict mode
+  const isLoadingRef = useRef(false)
+  const hasLoadedRef = useRef(false)
+  const dialogOpenedAtRef = useRef<number>(0)
+
   useEffect(() => {
     if (open) {
-      loadInitialData()
+      const now = Date.now()
+      // Prevent multiple loads within 500ms (strict mode double render)
+      if (hasLoadedRef.current && (now - dialogOpenedAtRef.current) < 500) {
+        return
+      }
+
+      if (!isLoadingRef.current) {
+        dialogOpenedAtRef.current = now
+        loadInitialData()
+      }
+    } else {
+      // Reset when dialog closes
+      hasLoadedRef.current = false
+      isLoadingRef.current = false
     }
   }, [open])
 
-  // Debug: Log districts state changes
-  useEffect(() => {
-    console.log('[EditPrivateDataDialog] Districts state updated:', districts)
-  }, [districts])
-
   const loadInitialData = async () => {
+    if (isLoadingRef.current) {
+      return
+    }
+
+    isLoadingRef.current = true
+
     try {
-      // Reset state
-      setFormData({ email: "", profileName: "" })
-      setCities([])
-      setDistricts([])
-      
-      // 1. Fetch provinces
+      // 1. Fetch provinces first
       setLocationLoading(prev => ({ ...prev, provinces: true }))
       const provincesRes = await apiGet<any>('/locations/provinces')
-      const provincesData = (provincesRes.success || Array.isArray(provincesRes)) 
-        ? (provincesRes.data || provincesRes) 
+      const provincesData = (provincesRes.success || Array.isArray(provincesRes))
+        ? (provincesRes.data || provincesRes)
         : []
       setProvinces(provincesData)
       setLocationLoading(prev => ({ ...prev, provinces: false }))
 
       // 2. Fetch user profile
       const profileData = await apiGet<PrivateData>("/profile")
-      
-      // 3. Load dependent cities if province exists and is valid
+
+      // 3. Load cities and districts in parallel if needed
+      const promises: Promise<any>[] = []
+
       if (profileData.originProvinceId && profileData.originProvinceId.trim() !== '') {
         setLocationLoading(prev => ({ ...prev, cities: true }))
-        const citiesRes = await apiGet<any>(`/locations/regencies/${profileData.originProvinceId}`)
-        const citiesData = (citiesRes.success || Array.isArray(citiesRes)) 
-          ? (citiesRes.data || citiesRes) 
-          : []
-        setCities(citiesData)
-        setLocationLoading(prev => ({ ...prev, cities: false }))
+        promises.push(
+          apiGet<any>(`/locations/regencies/${profileData.originProvinceId}`)
+            .then(citiesRes => {
+              const citiesData = (citiesRes.success || Array.isArray(citiesRes))
+                ? (citiesRes.data || citiesRes)
+                : []
+              setCities(citiesData)
+              setLocationLoading(prev => ({ ...prev, cities: false }))
+              return citiesData
+            })
+            .catch(err => {
+              console.error('Error fetching cities:', err)
+              setCities([])
+              setLocationLoading(prev => ({ ...prev, cities: false }))
+              return []
+            })
+        )
       }
 
-      // 4. Load dependent districts if city exists and is valid
       if (profileData.originCityId && profileData.originCityId.trim() !== '') {
         setLocationLoading(prev => ({ ...prev, districts: true }))
-        console.log('[EditPrivateDataDialog] Loading initial districts for cityId:', profileData.originCityId)
-        
-        try {
-          const districtsRes = await apiGet<any>(`/locations/districts/${profileData.originCityId}`)
-          console.log('[EditPrivateDataDialog] Initial districts API response:', districtsRes)
-          
-          // Handle response structure consistently
-          let districtsData: LocationOption[] = []
-          if (districtsRes.success && Array.isArray(districtsRes.data)) {
-            districtsData = districtsRes.data
-          } else if (Array.isArray(districtsRes)) {
-            districtsData = districtsRes
-          }
-          
-          console.log('[EditPrivateDataDialog] Setting initial districts:', districtsData)
-          
-          // Use a small delay to ensure state update completes before formData is set
-          setDistricts(districtsData)
-          
-          // Wait for next tick to ensure React has processed the state update
-          await new Promise(resolve => setTimeout(resolve, 50))
-        } catch (districtError) {
-          console.error('[EditPrivateDataDialog] Error fetching districts:', districtError)
-          setDistricts([])
-        } finally {
-          setLocationLoading(prev => ({ ...prev, districts: false }))
-        }
+
+        promises.push(
+          apiGet<any>(`/locations/districts/${profileData.originCityId}`)
+            .then(districtsRes => {
+              let districtsData: LocationOption[] = []
+              if (districtsRes.success && Array.isArray(districtsRes.data)) {
+                districtsData = districtsRes.data
+              } else if (Array.isArray(districtsRes)) {
+                districtsData = districtsRes
+              }
+
+              setDistricts(districtsData)
+              setLocationLoading(prev => ({ ...prev, districts: false }))
+              return districtsData
+            })
+            .catch(err => {
+              console.error('Error fetching districts:', err)
+              setDistricts([])
+              setLocationLoading(prev => ({ ...prev, districts: false }))
+              return []
+            })
+        )
       }
 
-      // 5. Set form data (now that options are loaded)
-      console.log('[EditPrivateDataDialog] Profile data loaded:', {
-        originProvinceId: profileData.originProvinceId,
-        originCityId: profileData.originCityId,
-        originDistrictId: profileData.originDistrictId
-      })
-      
+      // Wait for all location data to load
+      if (promises.length > 0) {
+        await Promise.all(promises)
+        // Small delay to ensure React processes state updates
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
+
+      // 4. Now set form data after all location options are loaded
       setFormData({
         email: profileData.email || "",
         profileName: profileData.profileName || "",
@@ -184,23 +211,29 @@ export function EditPrivateDataDialog({ open, onOpenChange, onSuccess }: EditPri
         originDistrictName: profileData.originDistrictName || "",
         originPostalCode: profileData.originPostalCode || "",
         originAddressText: profileData.originAddressText || "",
+        originRajaOngkirDistrictId: profileData.originRajaOngkirDistrictId || "",
         bankName: profileData.bankName || "",
         accountNumber: profileData.accountNumber || "",
         accountHolderName: profileData.accountHolderName || "",
       })
 
-      // 6. Load bank accounts
+      // 5. Load bank accounts
       setBankAccounts(profileData.bankAccounts || [])
+
+      // Mark as loaded
+      hasLoadedRef.current = true
 
     } catch (err) {
       console.error("Failed to load initial data", err)
+    } finally {
+      isLoadingRef.current = false
     }
   }
 
   // Fetch cities when province changes (USER INTERACTION ONLY)
   const handleProvinceChange = async (val: string) => {
-    const province = provinces.find(p => p.code === val)
-    
+    const province = provinces.find(p => p.id === val || p.code === val)
+
     // Update form data
     setFormData(prev => ({
       ...prev,
@@ -224,8 +257,8 @@ export function EditPrivateDataDialog({ open, onOpenChange, onSuccess }: EditPri
 
   // Fetch districts when city changes (USER INTERACTION ONLY)
   const handleCityChange = async (val: string) => {
-    const city = cities.find(c => c.code === val)
-    
+    const city = cities.find(c => c.id === val || c.code === val)
+
     setFormData(prev => ({
       ...prev,
       originCityId: val,
@@ -242,13 +275,40 @@ export function EditPrivateDataDialog({ open, onOpenChange, onSuccess }: EditPri
   }
 
   // Handle district change
-  const handleDistrictChange = (val: string) => {
-    const district = districts.find(d => d.code === val)
-    setFormData(prev => ({
-      ...prev,
+  const handleDistrictChange = async (val: string) => {
+    const district = districts.find(d => d.id === val || d.code === val)
+    const updatedData: PrivateData = {
+      ...formData,
       originDistrictId: val,
       originDistrictName: district?.name || ''
-    }))
+    }
+
+    // Fetch RajaOngkir ID based on location name
+    if (formData.originCityName && formData.originProvinceName && district?.name) {
+      try {
+        const searchQuery = `${district.name}, ${formData.originCityName}, ${formData.originProvinceName}`
+        console.log('[RajaOngkir] Fetching ID for:', searchQuery)
+
+        const response = await fetch(`/api/locations/rajaongkir/search?query=${encodeURIComponent(searchQuery)}`)
+        const data = await response.json()
+
+        console.log('[RajaOngkir] Search result:', data)
+
+        if (data.success && data.data && data.data.length > 0) {
+          // Use the first result's district ID
+          const rajaOngkirId = data.data[0].districtId || data.data[0].id
+          updatedData.originRajaOngkirDistrictId = rajaOngkirId
+          console.log('[RajaOngkir] Set ID to:', rajaOngkirId)
+        } else {
+          console.warn('[RajaOngkir] No results found')
+        }
+      } catch (error) {
+        console.error('[RajaOngkir] Failed to fetch ID:', error)
+        // Continue without RajaOngkir ID - not critical for profile update
+      }
+    }
+
+    setFormData(updatedData)
   }
 
   const fetchProvinces = async () => {
@@ -282,10 +342,8 @@ export function EditPrivateDataDialog({ open, onOpenChange, onSuccess }: EditPri
   const fetchDistricts = async (cityId: string) => {
     setLocationLoading((prev) => ({ ...prev, districts: true }))
     try {
-      console.log('[EditPrivateDataDialog] Fetching districts for cityId:', cityId)
       const data = await apiGet<any>(`/locations/districts/${cityId}`)
-      console.log('[EditPrivateDataDialog] Districts API response:', data)
-      
+
       // Handle response structure: { success: true, data: [...] }
       let districtsArray: LocationOption[] = []
       if (data.success && Array.isArray(data.data)) {
@@ -293,12 +351,11 @@ export function EditPrivateDataDialog({ open, onOpenChange, onSuccess }: EditPri
       } else if (Array.isArray(data)) {
         districtsArray = data
       }
-      
-      console.log('[EditPrivateDataDialog] Setting districts array:', districtsArray)
+
       setDistricts(districtsArray)
     } catch (error) {
-      console.error('[EditPrivateDataDialog] Failed to fetch districts:', error)
-      setDistricts([]) // Ensure empty array on error
+      console.error('Failed to fetch districts:', error)
+      setDistricts([])
     } finally {
       setLocationLoading((prev) => ({ ...prev, districts: false }))
     }
@@ -645,67 +702,137 @@ export function EditPrivateDataDialog({ open, onOpenChange, onSuccess }: EditPri
             {/* Tab 2: Alamat */}
             <TabsContent value="alamat" className="space-y-3">
               <p className="text-xs text-gray-500">Alamat awal untuk perhitungan ongkos kirim</p>
-              
-              <div>
-                <Label htmlFor="province" className="text-xs">Provinsi</Label>
-                <Select 
-                  value={formData.originProvinceId || ''} 
-                  onValueChange={handleProvinceChange}
-                  disabled={locationLoading.provinces}
-                >
-                  <SelectTrigger id="province" className="mt-1 h-8 text-sm">
-                    <SelectValue placeholder={locationLoading.provinces ? "Memuat..." : "Pilih"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {provinces.map((province) => (
-                      <SelectItem key={province.code} value={province.code}>
-                        {province.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
 
-              <div>
-                <Label htmlFor="city" className="text-xs">Kota/Kabupaten</Label>
-                <Select 
-                  value={formData.originCityId || ''} 
-                  onValueChange={handleCityChange}
-                  disabled={!formData.originProvinceId || locationLoading.cities}
-                >
-                  <SelectTrigger id="city" className="mt-1 h-8 text-sm">
-                    <SelectValue placeholder={locationLoading.cities ? "Memuat..." : "Pilih"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {cities.map((city) => (
-                      <SelectItem key={city.code} value={city.code}>
-                        {city.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {!isEditingAddress ? (
+                // View Mode - Display existing location as read-only
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <Label className="text-xs font-semibold text-gray-700">Lokasi Asal Saat Ini</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-[10px]"
+                      onClick={() => {
+                        setIsEditingAddress(true)
+                        // Load provinces if not already loaded
+                        if (provinces.length === 0) {
+                          fetchProvinces()
+                        }
+                        // Load cities if province exists
+                        if (formData.originProvinceId && cities.length === 0) {
+                          fetchCities(formData.originProvinceId)
+                        }
+                        // Load districts if city exists
+                        if (formData.originCityId && districts.length === 0) {
+                          fetchDistricts(formData.originCityId)
+                        }
+                      }}
+                    >
+                      <Pencil className="w-3 h-3 mr-1" />
+                      Ubah
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div>
+                      <p className="text-[10px] text-gray-500">Provinsi</p>
+                      <p className="font-medium">{formData.originProvinceName || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-gray-500">Kota/Kab</p>
+                      <p className="font-medium">{formData.originCityName || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-gray-500">Kecamatan</p>
+                      <p className="font-medium">{formData.originDistrictName || '-'}</p>
+                    </div>
+                  </div>
+                  {(formData.originDistrictId || formData.originRajaOngkirDistrictId) && (
+                    <div className="text-[10px] text-gray-400 pt-1 border-t border-gray-200 space-y-0.5">
+                      {formData.originDistrictId && <p>Wilayah ID: {formData.originDistrictId}</p>}
+                      {formData.originRajaOngkirDistrictId && (
+                        <p className="text-green-600 font-medium">RajaOngkir ID: {formData.originRajaOngkirDistrictId}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                // Edit Mode - Show Select dropdowns
+                <div className="space-y-3 border border-blue-200 bg-blue-50 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <Label className="text-xs font-semibold text-blue-900">Edit Lokasi Asal</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-[10px]"
+                      onClick={() => setIsEditingAddress(false)}
+                    >
+                      Batal
+                    </Button>
+                  </div>
 
-              <div>
-                <Label htmlFor="district" className="text-xs">Kecamatan</Label>
-                <Select 
-                  key={`district-${districts.length}-${formData.originCityId}`}
-                  value={formData.originDistrictId || ''} 
-                  onValueChange={handleDistrictChange}
-                  disabled={!formData.originCityId || locationLoading.districts}
-                >
-                  <SelectTrigger id="district" className="mt-1 h-8 text-sm">
-                    <SelectValue placeholder={locationLoading.districts ? "Memuat..." : "Pilih"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {districts.map((district) => (
-                      <SelectItem key={district.code} value={district.code}>
-                        {district.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  <div>
+                    <Label htmlFor="province" className="text-xs">Provinsi</Label>
+                    <Select
+                      value={formData.originProvinceId || ''}
+                      onValueChange={handleProvinceChange}
+                      disabled={locationLoading.provinces}
+                    >
+                      <SelectTrigger id="province" className="mt-1 h-8 text-sm bg-white">
+                        <SelectValue placeholder={locationLoading.provinces ? "Memuat..." : "Pilih Provinsi"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {provinces.map((province) => (
+                          <SelectItem key={province.id} value={province.id}>
+                            {province.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="city" className="text-xs">Kota/Kabupaten</Label>
+                    <Select
+                      value={formData.originCityId || ''}
+                      onValueChange={handleCityChange}
+                      disabled={!formData.originProvinceId || locationLoading.cities}
+                    >
+                      <SelectTrigger id="city" className="mt-1 h-8 text-sm bg-white">
+                        <SelectValue placeholder={locationLoading.cities ? "Memuat..." : "Pilih Kota/Kabupaten"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cities.map((city) => (
+                          <SelectItem key={city.id} value={city.id}>
+                            {city.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="district" className="text-xs">Kecamatan</Label>
+                    <Select
+                      value={formData.originDistrictId || ''}
+                      onValueChange={handleDistrictChange}
+                      disabled={!formData.originCityId || locationLoading.districts}
+                    >
+                      <SelectTrigger id="district" className="mt-1 h-8 text-sm bg-white">
+                        <SelectValue placeholder={locationLoading.districts ? "Memuat..." : "Pilih Kecamatan"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {districts.map((district) => (
+                          <SelectItem key={district.id} value={district.id}>
+                            {district.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
 
               <div>
                 <Label htmlFor="postalCode" className="text-xs">Kode Pos</Label>

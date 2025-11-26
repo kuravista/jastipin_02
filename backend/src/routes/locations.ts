@@ -12,6 +12,9 @@ import {
   clearCache,
   getCacheStats
 } from '../services/wilayah.service.js'
+import {
+  searchDestinations
+} from '../services/rajaongkir.service.js'
 
 const router: Router = express.Router()
 
@@ -23,9 +26,10 @@ router.get('/provinces', async (_req, res) => {
   try {
     const provinces = await getProvinces()
 
-    // Transform 'code' to 'id' for frontend compatibility
+    // Transform 'code' to 'id' for frontend compatibility (AddressForm uses 'id')
     const transformed = provinces.map(p => ({
       id: p.code,
+      code: p.code, // Keep both for backward compatibility
       name: p.name
     }))
 
@@ -60,9 +64,10 @@ router.get('/regencies/:provinceId', async (req, res) => {
 
     const cities = await getCitiesByProvince(provinceId)
 
-    // Transform 'code' to 'id' for frontend compatibility
+    // Transform 'code' to 'id' for frontend compatibility (AddressForm uses 'id')
     const transformed = cities.map(c => ({
       id: c.code,
+      code: c.code, // Keep both for backward compatibility
       name: c.name
     }))
 
@@ -97,9 +102,10 @@ router.get('/districts/:cityId', async (req, res) => {
 
     const districts = await getDistrictsByCity(cityId)
 
-    // Transform 'code' to 'id' for frontend compatibility
+    // Transform to match AddressForm format (uses 'id')
     const transformed = districts.map(d => ({
       id: d.code,
+      code: d.code, // Keep both for backward compatibility
       name: d.name
     }))
 
@@ -154,13 +160,44 @@ router.get('/villages/:districtId', async (req, res) => {
 })
 
 /**
+ * GET /api/locations/rajaongkir/search
+ * Search RajaOngkir location by name (returns ID for shipping calculation)
+ */
+router.get('/rajaongkir/search', async (req, res) => {
+  try {
+    const { query } = req.query
+
+    if (!query || typeof query !== 'string') {
+      res.status(400).json({
+        success: false,
+        error: 'Search query required'
+      })
+      return
+    }
+
+    const results = await searchDestinations(query)
+
+    res.json({
+      success: true,
+      count: results.length,
+      data: results
+    })
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to search RajaOngkir locations'
+    })
+  }
+})
+
+/**
  * POST /api/locations/cache/clear
  * Clear location cache (admin only)
  */
 router.post('/cache/clear', (_req, res) => {
   try {
     clearCache()
-    
+
     res.json({
       success: true,
       message: 'Location cache cleared'
@@ -180,7 +217,7 @@ router.post('/cache/clear', (_req, res) => {
 router.get('/cache/stats', (_req, res) => {
   try {
     const stats = getCacheStats()
-    
+
     res.json({
       success: true,
       data: stats
@@ -189,6 +226,39 @@ router.get('/cache/stats', (_req, res) => {
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to get cache stats'
+    })
+  }
+})
+
+/**
+ * GET /api/locations/rajaongkir/search
+ * Search RajaOngkir districts (for mapping district ID)
+ * Query params:
+ *   - q: search query (city name, district name)
+ */
+router.get('/rajaongkir/search', async (req, res) => {
+  try {
+    const query = req.query.q as string
+
+    if (!query || query.trim().length < 3) {
+      res.status(400).json({
+        success: false,
+        error: 'Query must be at least 3 characters'
+      })
+      return
+    }
+
+    const results = await searchDestinations(query.trim())
+
+    res.json({
+      success: true,
+      count: results.length,
+      data: results
+    })
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to search RajaOngkir districts'
     })
   }
 })

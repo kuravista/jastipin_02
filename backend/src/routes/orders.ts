@@ -507,28 +507,68 @@ router.post(
           quantity: item.quantity
         }))
       )
-      
-      // Get jastiper origin (TODO: add to user profile)
-      // For now, use a default or from request
-      const origin = req.body.origin || order.Address.districtId
-      const destination = order.Address.districtId
-      
-      // Calculate shipping
+
+      // Get jastiper user profile for origin
+      const jastiper = await db.user.findUnique({
+        where: { id: jastiperId },
+        select: {
+          originDistrictId: true,
+          originDistrictName: true,
+          originCityName: true,
+          originProvinceName: true,
+          originRajaOngkirDistrictId: true
+        }
+      })
+
+      // Check if jastiper has set origin with RajaOngkir mapping
+      if (!jastiper?.originRajaOngkirDistrictId) {
+        res.status(400).json({
+          error: 'Origin address not configured',
+          message: 'Please set your origin address in profile settings. RajaOngkir mapping will be done automatically.',
+          hint: 'Go to profile settings and update your origin address'
+        })
+        return
+      }
+
+      // Get destination from address (must use rajaOngkirDistrictId if available)
+      const destination = order.Address.rajaOngkirDistrictId || order.Address.districtId
+
+      if (!destination) {
+        res.status(400).json({
+          error: 'Destination address incomplete',
+          message: 'Order address does not have RajaOngkir district ID'
+        })
+        return
+      }
+
+      // Calculate shipping using RajaOngkir district IDs
       const { calculateShippingCost, getBestShippingOption } = await import('../services/rajaongkir.service.js')
       const shippingOptions = await calculateShippingCost(
-        origin,
+        jastiper.originRajaOngkirDistrictId,
         destination,
         totalWeight,
-        courier || 'jne:tiki:pos'
+        courier || 'jne:tiki:pos:jnt'
       )
-      
+
       const recommendedOption = getBestShippingOption(shippingOptions)
-      
+
       res.json({
         success: true,
         data: {
-          origin,
-          destination,
+          origin: {
+            districtId: jastiper.originDistrictId,
+            rajaOngkirDistrictId: jastiper.originRajaOngkirDistrictId,
+            districtName: jastiper.originDistrictName,
+            cityName: jastiper.originCityName,
+            provinceName: jastiper.originProvinceName
+          },
+          destination: {
+            districtId: order.Address.districtId,
+            rajaOngkirDistrictId: order.Address.rajaOngkirDistrictId,
+            districtName: order.Address.districtName,
+            cityName: order.Address.cityName,
+            provinceName: order.Address.provinceName
+          },
           weight: totalWeight,
           options: shippingOptions,
           recommendedOption
@@ -626,10 +666,28 @@ router.get(
       // Query orders for this jastiper
       const orders = await db.order.findMany({
         where: whereClause,
-        include: {
-          Participant: true,
+        select: {
+          id: true,
+          status: true,
+          dpAmount: true,
+          totalPrice: true,
+          dpPaidAt: true,
+          proofUrl: true, // Include proof URL for validation dashboard
+          createdAt: true,
+          shippingFee: true,
+          serviceFee: true,
+          validatedAt: true,
+          rejectionReason: true,
+          Participant: {
+            select: {
+              name: true,
+              phone: true
+            }
+          },
           OrderItem: {
-            include: {
+            select: {
+              quantity: true,
+              priceAtOrder: true,
               Product: {
                 select: {
                   id: true,
@@ -637,24 +695,28 @@ router.get(
                   price: true,
                   type: true,
                   weightGram: true,
-                  markupType: true,
-                  markupValue: true,
-                  slug: true,
                   // Exclude image and description to reduce response size
                 }
               }
             }
           },
-          Address: true,
+          Address: {
+            select: {
+              recipientName: true,
+              phone: true,
+              addressText: true,
+              districtId: true,
+              districtName: true,
+              cityName: true,
+              provinceName: true
+            }
+          },
           Trip: {
             select: {
               id: true,
-              jastiperId: true,
               title: true,
-              slug: true,
               paymentType: true,
-              dpPercentage: true,
-              // Exclude unnecessary fields
+              dpPercentage: true
             }
           }
         },
@@ -732,15 +794,15 @@ router.post(
 
       // Verify user owns this trip
       if (order.Trip?.jastiperId !== userId) {
-        res.status(403).json({ 
-          error: 'Only the jastiper who owns this order can generate upload token' 
+        res.status(403).json({
+          error: 'Only the jastiper who owns this order can generate upload token'
         })
         return
       }
 
       // Check if order already has proof uploaded
       if (order.proofUrl) {
-        res.status(400).json({ 
+        res.status(400).json({
           error: 'Order already has payment proof uploaded',
           proofUrl: order.proofUrl
         })
@@ -771,8 +833,89 @@ router.post(
       })
     } catch (error: any) {
       console.error('Generate token error:', error)
-      res.status(500).json({ 
-        error: error.message || 'Failed to generate upload token' 
+      res.status(500).json({
+        error: error.message || 'Failed to generate upload token'
+      })
+    }
+  }
+)
+
+/**
+ * PATCH /api/orders/:orderId/map-rajaongkir
+ * Map address to RajaOngkir district ID (for accurate shipping calculation)
+ * Auth: Jastiper only
+ * Body: { rajaOngkirDistrictId }
+ */
+router.patch(
+  '/orders/:orderId/map-rajaongkir',
+  authMiddleware,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { orderId } = req.params
+      const { rajaOngkirDistrictId } = req.body
+      const jastiperId = req.user?.id
+
+      if (!jastiperId) {
+        res.status(401).json({ error: 'Unauthorized' })
+        return
+      }
+
+      if (!rajaOngkirDistrictId) {
+        res.status(400).json({ error: 'rajaOngkirDistrictId is required' })
+        return
+      }
+
+      // Get order with address
+      const order = await db.order.findUnique({
+        where: { id: orderId },
+        include: {
+          Address: true,
+          Trip: {
+            select: {
+              jastiperId: true
+            }
+          }
+        }
+      })
+
+      if (!order) {
+        res.status(404).json({ error: 'Order not found' })
+        return
+      }
+
+      // Verify ownership
+      if (order.Trip?.jastiperId !== jastiperId) {
+        res.status(403).json({ error: 'Unauthorized: Not the trip owner' })
+        return
+      }
+
+      if (!order.Address) {
+        res.status(400).json({ error: 'Order has no address' })
+        return
+      }
+
+      // Update address with RajaOngkir district ID
+      const updatedAddress = await db.address.update({
+        where: { id: order.Address.id },
+        data: {
+          rajaOngkirDistrictId
+        }
+      })
+
+      res.json({
+        success: true,
+        message: 'RajaOngkir district ID mapped successfully',
+        data: {
+          addressId: updatedAddress.id,
+          rajaOngkirDistrictId: updatedAddress.rajaOngkirDistrictId,
+          districtName: updatedAddress.districtName,
+          cityName: updatedAddress.cityName
+        }
+      })
+    } catch (error: any) {
+      console.error('Map RajaOngkir error:', error)
+      res.status(500).json({
+        error: error.message || 'Failed to map RajaOngkir district ID'
       })
     }
   }

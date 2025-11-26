@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { AlertCircle, Calculator, CheckCircle, CheckCircle2, Loader2, Package, XCircle, Search, FileText, ChevronDown, ChevronUp, MapPin, Phone, User } from 'lucide-react'
+import { AlertCircle, Calculator, CheckCircle, CheckCircle2, Loader2, Package, XCircle, Search, FileText, ChevronUp, MapPin, User, Image as ImageIcon, ExternalLink, Calendar, ChevronDown, TrendingUp } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { 
   Dialog, 
@@ -24,6 +24,7 @@ interface Order {
   dpAmount: number
   totalPrice: number
   dpPaidAt: string | null
+  proofUrl: string | null
   createdAt: string
   Participant: {
     name: string
@@ -90,6 +91,10 @@ export default function JastiperValidationDashboard() {
   const [activeOrderForCalc, setActiveOrderForCalc] = useState<string | null>(null)
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([])
   const [calculatingShipping, setCalculatingShipping] = useState(false)
+
+  // Proof preview
+  const [showProofPreview, setShowProofPreview] = useState(false)
+  const [selectedProofUrl, setSelectedProofUrl] = useState<string | null>(null)
 
   useEffect(() => {
     setCurrentPage(1) // Reset to page 1 when filter changes
@@ -302,6 +307,43 @@ export default function JastiperValidationDashboard() {
     setActiveOrderForCalc(null)
   }
 
+  const calculateMedianShipping = (orderId: string) => {
+    if (!shippingOptions || shippingOptions.length === 0) {
+      setError('Belum ada data ongkir. Klik "Hitung" terlebih dahulu.')
+      return
+    }
+
+    // Sort costs in ascending order
+    const sortedCosts = shippingOptions.map(opt => opt.cost).sort((a, b) => a - b)
+
+    // Calculate median
+    let median: number
+    const mid = Math.floor(sortedCosts.length / 2)
+
+    if (sortedCosts.length % 2 === 0) {
+      // Even number of items: average of two middle values
+      median = (sortedCosts[mid - 1] + sortedCosts[mid]) / 2
+    } else {
+      // Odd number of items: middle value
+      median = sortedCosts[mid]
+    }
+
+    // Round to nearest integer
+    const medianRounded = Math.round(median)
+
+    // Set to shipping fee
+    setShippingFees(prev => ({
+      ...prev,
+      [orderId]: medianRounded.toString()
+    }))
+
+    // Close calculator if open
+    if (showCalculator && activeOrderForCalc === orderId) {
+      setShowCalculator(false)
+      setActiveOrderForCalc(null)
+    }
+  }
+
   const pendingCount = orders.filter(o => o.status === 'awaiting_validation').length
 
   return (
@@ -390,7 +432,7 @@ export default function JastiperValidationDashboard() {
         )}
 
         {/* Order List */}
-        <div className="space-y-2">
+        <div className="space-y-3">
         {filteredOrders.map((order) => {
           const isExpanded = expandedOrderId === order.id
           const isValidated = activeFilter === 'sudah-validasi' || order.status === 'validated'
@@ -398,272 +440,343 @@ export default function JastiperValidationDashboard() {
           return (
             <div 
               key={order.id} 
-              className="bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-sm transition-shadow"
+              className={`group bg-white rounded-xl border transition-all duration-200 ${
+                isExpanded ? 'border-orange-200 shadow-md ring-1 ring-orange-100' : 'border-gray-100 hover:border-orange-200 hover:shadow-sm'
+              }`}
             >
-              {/* Collapsed Header - Always Visible */}
-              <div className="p-3">
-                {/* Mobile & Tablet Layout (< 1024px) */}
-                <div className="lg:hidden">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              {/* Main Row - Clickable Header */}
+              <div 
+                className="p-4 cursor-pointer"
+                onClick={() => toggleExpand(order.id)}
+              >
+                <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                  
+                  {/* 1. User Info & Status (Mobile Optimized) */}
+                  <div className="flex items-start justify-between lg:justify-start lg:items-center gap-3 lg:w-[280px]">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
+                        isExpanded ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-600 group-hover:bg-orange-50 group-hover:text-orange-500'
+                      }`}>
+                        {order.Participant.name.charAt(0).toUpperCase()}
+                      </div>
                       <div>
-                        <div className="font-medium text-gray-900 text-sm">{order.Participant.name}</div>
-                        <div className="text-xs text-gray-500">{order.Participant.phone}</div>
+                        <div className="font-semibold text-gray-900 text-sm">{order.Participant.name}</div>
+                        <div className="text-xs text-gray-500 flex items-center gap-1">
+                          {order.Participant.phone}
+                        </div>
                       </div>
                     </div>
-                    <Badge 
-                      className="text-xs" 
-                      variant={
-                        order.status === 'pending_dp' ? 'destructive' :
-                        order.status === 'awaiting_validation' ? 'default' :
-                        'secondary'
-                      }
+                    
+                    {/* Mobile Status Badge (Hidden on Desktop) */}
+                    <div className="lg:hidden">
+                      <Badge
+                        className={`text-[10px] px-2 py-0.5 h-5 ${
+                          order.status === 'pending_dp' ? 'bg-red-100 text-red-700 hover:bg-red-200 border-red-200' :
+                          order.status === 'awaiting_validation' ? 'bg-orange-100 text-orange-700 hover:bg-orange-200 border-orange-200' :
+                          'bg-green-100 text-green-700 hover:bg-green-200 border-green-200'
+                        }`}
+                        variant="outline"
+                      >
+                        {order.status === 'pending_dp' ? 'Belum Bayar' :
+                         order.status === 'awaiting_validation' ? 'Validasi' :
+                         'Selesai'}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {/* 2. Order Meta (Date & Items) */}
+                  <div className="flex-1 grid grid-cols-2 lg:flex lg:items-center lg:gap-6 text-sm">
+                    <div className="flex items-center gap-2 text-gray-500">
+                      <Calendar className="w-4 h-4 text-gray-400" />
+                      <span className="text-xs lg:text-sm">
+                        {new Date(order.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-500">
+                      <Package className="w-4 h-4 text-gray-400" />
+                      <span className="text-xs lg:text-sm">{order.OrderItem.length} Item</span>
+                    </div>
+                  </div>
+
+                  {/* 3. Desktop Status Badges (Hidden on Mobile) */}
+                  <div className="hidden lg:flex items-center gap-2">
+                    <Badge
+                      className={`text-xs font-normal ${
+                        order.status === 'pending_dp' ? 'bg-red-50 text-red-700 border-red-200' :
+                        order.status === 'awaiting_validation' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                        'bg-green-50 text-green-700 border-green-200'
+                      }`}
+                      variant="outline"
                     >
                       {order.status === 'pending_dp' ? 'Belum Bayar' :
                        order.status === 'awaiting_validation' ? 'Perlu Validasi' :
-                       order.status === 'validated' ? 'Sudah Validasi' :
-                       order.status}
+                       'Sudah Validasi'}
                     </Badge>
+                    {order.proofUrl && (
+                      <div className="w-2 h-2 rounded-full bg-green-500" title="Bukti Transfer Ada" />
+                    )}
                   </div>
-                  <div className="flex justify-between items-center text-xs text-gray-600 mb-2">
-                    <span>{new Date(order.createdAt).toLocaleDateString('id-ID')}</span>
-                    <span>{order.OrderItem.length} item</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="font-bold text-[#F26B8A]">Rp {order.totalPrice.toLocaleString('id-ID')}</span>
+
+                  {/* 4. Price & Expand Action */}
+                  <div className="flex items-center justify-between lg:justify-end gap-4 lg:min-w-[180px] pt-3 border-t border-gray-50 lg:pt-0 lg:border-0">
+                    <div className="flex flex-col lg:items-end">
+                      <span className="text-[10px] text-gray-400 uppercase tracking-wider font-medium lg:hidden">Total Order</span>
+                      <span className="font-bold text-[#F26B8A] text-sm lg:text-base">
+                        Rp {order.totalPrice.toLocaleString('id-ID')}
+                      </span>
+                    </div>
                     <Button
-                      onClick={() => toggleExpand(order.id)}
                       size="sm"
-                      variant={isExpanded ? "outline" : "default"}
-                      className={!isExpanded ? 'bg-[#F26B8A] hover:bg-[#E05576] h-8 text-xs' : 'h-8 text-xs'}
+                      variant="ghost"
+                      className={`h-8 w-8 p-0 rounded-full hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 ${isExpanded ? 'rotate-180 bg-orange-50 text-orange-600' : 'text-gray-400'}`}
                     >
-                      {isExpanded ? (
-                        <>
-                          <ChevronUp className="w-3 h-3 mr-1" />
-                          Tutup
-                        </>
-                      ) : (
-                        <>
-                          {isValidated ? 'Detail' : 'Validasi'}
-                        </>
-                      )}
+                      <ChevronDown className="w-5 h-5" />
                     </Button>
                   </div>
-                </div>
 
-                {/* Desktop Layout (>= 1024px) - Table-like */}
-                <div className="hidden lg:flex lg:items-center lg:justify-between lg:gap-4">
-                  <div className="flex items-center gap-3 flex-1">
-                    <User className="w-4 h-4 text-gray-400" />
-                    <div className="min-w-0">
-                      <div className="font-medium text-gray-900 text-sm truncate">{order.Participant.name}</div>
-                      <div className="text-xs text-gray-500">{order.Participant.phone}</div>
-                    </div>
-                  </div>
-                  <div className="text-xs text-gray-600">
-                    {new Date(order.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}
-                  </div>
-                  <div className="text-xs text-gray-600 text-center w-16">
-                    {order.OrderItem.length} item
-                  </div>
-                  <div className="font-bold text-[#F26B8A] text-sm w-32 text-right">
-                    Rp {order.totalPrice.toLocaleString('id-ID')}
-                  </div>
-                  <Badge 
-                    className="text-xs" 
-                    variant={
-                      order.status === 'pending_dp' ? 'destructive' :
-                      order.status === 'awaiting_validation' ? 'default' :
-                      'secondary'
-                    }
-                  >
-                    {order.status === 'pending_dp' ? 'Belum Bayar' :
-                     order.status === 'awaiting_validation' ? 'Perlu Validasi' :
-                     order.status === 'validated' ? 'Sudah Validasi' :
-                     order.status}
-                  </Badge>
-                  <Button
-                    onClick={() => toggleExpand(order.id)}
-                    size="sm"
-                    variant={isExpanded ? "outline" : "default"}
-                    className={!isExpanded ? 'bg-[#F26B8A] hover:bg-[#E05576] h-8 text-xs w-24' : 'h-8 text-xs w-24'}
-                  >
-                    {isExpanded ? (
-                      <>
-                        <ChevronUp className="w-3 h-3 mr-1" />
-                        Tutup
-                      </>
-                    ) : (
-                      <>
-                        {isValidated ? 'Detail' : 'Validasi'}
-                      </>
-                    )}
-                  </Button>
                 </div>
               </div>
 
-              {/* Expanded Content */}
+              {/* Expanded Content - Smooth Reveal */}
               {isExpanded && (
-                <div className="border-t border-gray-100 bg-gray-50 p-3 space-y-3">
-                  {/* Order Items */}
-                  <div>
-                    <p className="text-xs font-medium text-gray-500 mb-2">Pesanan:</p>
-                    <div className="space-y-1">
-                      {order.OrderItem.map((item, idx) => (
-                        <div key={idx} className="flex justify-between text-xs text-gray-700 bg-white px-2 py-1.5 rounded">
-                          <span className="truncate">{item.Product.title} <span className="text-gray-500">× {item.quantity}</span></span>
-                          <span className="font-medium ml-2">Rp {(item.priceAtOrder * item.quantity).toLocaleString('id-ID')}</span>
+                <div className="border-t border-gray-100 bg-gray-50/50 animate-in slide-in-from-top-2 duration-200">
+                  <div className="p-4 space-y-4">
+                    
+                    {/* Grid Layout for Details */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      
+                      {/* Left Column: Items & Address */}
+                      <div className="space-y-4">
+                        <div className="bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
+                          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Detail Pesanan</h4>
+                          <div className="space-y-2">
+                            {order.OrderItem.map((item, idx) => (
+                              <div key={idx} className="flex justify-between items-start text-sm group/item">
+                                <div className="flex gap-2">
+                                  <div className="w-1 h-1 rounded-full bg-orange-300 mt-2" />
+                                  <span className="text-gray-700 group-hover/item:text-gray-900">
+                                    {item.Product.title} 
+                                    <span className="text-gray-400 ml-1">x{item.quantity}</span>
+                                  </span>
+                                </div>
+                                <span className="font-medium text-gray-900">
+                                  Rp {(item.priceAtOrder * item.quantity).toLocaleString('id-ID')}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="mt-3 pt-3 border-t border-dashed border-gray-200 flex justify-between items-center text-sm">
+                            <span className="text-gray-500">DP Terbayar</span>
+                            <span className="font-semibold text-green-600">Rp {order.dpAmount.toLocaleString('id-ID')}</span>
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
 
-                  {/* Address */}
-                  {order.Address && (
-                    <div className="bg-white p-2 rounded">
-                      <div className="flex items-start gap-2">
-                        <MapPin className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
-                        <div className="text-xs">
-                          <p className="font-medium text-gray-700">{order.Address.recipientName}</p>
-                          <p className="text-gray-600 mt-0.5">
-                            {order.Address.addressText}, {order.Address.districtName}, {order.Address.cityName}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* DP Info */}
-                  <div className="flex justify-between text-xs bg-white px-2 py-1.5 rounded">
-                    <span className="text-gray-600">DP Dibayar:</span>
-                    <span className="font-semibold text-gray-900">Rp {order.dpAmount.toLocaleString('id-ID')}</span>
-                  </div>
-
-                  {/* Validation Form or Status */}
-                  {isValidated ? (
-                    <div className="flex items-center justify-between bg-white p-2 rounded">
-                      <div className="flex items-center gap-2 text-green-600 text-xs font-medium">
-                        <CheckCircle2 className="w-4 h-4" />
-                        Sudah Divalidasi
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => window.open(`/inv/${order.id}`, '_blank')}
-                        className="h-7 text-xs"
-                      >
-                        <FileText className="w-3 h-3 mr-1" />
-                        Invoice
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-2 bg-white p-3 rounded">
-                      {/* Shipping Fee */}
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between items-center">
-                          <Label className="text-xs font-medium">
-                            Ongkir <span className="text-red-500">*</span>
-                          </Label>
-                          {order.Address && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => calculateShipping(order.id)}
-                              disabled={calculatingShipping}
-                              className="h-7 text-xs"
-                            >
-                              {calculatingShipping ? (
-                                <>
-                                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                                  Hitung...
-                                </>
-                              ) : (
-                                <>
-                                  <Calculator className="mr-1 h-3 w-3" />
-                                  Hitung Ongkir
-                                </>
-                              )}
-                            </Button>
-                          )}
-                        </div>
-                        <Input
-                          type="number"
-                          value={shippingFees[order.id] || ''}
-                          onChange={(e) => setShippingFees(prev => ({ ...prev, [order.id]: e.target.value }))}
-                          placeholder="Masukkan ongkir"
-                          className="h-9 text-sm"
-                        />
+                        {order.Address && (
+                          <div className="bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
+                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Pengiriman</h4>
+                            <div className="flex items-start gap-3">
+                              <div className="p-1.5 bg-blue-50 rounded-md text-blue-600 mt-0.5">
+                                <MapPin className="w-4 h-4" />
+                              </div>
+                              <div className="text-sm">
+                                <p className="font-medium text-gray-900">{order.Address.recipientName}</p>
+                                <p className="text-gray-500 leading-relaxed mt-0.5">
+                                  {order.Address.addressText}, {order.Address.districtName}, {order.Address.cityName}
+                                </p>
+                                <p className="text-xs text-blue-600 mt-1 font-medium">{order.Address.phone}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
-                      {/* Service Fee */}
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-medium">
-                          Biaya Jasa <span className="text-gray-500">(opsional)</span>
-                        </Label>
-                        <Input
-                          type="number"
-                          value={serviceFees[order.id] || ''}
-                          onChange={(e) => setServiceFees(prev => ({ ...prev, [order.id]: e.target.value }))}
-                          placeholder="Biaya jasa tambahan"
-                          className="h-9 text-sm"
-                        />
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex gap-2 pt-2">
-                        <Button
-                          onClick={() => handleValidate(order.id, 'accept')}
-                          disabled={processing}
-                          className="flex-1 bg-[#F26B8A] hover:bg-[#E05576] h-9 text-sm"
-                        >
-                          {processing ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {/* Right Column: Proof & Actions */}
+                      <div className="space-y-4">
+                        {/* Proof Section */}
+                        <div className="bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
+                          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Bukti Pembayaran</h4>
+                          {order.proofUrl ? (
+                            <div className="flex items-center justify-between p-3 bg-green-50 border border-green-100 rounded-lg">
+                              <div className="flex items-center gap-3">
+                                <div className="p-2 bg-white rounded-md border border-green-100 shadow-sm">
+                                  <ImageIcon className="w-4 h-4 text-green-600" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-green-900">Bukti Tersedia</p>
+                                  <p className="text-xs text-green-600">Diunggah oleh pembeli</p>
+                                </div>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedProofUrl(order.proofUrl);
+                                  setShowProofPreview(true);
+                                }}
+                                className="h-8 text-xs bg-white hover:bg-green-50 border-green-200 text-green-700"
+                              >
+                                <ExternalLink className="w-3 h-3 mr-1.5" />
+                                Lihat
+                              </Button>
+                            </div>
                           ) : (
-                            <CheckCircle className="mr-2 h-4 w-4" />
+                            <div className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-100 rounded-lg text-gray-500">
+                              <AlertCircle className="w-4 h-4" />
+                              <span className="text-sm">Belum ada bukti transfer</span>
+                            </div>
                           )}
-                          Terima
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => setShowRejectForm(prev => ({ ...prev, [order.id]: !prev[order.id] }))}
-                          disabled={processing}
-                          className="h-9 text-sm"
-                        >
-                          <XCircle className="mr-1.5 h-3.5 w-3.5" />
-                          Tolak
-                        </Button>
-                      </div>
-
-                      {/* Reject Form */}
-                      {showRejectForm[order.id] && (
-                        <div className="pt-2 border-t space-y-2">
-                          <Label className="text-xs font-medium text-red-600">Alasan Penolakan:</Label>
-                          <Textarea
-                            value={rejectionReasons[order.id] || ''}
-                            onChange={(e) => setRejectionReasons(prev => ({ ...prev, [order.id]: e.target.value }))}
-                            placeholder="Jelaskan alasan penolakan..."
-                            rows={3}
-                            className="text-sm"
-                          />
-                          <Button
-                            variant="destructive"
-                            onClick={() => handleValidate(order.id, 'reject')}
-                            disabled={processing}
-                            className="w-full h-9 text-sm"
-                          >
-                            {processing ? (
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                              <XCircle className="mr-2 h-4 w-4" />
-                            )}
-                            Konfirmasi Tolak
-                          </Button>
                         </div>
-                      )}
+
+                        {/* Action Section */}
+                        <div className="bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
+                          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Tindakan</h4>
+                          
+                          {isValidated ? (
+                            <div className="flex flex-col items-center justify-center py-4 text-center space-y-3">
+                              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                                <CheckCircle2 className="w-6 h-6 text-green-600" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-900">Order Telah Divalidasi</p>
+                                <p className="text-xs text-gray-500">Invoice telah dikirim ke pembeli</p>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => window.open(`/inv/${order.id}`, '_blank')}
+                                className="w-full mt-2"
+                              >
+                                <FileText className="w-4 h-4 mr-2" />
+                                Lihat Invoice
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="space-y-4">
+                              {/* Input Fields */}
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1.5">
+                                  <div className="flex justify-between items-center">
+                                    <Label className="text-xs font-medium text-gray-700">Ongkir <span className="text-red-500">*</span></Label>
+                                    {order.Address && (
+                                      <div className="flex items-center gap-1">
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            calculateShipping(order.id);
+                                          }}
+                                          disabled={calculatingShipping}
+                                          className="text-[10px] text-blue-600 hover:text-blue-700 font-medium flex items-center"
+                                        >
+                                          {calculatingShipping ? <Loader2 className="w-3 h-3 animate-spin" /> : <Calculator className="w-3 h-3 mr-1" />}
+                                          Hitung
+                                        </button>
+                                        {shippingOptions.length > 0 && (
+                                          <>
+                                            <span className="text-gray-300">|</span>
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                calculateMedianShipping(order.id);
+                                              }}
+                                              className="text-[10px] text-purple-600 hover:text-purple-700 font-medium flex items-center"
+                                            >
+                                              <TrendingUp className="w-3 h-3 mr-1" />
+                                              Median
+                                            </button>
+                                          </>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">Rp</span>
+                                    <Input
+                                      type="number"
+                                      value={shippingFees[order.id] || ''}
+                                      onChange={(e) => setShippingFees(prev => ({ ...prev, [order.id]: e.target.value }))}
+                                      placeholder="0"
+                                      className="h-9 pl-8 text-sm"
+                                      onClick={(e) => e.stopPropagation()}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                  <Label className="text-xs font-medium text-gray-700">Jasa <span className="text-gray-400">(Opsional)</span></Label>
+                                  <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">Rp</span>
+                                    <Input
+                                      type="number"
+                                      value={serviceFees[order.id] || ''}
+                                      onChange={(e) => setServiceFees(prev => ({ ...prev, [order.id]: e.target.value }))}
+                                      placeholder="0"
+                                      className="h-9 pl-8 text-sm"
+                                      onClick={(e) => e.stopPropagation()}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Action Buttons */}
+                              <div className="flex gap-2">
+                                <Button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleValidate(order.id, 'accept');
+                                  }}
+                                  disabled={processing}
+                                  className="flex-1 bg-[#F26B8A] hover:bg-[#E05576] text-white h-10 shadow-sm"
+                                >
+                                  {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-2" />}
+                                  Terima Order
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowRejectForm(prev => ({ ...prev, [order.id]: !prev[order.id] }));
+                                  }}
+                                  disabled={processing}
+                                  className="h-10 px-3 border-red-100 text-red-600 hover:bg-red-50 hover:text-red-700"
+                                >
+                                  <XCircle className="w-4 h-4" />
+                                </Button>
+                              </div>
+
+                              {/* Reject Form */}
+                              {showRejectForm[order.id] && (
+                                <div className="pt-3 border-t border-gray-100 animate-in slide-in-from-top-1">
+                                  <Label className="text-xs font-medium text-red-600 mb-1.5 block">Alasan Penolakan:</Label>
+                                  <Textarea
+                                    value={rejectionReasons[order.id] || ''}
+                                    onChange={(e) => setRejectionReasons(prev => ({ ...prev, [order.id]: e.target.value }))}
+                                    placeholder="Jelaskan kenapa order ditolak..."
+                                    rows={2}
+                                    className="text-sm mb-2 resize-none"
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleValidate(order.id, 'reject');
+                                    }}
+                                    disabled={processing}
+                                    className="w-full h-8 text-xs"
+                                  >
+                                    Konfirmasi Tolak
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               )}
             </div>
@@ -757,6 +870,74 @@ export default function JastiperValidationDashboard() {
                   </div>
                 </button>
               ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Proof Preview Dialog */}
+      <Dialog open={showProofPreview} onOpenChange={setShowProofPreview}>
+        <DialogContent className="max-w-3xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle className="text-lg">Bukti Transfer DP</DialogTitle>
+            <DialogDescription className="text-sm">
+              Preview bukti pembayaran yang diupload oleh customer
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            {selectedProofUrl ? (
+              <div className="bg-gray-50 rounded-lg p-4 flex flex-col items-center">
+                <div className="relative w-full max-h-[60vh] overflow-auto bg-white rounded border">
+                  <img
+                    src={selectedProofUrl}
+                    alt="Bukti Transfer"
+                    className="w-full h-auto object-contain"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement
+                      target.style.display = 'none'
+                      const parent = target.parentElement
+                      if (parent) {
+                        parent.innerHTML = `
+                          <div class="flex flex-col items-center justify-center p-8 text-gray-500">
+                            <svg class="w-16 h-16 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <p class="text-sm">Gagal memuat gambar</p>
+                            <a href="${selectedProofUrl}" target="_blank" rel="noopener noreferrer" class="text-xs text-blue-600 hover:underline mt-2">Buka di tab baru</a>
+                          </div>
+                        `
+                      }
+                    }}
+                  />
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(selectedProofUrl, '_blank')}
+                    className="text-xs"
+                  >
+                    <ExternalLink className="w-3 h-3 mr-1" />
+                    Buka di Tab Baru
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setShowProofPreview(false)
+                      setSelectedProofUrl(null)
+                    }}
+                    className="text-xs"
+                  >
+                    Tutup
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <AlertCircle className="w-12 h-12 mx-auto mb-2" />
+                <p className="text-sm">Tidak ada bukti transfer</p>
+              </div>
             )}
           </div>
         </DialogContent>

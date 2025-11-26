@@ -61,6 +61,7 @@ interface SavedAddress {
   villageName?: string
   addressText: string
   postalCode?: string
+  rajaOngkirDistrictId?: string
 }
 
 export default function DPCheckoutForm({
@@ -250,7 +251,8 @@ export default function DPCheckoutForm({
           districtName: address.districtName,
           villageId: address.villageId,
           villageName: address.villageName,
-          postalCode: address.postalCode
+          postalCode: address.postalCode,
+          rajaOngkirDistrictId: address.rajaOngkirDistrictId
         }}),
         ...(notes && { notes })
       }

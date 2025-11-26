@@ -94,8 +94,39 @@ router.get('/trips', authMiddleware, async (req: AuthRequest, res: Response) => 
 })
 
 /**
+ * GET /trips/:id/public
+ * Get PUBLIC trip details for guest checkout (no auth required)
+ * Returns minimal trip data without sensitive information
+ */
+router.get(
+  '/trips/:id/public',
+  async (req, res) => {
+    try {
+      const trip = await tripService.getTrip(req.params.id)
+
+      // Return only public fields needed for checkout
+      const publicTrip = {
+        id: trip.id,
+        title: trip.title,
+        paymentType: trip.paymentType,
+        jastiper: trip.User ? {
+          slug: trip.User.slug,
+          name: trip.User.profileName || trip.User.slug
+        } : null
+      }
+
+      res.json(publicTrip)
+    } catch (error: any) {
+      const status = error.status || 500
+      const message = error.message || 'Failed to fetch trip'
+      res.status(status).json({ error: message })
+    }
+  }
+)
+
+/**
  * GET /trips/:id
- * Get trip details with products and participants
+ * Get trip details with products and participants (AUTHENTICATED)
  */
 router.get(
   '/trips/:id',
@@ -116,6 +147,50 @@ router.get(
       const status = error.status || 500
       const message = error.message || 'Failed to fetch trip'
       res.status(status).json({ error: message })
+    }
+  }
+)
+
+/**
+ * GET /trips/:id/products
+ * Get PUBLIC products for a trip (no auth required for guest checkout)
+ * Supports filtering by product IDs via ?ids=id1,id2,id3
+ */
+router.get(
+  '/trips/:id/products',
+  async (req, res) => {
+    try {
+      const tripId = req.params.id
+      const idsParam = req.query.ids as string | undefined
+
+      // Build query filter
+      const where: any = { tripId }
+
+      // If specific product IDs requested, filter by them
+      if (idsParam) {
+        const ids = idsParam.split(',').map(id => id.trim())
+        where.id = { in: ids }
+      }
+
+      // Fetch products (public fields only)
+      const products = await db.product.findMany({
+        where,
+        select: {
+          id: true,
+          title: true,
+          price: true,
+          type: true,
+          unit: true,
+          stock: true,
+          isUnlimitedStock: true,
+          image: true,
+          description: true
+        }
+      })
+
+      res.json(products)
+    } catch (error: any) {
+      res.status(500).json({ error: 'Failed to fetch products' })
     }
   }
 )

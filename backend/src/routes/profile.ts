@@ -96,4 +96,77 @@ router.post(
   }
 )
 
+/**
+ * PATCH /profile/origin
+ * Update jastiper's origin address with automatic RajaOngkir mapping
+ * Body: { originProvinceId, originProvinceName, originCityId, originCityName, originDistrictId, originDistrictName }
+ */
+router.patch(
+  '/profile/origin',
+  authMiddleware,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const {
+        originProvinceId,
+        originProvinceName,
+        originCityId,
+        originCityName,
+        originDistrictId,
+        originDistrictName
+      } = req.body
+
+      if (!originDistrictId || !originDistrictName || !originCityName) {
+        res.status(400).json({
+          error: 'originDistrictId, originDistrictName, and originCityName are required'
+        })
+        return
+      }
+
+      // Auto-map to RajaOngkir district ID for shipping calculation
+      const { autoMapToRajaOngkir } = await import('../services/rajaongkir.service.js')
+      const rajaOngkirDistrictId = await autoMapToRajaOngkir(
+        originCityName,
+        originDistrictName
+      )
+
+      const updatedUser = await db.user.update({
+        where: { id: req.user!.id },
+        data: {
+          originProvinceId: originProvinceId || null,
+          originProvinceName: originProvinceName || null,
+          originCityId: originCityId || null,
+          originCityName: originCityName || null,
+          originDistrictId: originDistrictId || null,
+          originDistrictName: originDistrictName || null,
+          originRajaOngkirDistrictId: rajaOngkirDistrictId || null
+        },
+        select: {
+          id: true,
+          email: true,
+          slug: true,
+          profileName: true,
+          originProvinceId: true,
+          originProvinceName: true,
+          originCityId: true,
+          originCityName: true,
+          originDistrictId: true,
+          originDistrictName: true,
+          originRajaOngkirDistrictId: true
+        }
+      })
+
+      res.json({
+        success: true,
+        message: 'Origin address updated successfully',
+        data: updatedUser,
+        rajaOngkirMapped: !!rajaOngkirDistrictId
+      })
+    } catch (error: any) {
+      const status = error.status || 500
+      const message = error.message || 'Failed to update origin address'
+      res.status(status).json({ error: message })
+    }
+  }
+)
+
 export default router
