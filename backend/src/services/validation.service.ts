@@ -5,7 +5,7 @@
 
 import { PrismaClient } from '@prisma/client'
 import { calculatePriceBreakdown, OrderItemInput } from './price-calculator.service'
-import { releaseStock } from './stock-lock.service'
+import { releaseStock, lockStock, StockLockItem } from './stock-lock.service'
 import { EmailTriggerService } from './email/email-trigger.service.js'
 
 const db = new PrismaClient()
@@ -118,14 +118,29 @@ export async function validateOrder(
       markupType: item.Product.markupType as 'percent' | 'flat',
       markupValue: item.Product.markupValue
     }))
-    
+
     const breakdown = await calculatePriceBreakdown({
       items: itemsForCalculation,
       shippingFee: input.shippingFee || 0,
-      serviceFee: input.serviceFee || 0
+      serviceFee: input.serviceFee || 0,
+      dpPercentage: order.Trip?.dpPercentage || 20  // Use trip's DP percentage
     })
     
-    // 7. Update order with breakdown
+    // 7. Lock stock (deduct from inventory)
+    const stockLockItems: StockLockItem[] = order.OrderItem.map((item: any) => ({
+      productId: item.productId,
+      quantity: item.quantity
+    }))
+
+    const stockLockResult = await lockStock(input.orderId, stockLockItems)
+    if (!stockLockResult.success) {
+      return {
+        success: false,
+        error: `Stock lock failed: ${stockLockResult.error}`
+      }
+    }
+
+    // 8. Update order with breakdown
     const updatedOrder = await db.order.update({
       where: { id: input.orderId },
       data: {
@@ -148,11 +163,11 @@ export async function validateOrder(
         }
       }
     })
-    
-    // 8. TODO: Create payment link for remaining amount
+
+    // 9. TODO: Create payment link for remaining amount
     const paymentLink = `https://payment.jastipin.me/final/${updatedOrder.id}`
-    
-    // 9. Send email notification to customer (async, non-blocking)
+
+    // 10. Send email notification to customer (async, non-blocking)
     EmailTriggerService.sendOrderValidatedEmail(updatedOrder.id).catch(error => {
       console.error('[Validation] Failed to send email notification:', error)
       // Don't fail the validation if email fails

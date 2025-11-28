@@ -859,6 +859,60 @@ router.post(
 )
 
 /**
+ * GET /orders/pending-count
+ * Get count of orders pending validation (awaiting_validation + awaiting_final_validation)
+ * Auth: Jastiper only
+ */
+router.get(
+  '/orders/pending-count',
+  authMiddleware,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const jastiperId = req.user?.id
+
+      if (!jastiperId) {
+        res.status(401).json({ error: 'Unauthorized' })
+        return
+      }
+
+      // Count orders awaiting DP validation
+      const awaitingDPValidation = await db.order.count({
+        where: {
+          status: 'awaiting_validation',
+          Trip: {
+            jastiperId
+          }
+        }
+      })
+
+      // Count orders awaiting final payment validation
+      const awaitingFinalValidation = await db.order.count({
+        where: {
+          status: 'awaiting_final_validation',
+          Trip: {
+            jastiperId
+          }
+        }
+      })
+
+      const totalPending = awaitingDPValidation + awaitingFinalValidation
+
+      res.json({
+        success: true,
+        data: {
+          awaitingDPValidation,
+          awaitingFinalValidation,
+          total: totalPending
+        }
+      })
+    } catch (error: any) {
+      console.error('[Orders] Error getting pending count:', error)
+      res.status(500).json({ error: 'Failed to get pending count' })
+    }
+  }
+)
+
+/**
  * GET /orders
  * Get orders for authenticated jastiper with optional filtering
  * Auth: Jastiper only
@@ -949,6 +1003,7 @@ router.get(
           status: true,
           dpAmount: true,
           totalPrice: true,
+          finalAmount: true, // ADDED: Final payment amount
           dpPaidAt: true,
           proofUrl: true, // Legacy field
           dpProofUrl: true, // DP payment proof
@@ -956,6 +1011,8 @@ router.get(
           createdAt: true,
           shippingFee: true,
           serviceFee: true,
+          platformCommission: true, // ADDED: Platform commission
+          finalBreakdown: true, // ADDED: Complete breakdown from validation
           validatedAt: true,
           rejectionReason: true,
           Participant: {

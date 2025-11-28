@@ -25,6 +25,7 @@ import webhooksRoutes from './routes/webhooks.js'
 import workersRoutes from './routes/workers.js'
 import uploadRoutes from './routes/upload.js'
 import imagesRoutes from './routes/images.js'
+import analyticsRoutes from './routes/analytics.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import { maintenanceMiddleware } from './middleware/maintenance.js'
 
@@ -91,6 +92,7 @@ app.use('/api/webhooks', webhooksRoutes)
 app.use('/api/workers', workersRoutes)
 app.use('/api/upload', uploadRoutes)
 app.use('/api/images', imagesRoutes)
+app.use('/api/analytics', analyticsRoutes)
 app.use('/api', profileRoutes)
 app.use('/api', bankAccountsRoutes)
 app.use('/api', tripRoutes)

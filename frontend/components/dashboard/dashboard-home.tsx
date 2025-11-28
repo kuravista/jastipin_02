@@ -1,13 +1,14 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Plus, ChevronRight, AlertCircle, TrendingDown, Users, TrendingUp, ShoppingBag, DollarSign, Copy, Check, ExternalLink, Settings } from "lucide-react"
+import { Plus, ChevronRight, AlertCircle, TrendingDown, Users, TrendingUp, ShoppingBag, DollarSign, Copy, Check, ExternalLink, Settings, Loader2 } from "lucide-react"
 import { CreateTripDialog } from "@/components/dialogs/create-trip-dialog"
 import { CreateProductDialog } from "@/components/dialogs/create-product-dialog"
 import { useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import Link from "next/link"
 import Image from "next/image"
+import { useDashboardAnalytics } from "@/hooks/useDashboardAnalytics"
 
 interface DashboardHomeProps {
   onNavigate: (tab: string) => void
@@ -15,11 +16,28 @@ interface DashboardHomeProps {
 
 export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
   const { user } = useAuth()
+  const { analytics, alerts, loading } = useDashboardAnalytics()
   const [productDialogOpen, setProductDialogOpen] = useState(false)
   const [createTripOpen, setCreateTripOpen] = useState(false)
   const [copied, setCopied] = useState(false)
 
   const profileUrl = user?.slug ? `https://jastipin.me/${user.slug}` : ''
+
+  // Format currency to Indonesian Rupiah
+  const formatCurrency = (amount: number) => {
+    if (amount >= 1000000) {
+      return `${(amount / 1000000).toFixed(1)}M`
+    } else if (amount >= 1000) {
+      return `${(amount / 1000).toFixed(1)}K`
+    }
+    return amount.toString()
+  }
+
+  // Format growth percentage
+  const formatGrowth = (growth: number) => {
+    const absGrowth = Math.abs(growth)
+    return growth >= 0 ? `+${absGrowth.toFixed(1)}%` : `-${absGrowth.toFixed(1)}%`
+  }
 
   const handleCopyUrl = () => {
     if (profileUrl) {
@@ -128,105 +146,158 @@ export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
 
       <div className="bg-gradient-to-br from-[#F26B8A] to-[#F26B8A]/80 rounded-2xl p-5 shadow-lg">
         <div className="text-white/90 text-sm mb-4 font-medium">Analitik Bulan Ini</div>
-        <div className="grid grid-cols-3 gap-3">
-          {/* Total Pendapatan */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-4 h-4 text-white" />
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-8 h-8 text-white animate-spin" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-3">
+            {/* Total Pendapatan */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                  <DollarSign className="w-4 h-4 text-white" />
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-white mb-1">
+                {analytics ? formatCurrency(analytics.totalRevenue) : '0'}
+              </div>
+              <div className="text-xs text-white/80">Pendapatan</div>
+              <div className="flex items-center gap-1 mt-2">
+                {analytics && analytics.revenueGrowth >= 0 ? (
+                  <TrendingUp className="w-3 h-3 text-green-300" />
+                ) : (
+                  <TrendingDown className="w-3 h-3 text-red-300" />
+                )}
+                <span className={`text-xs font-medium ${analytics && analytics.revenueGrowth >= 0 ? 'text-green-300' : 'text-red-300'}`}>
+                  {analytics ? formatGrowth(analytics.revenueGrowth) : '0%'}
+                </span>
               </div>
             </div>
-            <div className="text-2xl font-bold text-white mb-1">8.5M</div>
-            <div className="text-xs text-white/80">Pendapatan</div>
-            <div className="flex items-center gap-1 mt-2">
-              <TrendingUp className="w-3 h-3 text-green-300" />
-              <span className="text-xs text-green-300 font-medium">+12%</span>
-            </div>
-          </div>
 
-          {/* Total Order */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                <ShoppingBag className="w-4 h-4 text-white" />
+            {/* Total Order */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                  <ShoppingBag className="w-4 h-4 text-white" />
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-white mb-1">
+                {analytics?.totalOrders || 0}
+              </div>
+              <div className="text-xs text-white/80">Total Order</div>
+              <div className="flex items-center gap-1 mt-2">
+                {analytics && analytics.ordersGrowth >= 0 ? (
+                  <TrendingUp className="w-3 h-3 text-green-300" />
+                ) : (
+                  <TrendingDown className="w-3 h-3 text-red-300" />
+                )}
+                <span className={`text-xs font-medium ${analytics && analytics.ordersGrowth >= 0 ? 'text-green-300' : 'text-red-300'}`}>
+                  {analytics ? formatGrowth(analytics.ordersGrowth) : '0%'}
+                </span>
               </div>
             </div>
-            <div className="text-2xl font-bold text-white mb-1">142</div>
-            <div className="text-xs text-white/80">Total Order</div>
-            <div className="flex items-center gap-1 mt-2">
-              <TrendingUp className="w-3 h-3 text-green-300" />
-              <span className="text-xs text-green-300 font-medium">+8%</span>
-            </div>
-          </div>
 
-          {/* Total Peserta */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                <Users className="w-4 h-4 text-white" />
+            {/* Total Peserta */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                  <Users className="w-4 h-4 text-white" />
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-white mb-1">
+                {analytics?.totalParticipants || 0}
+              </div>
+              <div className="text-xs text-white/80">Peserta</div>
+              <div className="flex items-center gap-1 mt-2">
+                {analytics && analytics.participantsGrowth >= 0 ? (
+                  <TrendingUp className="w-3 h-3 text-green-300" />
+                ) : (
+                  <TrendingDown className="w-3 h-3 text-red-300" />
+                )}
+                <span className={`text-xs font-medium ${analytics && analytics.participantsGrowth >= 0 ? 'text-green-300' : 'text-red-300'}`}>
+                  {analytics ? formatGrowth(analytics.participantsGrowth) : '0%'}
+                </span>
               </div>
             </div>
-            <div className="text-2xl font-bold text-white mb-1">68</div>
-            <div className="text-xs text-white/80">Peserta</div>
-            <div className="flex items-center gap-1 mt-2">
-              <TrendingUp className="w-3 h-3 text-green-300" />
-              <span className="text-xs text-green-300 font-medium">+5%</span>
-            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Section: Ringkasan Anda - Simplified (Top 2 Priorities Only) */}
       <div className="space-y-4">
         <h2 className="text-lg font-bold text-gray-900">Yang Perlu Diperhatikan</h2>
 
-        {/* Card Summary 1: Validasi (Priority 1) */}
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
-              <AlertCircle className="w-6 h-6 text-red-500" />
-            </div>
-            <div className="flex-1">
-              <div className="text-sm text-gray-600 mb-1">Validasi Order</div>
-              <div className="text-lg font-bold text-gray-900 mb-3">
-                Anda punya <span className="text-red-500">3</span> order baru yang perlu divalidasi
-              </div>
-              <Button
-                onClick={() => onNavigate("validasi")}
-                variant="outline"
-                size="sm"
-                className="w-full border-[#F26B8A] text-[#F26B8A] hover:bg-pink-50"
-              >
-                Lihat Detail
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
-            </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
           </div>
-        </div>
+        ) : (
+          <>
+            {/* Card Summary 1: Validasi (Priority 1) */}
+            {alerts && alerts.pendingValidationCount > 0 && (
+              <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <AlertCircle className="w-6 h-6 text-red-500" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm text-gray-600 mb-1">Validasi Order</div>
+                    <div className="text-lg font-bold text-gray-900 mb-3">
+                      Anda punya <span className="text-red-500">{alerts.pendingValidationCount}</span> order baru yang perlu divalidasi
+                    </div>
+                    <Button
+                      onClick={() => onNavigate("validasi")}
+                      variant="outline"
+                      size="sm"
+                      className="w-full border-[#F26B8A] text-[#F26B8A] hover:bg-pink-50"
+                    >
+                      Lihat Detail
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
 
-        {/* Card Summary 2: Stok Produk (Priority 2) */}
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
-              <TrendingDown className="w-6 h-6 text-orange-500" />
-            </div>
-            <div className="flex-1">
-              <div className="text-sm text-gray-600 mb-1">Stok Produk</div>
-              <div className="text-lg font-bold text-gray-900 mb-3">
-                Ada <span className="text-orange-500">5</span> produk yang stoknya menipis
+            {/* Card Summary 2: Stok Produk (Priority 2) */}
+            {alerts && alerts.lowStockProductsCount > 0 && (
+              <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <TrendingDown className="w-6 h-6 text-orange-500" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm text-gray-600 mb-1">Stok Produk</div>
+                    <div className="text-lg font-bold text-gray-900 mb-3">
+                      Ada <span className="text-orange-500">{alerts.lowStockProductsCount}</span> produk yang stoknya menipis
+                    </div>
+                    <Button
+                      onClick={() => onNavigate("produk")}
+                      variant="outline"
+                      size="sm"
+                      className="w-full border-[#F26B8A] text-[#F26B8A] hover:bg-pink-50"
+                    >
+                      Lihat Detail
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
               </div>
-              <Button
-                onClick={() => onNavigate("produk")}
-                variant="outline"
-                size="sm"
-                className="w-full border-[#F26B8A] text-[#F26B8A] hover:bg-pink-50"
-              >
-                Lihat Detail
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
-            </div>
-          </div>
-        </div>
+            )}
+
+            {/* No alerts message */}
+            {alerts && alerts.pendingValidationCount === 0 && alerts.lowStockProductsCount === 0 && (
+              <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100 text-center">
+                <div className="text-gray-400 mb-2">
+                  <Check className="w-12 h-12 mx-auto" />
+                </div>
+                <p className="text-gray-600 font-medium">Semua dalam kondisi baik!</p>
+                <p className="text-sm text-gray-500 mt-1">Tidak ada yang perlu diperhatikan saat ini</p>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   )

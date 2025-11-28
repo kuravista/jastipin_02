@@ -109,6 +109,7 @@ router.get(
         id: trip.id,
         title: trip.title,
         paymentType: trip.paymentType,
+        dpPercentage: trip.dpPercentage, // Include DP percentage for DP checkout
         jastiper: trip.User ? {
           slug: trip.User.slug,
           name: trip.User.profileName || trip.User.slug

@@ -20,6 +20,7 @@ export interface CalculatePriceInput {
   items: OrderItemInput[]
   shippingFee?: number  // set by jastiper (for goods) or 0
   serviceFee?: number   // optional extra fee
+  dpPercentage?: number // DP percentage from trip (default: 20)
 }
 
 export interface PriceBreakdown {
@@ -98,10 +99,10 @@ export async function calculatePriceBreakdown(
   
   // 7. Total final
   const totalFinal = subtotal + shippingFee + jastipherMarkup + serviceFee + platformCommission
-  
-  // 8. DP amount (already paid)
-  const dpAmount = await calculateDPAmount(subtotal)
-  
+
+  // 8. DP amount (already paid) - use trip's dpPercentage or default to 20%
+  const dpAmount = await calculateDPAmount(subtotal, input.dpPercentage || 20)
+
   // 9. Remaining amount
   const remainingAmount = Math.max(totalFinal - dpAmount, 0)
   

@@ -35,6 +35,7 @@ interface DPCheckoutFormProps {
   onSuccess?: (data: any) => void
   onCancel?: () => void
   jastiperSlug?: string // NEW: For redirect after upload
+  dpPercentage?: number // DP percentage from trip (default: 20)
 }
 
 const GUEST_PROFILE_KEY = 'jastipin_guest_profile'
@@ -72,7 +73,8 @@ export default function DPCheckoutForm({
   mode = 'page',
   onSuccess,
   onCancel,
-  jastiperSlug
+  jastiperSlug,
+  dpPercentage = 20
 }: DPCheckoutFormProps) {
   const [participantName, setParticipantName] = useState('')
   const [participantPhone, setParticipantPhone] = useState('')
@@ -211,8 +213,8 @@ export default function DPCheckoutForm({
     return sum + (product?.price || 0) * item.quantity
   }, 0)
 
-  // Calculate DP amount (20%, min 10k)
-  const dpAmount = Math.max(Math.ceil(subtotal * 0.2 / 1000) * 1000, 10000)
+  // Calculate DP amount (use trip's dpPercentage, default 20%, min 10k)
+  const dpAmount = Math.max(Math.ceil(subtotal * (dpPercentage / 100) / 1000) * 1000, 10000)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -228,6 +230,26 @@ export default function DPCheckoutForm({
       if (requiresAddress) {
         if (!address.provinceId || !address.cityId || !address.districtId || !address.addressText) {
           throw new Error('Alamat lengkap wajib diisi untuk produk barang')
+        }
+      }
+
+      // Validate stock availability before checkout (real-time check)
+      const goodsItems = items.filter(item => {
+        const product = products.find(p => p.id === item.productId)
+        return product?.type === 'goods'
+      })
+
+      for (const item of goodsItems) {
+        const product = products.find(p => p.id === item.productId)
+        if (!product) continue
+
+        // Check if product has stock tracking and if stock is sufficient
+        if (product.stock !== null && product.stock !== undefined) {
+          if (product.stock < item.quantity) {
+            throw new Error(
+              `Maaf, stok ${product.title} tidak mencukupi. Tersedia: ${product.stock}, diminta: ${item.quantity}`
+            )
+          }
         }
       }
 
@@ -485,7 +507,7 @@ export default function DPCheckoutForm({
               <span>Rp {subtotal.toLocaleString('id-ID')}</span>
             </div>
             <div className="flex justify-between font-bold text-lg">
-              <span>DP yang harus dibayar (20%)</span>
+              <span>DP yang harus dibayar ({dpPercentage}%)</span>
               <span className="text-blue-600">
                 Rp {dpAmount.toLocaleString('id-ID')}
               </span>
@@ -494,7 +516,7 @@ export default function DPCheckoutForm({
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
             <p className="text-blue-800">
-              <strong>Catatan:</strong> Anda hanya perlu membayar DP sebesar 20% terlebih dahulu. 
+              <strong>Catatan:</strong> Anda hanya perlu membayar DP sebesar {dpPercentage}% terlebih dahulu.
               Sisa pembayaran akan diinformasikan setelah jastiper memvalidasi pesanan Anda.
             </p>
           </div>

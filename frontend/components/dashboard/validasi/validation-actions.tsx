@@ -66,6 +66,7 @@ export function ValidationActions({
       {order.status === 'awaiting_final_validation' ? (
         <FinalValidationActions
           orderId={order.id}
+          order={order}
           processing={processing}
           onApproveFinal={onApproveFinal}
         />
@@ -98,15 +99,54 @@ export function ValidationActions({
  */
 function FinalValidationActions({
   orderId,
+  order,
   processing,
   onApproveFinal
 }: {
   orderId: string
+  order: Order
   processing: boolean
   onApproveFinal: (orderId: string, action: 'accept' | 'reject') => void
 }) {
+  // Get breakdown values (from finalBreakdown or individual fields)
+  const breakdown = order.finalBreakdown || {
+    shippingFee: order.shippingFee || 0,
+    serviceFee: order.serviceFee || 0,
+    platformCommission: order.platformCommission || 0,
+    remainingAmount: order.finalAmount || 0
+  }
+
   return (
     <div className="space-y-3">
+      {/* Fee Breakdown Info */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
+        <h5 className="text-xs font-semibold text-blue-900 uppercase tracking-wider mb-2">
+          Rincian Biaya
+        </h5>
+        <div className="space-y-1.5 text-xs">
+          <div className="flex justify-between items-center">
+            <span className="text-blue-700">Biaya Ongkir</span>
+            <span className="font-medium text-blue-900">
+              Rp {breakdown.shippingFee.toLocaleString('id-ID')}
+            </span>
+          </div>
+          {breakdown.serviceFee > 0 && (
+            <div className="flex justify-between items-center">
+              <span className="text-blue-700">Fee Tambahan</span>
+              <span className="font-medium text-blue-900">
+                Rp {breakdown.serviceFee.toLocaleString('id-ID')}
+              </span>
+            </div>
+          )}
+          <div className="flex justify-between items-center">
+            <span className="text-blue-700">Fee System</span>
+            <span className="font-medium text-blue-900">
+              Rp {breakdown.platformCommission.toLocaleString('id-ID')}
+            </span>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
         <p className="text-xs font-medium text-amber-900 mb-1">
           Menunggu Approval Pelunasan
@@ -114,6 +154,22 @@ function FinalValidationActions({
         <p className="text-xs text-amber-700">
           Customer telah upload bukti pelunasan. Periksa dan validasi pembayaran.
         </p>
+      </div>
+
+      {/* DP Paid and Final Payment Amount */}
+      <div className="bg-gradient-to-r from-green-50 to-purple-50 border border-purple-200 rounded-lg p-3 space-y-2">
+        <div className="flex justify-between items-center text-sm">
+          <span className="text-gray-600">DP Terbayar</span>
+          <span className="font-semibold text-green-600">
+            Rp {order.dpAmount.toLocaleString('id-ID')}
+          </span>
+        </div>
+        <div className="pt-2 border-t border-purple-200 flex justify-between items-center">
+          <span className="text-sm font-semibold text-purple-900">Nominal Pelunasan</span>
+          <span className="text-base font-bold text-purple-700">
+            Rp {breakdown.remainingAmount.toLocaleString('id-ID')}
+          </span>
+        </div>
       </div>
 
       <div className="flex gap-2">

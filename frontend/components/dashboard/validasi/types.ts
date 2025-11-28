@@ -4,6 +4,21 @@
  */
 
 /**
+ * Final price breakdown stored in order
+ */
+export interface FinalBreakdown {
+  subtotal: number
+  shippingFee: number
+  jastipherMarkup: number
+  taskFee: number
+  serviceFee: number
+  platformCommission: number
+  totalFinal: number
+  dpAmount: number
+  remainingAmount: number
+}
+
+/**
  * Order interface representing a customer order
  */
 export interface Order {
@@ -12,11 +27,16 @@ export interface Order {
   status: string
   dpAmount: number
   totalPrice: number
+  finalAmount?: number
   dpPaidAt: string | null
   proofUrl: string | null
   dpProofUrl: string | null
   finalProofUrl: string | null
   createdAt: string
+  shippingFee?: number
+  serviceFee?: number
+  platformCommission?: number
+  finalBreakdown?: FinalBreakdown | null
   Participant: {
     name: string
     phone: string

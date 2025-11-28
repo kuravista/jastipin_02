@@ -20,6 +20,7 @@ interface Trip {
   id: string
   title: string
   paymentType: string
+  dpPercentage?: number
   jastiper?: {
     slug: string
     name: string
@@ -163,6 +164,7 @@ export default function DPCheckoutPage() {
           products={products}
           items={cartItems}
           jastiperSlug={trip.jastiper?.slug}
+          dpPercentage={trip.dpPercentage}
         />
       </div>
     </div>
