@@ -1,14 +1,13 @@
+import db from '../lib/prisma.js'
 /**
  * Order Validation Service
  * Jastiper validates order and sets final price
  */
 
-import { PrismaClient } from '@prisma/client'
 import { calculatePriceBreakdown, OrderItemInput } from './price-calculator.service'
 import { releaseStock, lockStock, StockLockItem } from './stock-lock.service'
 import { EmailTriggerService } from './email/email-trigger.service.js'
 
-const db = new PrismaClient()
 
 export interface ValidateOrderInput {
   orderId: string

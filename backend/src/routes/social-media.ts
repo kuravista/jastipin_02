@@ -7,7 +7,7 @@
  */
 
 import { Router, Response, Router as ExpressRouter } from 'express'
-import { PrismaClient } from '@prisma/client'
+import db from '../lib/prisma.js'
 import { SocialMediaService } from '../services/social-media.service.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { validate } from '../middleware/validate.js'
@@ -15,7 +15,6 @@ import { createSocialMediaSchema, updateSocialMediaSchema } from '../utils/valid
 import { AuthRequest } from '../types/index.js'
 
 const router: ExpressRouter = Router()
-const db = new PrismaClient()
 const socialMediaService = new SocialMediaService(db)
 
 /**

@@ -1,11 +1,10 @@
+import db from '../lib/prisma.js'
 /**
  * Health Check Service
  * Monitors system health: database, services, memory, uptime
  */
 
-import { PrismaClient } from '@prisma/client'
 
-const prisma = new PrismaClient()
 const startTime = Date.now()
 
 interface HealthStatus {
@@ -45,7 +44,7 @@ async function checkDatabase(): Promise<{
 }> {
   try {
     const startCheck = Date.now()
-    await prisma.$queryRaw`SELECT 1`
+    await db.$queryRaw`SELECT 1`
     const responseTime = Date.now() - startCheck
 
     return {

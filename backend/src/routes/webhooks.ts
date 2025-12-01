@@ -4,11 +4,10 @@
  */
 
 import express, { type Router } from 'express'
-import { PrismaClient } from '@prisma/client'
+import db from '../lib/prisma.js'
 import { releaseStock, extendStockLock } from '../services/stock-lock.service.js'
 
 const router: Router = express.Router()
-const db = new PrismaClient()
 
 /**
  * POST /api/webhooks/payment/dp

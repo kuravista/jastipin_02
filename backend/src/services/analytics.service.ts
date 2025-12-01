@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import db from '../lib/prisma.js';
 
 export interface MonthlyAnalytics {
   totalRevenue: number;
@@ -33,7 +31,7 @@ export class AnalyticsService {
     const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
 
     // Get all trips for this jastiper
-    const trips = await prisma.trip.findMany({
+    const trips = await db.trip.findMany({
       where: { jastiperId },
       select: { id: true }
     });
@@ -52,7 +50,7 @@ export class AnalyticsService {
     }
 
     // Current month revenue (only paid orders)
-    const currentMonthRevenue = await prisma.order.aggregate({
+    const currentMonthRevenue = await db.order.aggregate({
       where: {
         tripId: { in: tripIds },
         createdAt: { gte: startOfCurrentMonth },
@@ -66,7 +64,7 @@ export class AnalyticsService {
     });
 
     // Last month revenue
-    const lastMonthRevenue = await prisma.order.aggregate({
+    const lastMonthRevenue = await db.order.aggregate({
       where: {
         tripId: { in: tripIds },
         createdAt: {
@@ -83,7 +81,7 @@ export class AnalyticsService {
     });
 
     // Current month orders
-    const currentMonthOrders = await prisma.order.count({
+    const currentMonthOrders = await db.order.count({
       where: {
         tripId: { in: tripIds },
         createdAt: { gte: startOfCurrentMonth }
@@ -91,7 +89,7 @@ export class AnalyticsService {
     });
 
     // Last month orders
-    const lastMonthOrders = await prisma.order.count({
+    const lastMonthOrders = await db.order.count({
       where: {
         tripId: { in: tripIds },
         createdAt: {
@@ -102,7 +100,7 @@ export class AnalyticsService {
     });
 
     // Current month participants
-    const currentMonthParticipants = await prisma.participant.count({
+    const currentMonthParticipants = await db.participant.count({
       where: {
         tripId: { in: tripIds },
         createdAt: { gte: startOfCurrentMonth }
@@ -110,7 +108,7 @@ export class AnalyticsService {
     });
 
     // Last month participants
-    const lastMonthParticipants = await prisma.participant.count({
+    const lastMonthParticipants = await db.participant.count({
       where: {
         tripId: { in: tripIds },
         createdAt: {
@@ -150,7 +148,7 @@ export class AnalyticsService {
    */
   async getDashboardAlerts(jastiperId: string): Promise<DashboardAlerts> {
     // Get all trips for this jastiper
-    const trips = await prisma.trip.findMany({
+    const trips = await db.trip.findMany({
       where: { jastiperId },
       select: { id: true }
     });
@@ -166,7 +164,7 @@ export class AnalyticsService {
     }
 
     // Count orders pending validation
-    const pendingValidationCount = await prisma.order.count({
+    const pendingValidationCount = await db.order.count({
       where: {
         tripId: { in: tripIds },
         status: { in: ['pending_dp_validation', 'pending_final_validation'] },
@@ -175,7 +173,7 @@ export class AnalyticsService {
     });
 
     // Get low stock products (stock < 10 and not unlimited)
-    const lowStockProducts = await prisma.product.findMany({
+    const lowStockProducts = await db.product.findMany({
       where: {
         tripId: { in: tripIds },
         isUnlimitedStock: false,

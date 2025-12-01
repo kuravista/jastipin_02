@@ -6,7 +6,7 @@
  */
 
 import { Router, Response, Router as ExpressRouter } from 'express'
-import { PrismaClient } from '@prisma/client'
+import db from '../lib/prisma.js'
 import { AuthService } from '../services/auth.service.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { optionalAuth } from '../middleware/auth.js'
@@ -15,7 +15,6 @@ import { updateProfileSchema, changePasswordSchema } from '../utils/validators.j
 import { AuthRequest } from '../types/index.js'
 
 const router: ExpressRouter = Router()
-const db = new PrismaClient()
 const authService = new AuthService(db)
 
 /**

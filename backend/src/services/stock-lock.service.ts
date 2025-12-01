@@ -1,12 +1,11 @@
+import db from '../lib/prisma.js'
 /**
  * Stock Lock Service
  * Manages stock reservation during DP flow using in-memory storage
  * TODO: Replace with Redis for production scalability
  */
 
-import { PrismaClient } from '@prisma/client'
 
-const db = new PrismaClient()
 
 const STOCK_LOCK_TTL = 30 * 60 * 1000  // 30 minutes in milliseconds
 const STOCK_LOCK_PREFIX = 'stock_lock:'

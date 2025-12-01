@@ -1,11 +1,10 @@
+import db from '../lib/prisma.js'
 /**
  * Price Calculator Service
  * Central pricing logic for DP flow
  */
 
-import { PrismaClient } from '@prisma/client'
 
-const db = new PrismaClient()
 
 export interface OrderItemInput {
   productId: string

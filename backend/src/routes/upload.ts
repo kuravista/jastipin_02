@@ -6,12 +6,11 @@
  */
 
 import { Router, Request, Response, Router as ExpressRouter } from 'express'
-import { PrismaClient } from '@prisma/client'
+import db from '../lib/prisma.js'
 import { TokenService } from '../services/token.service.js'
 import { createRateLimiter } from '../middleware/rateLimiter.js'
 
 const router: ExpressRouter = Router()
-const db = new PrismaClient()
 const tokenService = new TokenService(db)
 
 // Rate limiter for validation endpoint (10 requests per IP per minute)

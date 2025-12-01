@@ -1,13 +1,12 @@
+import db from '../../lib/prisma.js'
 /**
  * Email Trigger Service
  * Handles automated email notifications for order events
  */
 
-import { PrismaClient } from '@prisma/client'
 import { getSendPulseService } from './sendpulse.service.js'
 import { TokenService } from '../token.service.js'
 
-const db = new PrismaClient()
 const tokenService = new TokenService(db)
 
 export class EmailTriggerService {

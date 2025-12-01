@@ -8,7 +8,7 @@
  */
 
 import { Router, Response, Router as ExpressRouter } from 'express'
-import { PrismaClient } from '@prisma/client'
+import db from '../lib/prisma.js'
 import { TripService } from '../services/trip.service.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { validate } from '../middleware/validate.js'
@@ -20,7 +20,6 @@ import { getRandomTripImage } from '../utils/image.utils.js'
 import { AuthRequest } from '../types/index.js'
 
 const router: ExpressRouter = Router()
-const db = new PrismaClient()
 const tripService = new TripService(db)
 
 /**

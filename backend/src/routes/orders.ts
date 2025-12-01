@@ -9,7 +9,7 @@
  */
 
 import { Router, Response, Router as ExpressRouter } from 'express'
-import { PrismaClient } from '@prisma/client'
+import db from '../lib/prisma.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { validate } from '../middleware/validate.js'
 import {
@@ -25,7 +25,6 @@ import {
 } from '../services/checkout.service.js'
 
 const router: ExpressRouter = Router()
-const db = new PrismaClient()
 
 // Import TokenService for magic link generation
 import { TokenService } from '../services/token.service.js'

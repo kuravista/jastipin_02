@@ -1,9 +1,9 @@
+import db from '../lib/prisma.js'
 /**
  * DP Checkout Service
  * Handles minimal checkout with DP payment
  */
 
-import { PrismaClient } from '@prisma/client'
 import { calculateDPAmount } from './price-calculator.service.js'
 import { GuestService } from './guest.service.js'
 import { getSendPulseService } from './email/sendpulse.service.js'
@@ -11,7 +11,6 @@ import { EmailTemplateService } from './email/email-template.service.js'
 import { TokenService } from './token.service.js'
 import { generateOrderCode } from '../utils/order-code.js'
 
-const db = new PrismaClient()
 const guestService = new GuestService(db)
 const tokenService = new TokenService(db)
 

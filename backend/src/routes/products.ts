@@ -7,7 +7,7 @@
  */
 
 import { Router, Response, Router as ExpressRouter } from 'express'
-import { PrismaClient } from '@prisma/client'
+import db from '../lib/prisma.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { validate } from '../middleware/validate.js'
 import {
@@ -16,7 +16,6 @@ import {
 import { AuthRequest } from '../types/index.js'
 
 const router: ExpressRouter = Router()
-const db = new PrismaClient()
 
 /**
  * POST /products

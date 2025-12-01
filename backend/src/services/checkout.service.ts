@@ -1,12 +1,11 @@
+import db from '../lib/prisma.js'
 /**
  * Checkout Service
  * Handles order processing and checkout logic
  */
 
-import { PrismaClient } from '@prisma/client'
 import { generateOrderCode } from '../utils/order-code.js'
 
-const db = new PrismaClient()
 
 export interface CheckoutItem {
   productId: string

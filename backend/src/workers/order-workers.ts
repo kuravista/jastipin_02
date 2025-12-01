@@ -1,12 +1,11 @@
+import db from '../lib/prisma.js'
 /**
  * Order Workers
  * Background jobs for order management
  */
 
-import { PrismaClient } from '@prisma/client'
 import { releaseStock } from '../services/stock-lock.service.js'
 
-const db = new PrismaClient()
 
 /**
  * Auto-Refund Worker
