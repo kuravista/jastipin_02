@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import Script from "next/script"
 import { Poppins, Inter } from "next/font/google"
 import { AuthProvider } from "@/lib/auth-context"
+import { SupabaseAuthProvider } from "@/lib/supabase-auth-context"
 import { Toaster } from "@/components/ui/sonner"
 import "./globals.css"
 import "@/lib/mobile-fullscreen"
@@ -75,10 +76,12 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} ${poppins.variable} font-sans antialiased`}>
-        <AuthProvider>
-          {children}
-          <Toaster position="bottom-center" richColors />
-        </AuthProvider>
+        <SupabaseAuthProvider>
+          <AuthProvider>
+            {children}
+            <Toaster position="bottom-center" richColors />
+          </AuthProvider>
+        </SupabaseAuthProvider>
         <Script
           src="https://static.sppopups.com/assets/loader.js"
           data-chats-widget-id="5340006e-dc13-44fb-b75d-99e826dcf2bd"
