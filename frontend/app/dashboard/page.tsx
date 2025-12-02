@@ -105,30 +105,20 @@ function DashboardPageWrapper() {
   const { refreshUser } = useAuth()
   const [showTourIntro, setShowTourIntro] = useState(false)
   const [runTour, setRunTour] = useState(false)
-  const [previousProfileComplete, setPreviousProfileComplete] = useState<boolean | null>(null)
 
-  // Monitor profile completion and show tour intro
+  // Show profile modal if incomplete
   useEffect(() => {
-    if (!user) return
-
-    // First render - initialize
-    if (previousProfileComplete === null) {
-      setPreviousProfileComplete(user.isProfileComplete || false)
-
-      // Show profile modal if incomplete
-      if (!user.isProfileComplete) {
-        setModalOpen(true)
-      }
-      return
+    if (user && !user.isProfileComplete) {
+      setModalOpen(true)
     }
+  }, [user?.id])
 
-    // Profile just got completed (transition from false to true)
-    if (!previousProfileComplete && user.isProfileComplete && user.tutorialStep === 'profile_complete') {
-      setModalOpen(false)
+  // Show tour intro when profile is completed
+  useEffect(() => {
+    if (user && user.isProfileComplete && user.tutorialStep === 'profile_complete') {
       setShowTourIntro(true)
-      setPreviousProfileComplete(true)
     }
-  }, [user?.isProfileComplete, user?.tutorialStep, user?.id, previousProfileComplete, setModalOpen])
+  }, [user?.tutorialStep])
 
   const handleStartTour = () => {
     setShowTourIntro(false)
