@@ -90,7 +90,7 @@ export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
         </div>
         
         {user?.slug && (
-          <div className="flex items-center gap-2 mt-3">
+          <div className="flex items-center gap-2 mt-3" data-tour="profile-url">
             <div 
               className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm cursor-pointer hover:border-orange-300 hover:shadow-md transition-all group"
               onClick={handleCopyUrl}
@@ -115,6 +115,7 @@ export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
       <div className="flex gap-3">
         {/* Upload Produk Cepat - 4 parts */}
         <Button 
+          data-tour="upload-product"
           onClick={() => setProductDialogOpen(true)}
           className="flex-[4] h-14 bg-[#FB923C] hover:bg-[#EA7C2C] text-white font-semibold text-lg rounded-xl shadow-lg"
         >
@@ -124,6 +125,7 @@ export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
 
         {/* Tambah Trip - 1 part */}
         <Button 
+          data-tour="create-trip"
           onClick={() => setCreateTripOpen(true)}
           className="flex-1 h-14 bg-white hover:bg-gray-50 text-[#FB923C] border-2 border-[#FB923C] font-semibold rounded-xl shadow-lg"
         >
@@ -225,7 +227,7 @@ export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
       </div>
 
       {/* Section: Ringkasan Anda - Simplified (Top 2 Priorities Only) */}
-      <div className="space-y-4">
+      <div className="space-y-4" data-tour="validasi-card">
         <h2 className="text-lg font-bold text-gray-900">Yang Perlu Diperhatikan</h2>
 
         {loading ? (
