@@ -6,9 +6,10 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Check, Loader2 } from 'lucide-react'
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 
 interface TourIntroDialogProps {
   open: boolean
@@ -33,6 +34,9 @@ export function TourIntroDialog({ open, onStartTour, onSkip }: TourIntroDialogPr
   return (
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent className="max-w-md p-0" onInteractOutside={(e) => e.preventDefault()}>
+        <VisuallyHidden>
+          <DialogTitle>Profil Sudah Lengkap</DialogTitle>
+        </VisuallyHidden>
         <div className="bg-white rounded-lg overflow-hidden">
           {/* Success Icon */}
           <div className="flex justify-center py-8 bg-gradient-to-r from-[#FB923C] to-[#F26B8A]">
