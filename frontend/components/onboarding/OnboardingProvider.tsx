@@ -5,7 +5,7 @@
 
 'use client'
 
-import React, { createContext, useState, useContext, useCallback } from 'react'
+import React, { createContext, useState, useContext, useCallback, useMemo } from 'react'
 import { ProfileCompletionData, OnboardingStep } from './types'
 import { apiPatch } from '@/lib/api-client'
 import { useAuth } from '@/lib/auth-context'
@@ -47,12 +47,11 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     [],
   )
 
-  // Validation logic for each step
-  const validateStep = useCallback((step: OnboardingStep): boolean => {
+  // Pure validation function - NO side effects (no setErrors here!)
+  const getValidationErrors = useCallback((step: OnboardingStep): Record<string, string> => {
     const newErrors: Record<string, string> = {}
 
     if (step === 1) {
-      // Step 1: Personal Info
       if (!formData.profileName) {
         newErrors.profileName = 'Nama lengkap wajib diisi'
       } else if (formData.profileName.length < 2) {
@@ -65,7 +64,6 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         newErrors.whatsappNumber = 'Nomor WhatsApp harus 10-15 digit'
       }
     } else if (step === 2) {
-      // Step 2: Origin Address
       if (!formData.originProvinceId) {
         newErrors.originProvinceId = 'Provinsi wajib dipilih'
       }
@@ -89,7 +87,6 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         newErrors.originAddressText = 'Alamat minimal 10 karakter'
       }
     } else if (step === 3) {
-      // Step 3: Bank Account
       if (!formData.bankName) {
         newErrors.bankName = 'Nama bank wajib dipilih'
       }
@@ -105,15 +102,24 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       }
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
+    return newErrors
   }, [formData])
 
-  const canGoNext = validateStep(currentStep)
+  // Use useMemo to compute canGoNext without side effects
+  const canGoNext = useMemo(() => {
+    const validationErrors = getValidationErrors(currentStep)
+    return Object.keys(validationErrors).length === 0
+  }, [getValidationErrors, currentStep])
+
   const canGoBack = currentStep > 1
 
   const goNext = () => {
-    if (canGoNext && currentStep < 3) {
+    const validationErrors = getValidationErrors(currentStep)
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors)
+      return
+    }
+    if (currentStep < 3) {
       setCurrentStep((prev) => (prev + 1) as OnboardingStep)
       setErrors({})
     }
@@ -131,7 +137,9 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       setIsSubmitting(true)
 
       // Validate step 3 before submission
-      if (!validateStep(3)) {
+      const validationErrors = getValidationErrors(3)
+      if (Object.keys(validationErrors).length > 0) {
+        setErrors(validationErrors)
         return
       }
 
