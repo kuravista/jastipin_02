@@ -68,7 +68,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (typeof window === 'undefined') return
     try {
-      const token = localStorage.getItem('authToken')
+      // Check for existing token
+      let token = localStorage.getItem('authToken')
+      
+      // Check for OAuth token cookie (set by callback route)
+      if (!token) {
+        const cookies = document.cookie.split('; ')
+        const oauthCookie = cookies.find(c => c.startsWith('oauth_app_token='))
+        if (oauthCookie) {
+          token = oauthCookie.split('=')[1]
+          // Store in localStorage and delete cookie
+          localStorage.setItem('authToken', token)
+          document.cookie = 'oauth_app_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+          console.log('OAuth token transferred to localStorage')
+        }
+      }
+      
       if (token) {
         fetchUserProfile()
       } else {

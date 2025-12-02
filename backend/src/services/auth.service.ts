@@ -467,4 +467,71 @@ export class AuthService {
 
     return { message: 'Password changed successfully' }
   }
+
+  /**
+   * Generate unique slug from email
+   * @param email - Email address
+   * @returns Unique slug
+   */
+  private async generateUniqueSlug(email: string): Promise<string> {
+    const baseSlug = email.split('@')[0].toLowerCase().replace(/[^a-z0-9_-]/g, '')
+    
+    let slug = baseSlug
+    let counter = 1
+    
+    while (true) {
+      const existing = await this.db.user.findUnique({
+        where: { slug },
+        select: { id: true }
+      })
+      
+      if (!existing) break
+      slug = `${baseSlug}${counter}`
+      counter++
+    }
+    
+    return slug
+  }
+
+  /**
+   * Sync OAuth user to app database
+   * @param userId - Supabase user ID
+   * @param email - User email
+   * @returns User data
+   */
+  async syncOAuthUser(userId: string, email: string) {
+    // Check if user already exists
+    const existingUser = await this.db.user.findUnique({
+      where: { id: userId },
+      select: { id: true }
+    })
+
+    if (existingUser) {
+      return await this.getUserProfile(userId)
+    }
+
+    // Generate unique slug
+    const slug = await this.generateUniqueSlug(email)
+
+    // Create new user
+    const newUser = await this.db.user.create({
+      data: {
+        id: userId,
+        email: email.toLowerCase(),
+        slug,
+        profileName: email.split('@')[0],
+        password: '', // OAuth users don't have password
+      },
+      select: {
+        id: true,
+        email: true,
+        slug: true,
+        profileName: true,
+        avatar: true,
+        createdAt: true,
+      }
+    })
+
+    return newUser
+  }
 }

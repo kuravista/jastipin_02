@@ -9,6 +9,7 @@
 import { Router, Response, Router as ExpressRouter } from 'express'
 import db from '../lib/prisma.js'
 import { AuthService } from '../services/auth.service.js'
+import { generateAccessToken } from '../utils/jwt.js'
 import { validate } from '../middleware/validate.js'
 import {
   registerSchema,
@@ -108,6 +109,45 @@ router.post('/logout', async (_req: AuthRequest, res: Response) => {
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   })
   res.json({ message: 'Logged out successfully' })
+})
+
+/**
+ * POST /auth/sync-user
+ * Sync OAuth user to app database
+ * Requires Supabase access token in Authorization header
+ */
+router.post('/sync-user', async (req: AuthRequest, res: Response) => {
+  try {
+    const { id, email } = req.body
+
+    // Validate input
+    if (!id || !email) {
+      res.status(400).json({
+        error: 'Missing required fields: id and email'
+      })
+      return
+    }
+
+    // Sync user to database
+    const user = await authService.syncOAuthUser(id, email)
+    
+    // Generate app JWT token for OAuth user
+    const token = generateAccessToken(user.id, user.slug, user.email)
+    
+    console.log('OAuth user synced:', { userId: user.id, email: user.email })
+    
+    res.json({
+      success: true,
+      user,
+      token
+    })
+  } catch (error: any) {
+    console.error('Sync user error:', error)
+    res.status(500).json({
+      error: 'Failed to sync user',
+      message: error.message
+    })
+  }
 })
 
 /**
