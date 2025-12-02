@@ -165,9 +165,10 @@ router.get('/villages/:districtId', async (req, res) => {
  */
 router.get('/rajaongkir/search', async (req, res) => {
   try {
-    const { query } = req.query
+    // Accept both 'query' and 'q' parameters for flexibility
+    const searchQuery = req.query.query || req.query.q
 
-    if (!query || typeof query !== 'string') {
+    if (!searchQuery || typeof searchQuery !== 'string') {
       res.status(400).json({
         success: false,
         error: 'Search query required'
@@ -175,7 +176,7 @@ router.get('/rajaongkir/search', async (req, res) => {
       return
     }
 
-    const results = await searchDestinations(query)
+    const results = await searchDestinations(searchQuery)
 
     res.json({
       success: true,
