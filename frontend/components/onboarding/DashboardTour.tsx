@@ -19,13 +19,13 @@ export function DashboardTour({ run, onFinish, onSkip }: DashboardTourProps) {
 
   const steps: Step[] = [
     {
-      target: '[data-tour="upload-product"]',
+      target: '[data-tour="create-trip"]',
       content: (
         <div>
-          <h3 className="text-base font-bold mb-2">Upload Produk Cepat 📦</h3>
+          <h3 className="text-base font-bold mb-2">1. Buat Trip Dulu ✈️</h3>
           <p className="text-sm">
-            Klik tombol ini untuk menambahkan produk baru yang ingin Anda jual. Bisa upload
-            satu per satu atau massal!
+            Langkah pertama! Buat trip untuk mengorganisir produk berdasarkan lokasi atau tanggal 
+            belanja. Setiap trip bisa memiliki banyak produk.
           </p>
         </div>
       ),
@@ -34,13 +34,41 @@ export function DashboardTour({ run, onFinish, onSkip }: DashboardTourProps) {
       spotlightPadding: 8,
     },
     {
-      target: '[data-tour="create-trip"]',
+      target: '[data-tour="upload-product"]',
       content: (
         <div>
-          <h3 className="text-base font-bold mb-2">Buat Trip Baru ✈️</h3>
+          <h3 className="text-base font-bold mb-2">2. Upload Produk 📦</h3>
           <p className="text-sm">
-            Buat trip untuk mengorganisir produk berdasarkan lokasi atau tanggal belanja. Setiap
-            trip bisa memiliki banyak produk!
+            Setelah trip dibuat, tambahkan produk yang ingin Anda jual. Bisa upload satu per satu 
+            atau massal!
+          </p>
+        </div>
+      ),
+      placement: 'bottom' as const,
+      spotlightPadding: 8,
+    },
+    {
+      target: '[data-tour="edit-profile"]',
+      content: (
+        <div>
+          <h3 className="text-base font-bold mb-2">3. Edit Data Profil ⚙️</h3>
+          <p className="text-sm">
+            Klik avatar untuk mengakses pengaturan akun. Di sini Anda bisa mengubah nama, alamat, 
+            rekening bank, dan data lainnya.
+          </p>
+        </div>
+      ),
+      placement: 'left' as const,
+      spotlightPadding: 8,
+    },
+    {
+      target: '[data-tour="profile-url"]',
+      content: (
+        <div>
+          <h3 className="text-base font-bold mb-2">4. Bagikan Link Profil 🔗</h3>
+          <p className="text-sm">
+            Ini adalah link publik profil Anda. Klik untuk copy dan bagikan ke calon pembeli di
+            WhatsApp, Instagram, atau media sosial lainnya!
           </p>
         </div>
       ),
@@ -51,28 +79,14 @@ export function DashboardTour({ run, onFinish, onSkip }: DashboardTourProps) {
       target: '[data-tour="validasi-card"]',
       content: (
         <div>
-          <h3 className="text-base font-bold mb-2">Validasi Order 💰</h3>
+          <h3 className="text-base font-bold mb-2">5. Pantau Order Masuk 💰</h3>
           <p className="text-sm">
-            Pantau order baru yang masuk. Periksa detail pembeli, jumlah, dan bukti pembayaran
-            sebelum melanjutkan.
+            Di sini Anda bisa melihat order baru yang masuk. Periksa detail pembeli, jumlah, dan 
+            bukti pembayaran sebelum memproses.
           </p>
         </div>
       ),
       placement: 'top' as const,
-      spotlightPadding: 8,
-    },
-    {
-      target: '[data-tour="profile-url"]',
-      content: (
-        <div>
-          <h3 className="text-base font-bold mb-2">Bagikan Profil Anda 🔗</h3>
-          <p className="text-sm">
-            Ini adalah link publik profil Anda. Klik untuk copy dan bagikan ke calon pembeli di
-            WhatsApp, Instagram, atau media sosial lainnya!
-          </p>
-        </div>
-      ),
-      placement: 'bottom' as const,
       spotlightPadding: 8,
     },
     {

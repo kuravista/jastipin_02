@@ -59,7 +59,7 @@ export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
           </div>
           
           {/* Avatar with Settings Icon */}
-          <div className="relative group">
+          <div className="relative group" data-tour="edit-profile">
             <button
               onClick={() => onNavigate("account")}
               className="relative w-12 h-12"
