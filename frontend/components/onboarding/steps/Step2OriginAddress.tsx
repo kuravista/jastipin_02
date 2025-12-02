@@ -64,7 +64,6 @@ export function Step2OriginAddress() {
       setLoading((prev) => ({ ...prev, cities: true }))
       setCities([])
       setDistricts([])
-      setRajaOngkirResults([])
       const response = await apiGet<{ data: LocationOption[] }>(
         `/locations/regencies/${provinceId}`,
       )
