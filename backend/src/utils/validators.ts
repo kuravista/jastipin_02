@@ -245,6 +245,38 @@ export const updateSocialMediaSchema = z.object({
   url: z.string().url('Invalid URL').optional(),
 })
 
+// Onboarding schema
+export const completeProfileSchema = z.object({
+  profileName: z
+    .string()
+    .min(2, 'Nama minimal 2 karakter')
+    .max(100, 'Nama maksimal 100 karakter'),
+  whatsappNumber: z
+    .string()
+    .regex(/^628\d{9,}$/, 'Nomor WhatsApp harus 10-15 digit (628...)'),
+  originProvinceId: z.string().min(1, 'Provinsi harus dipilih'),
+  originProvinceName: z.string().min(1, 'Nama provinsi harus ada'),
+  originCityId: z.string().min(1, 'Kota harus dipilih'),
+  originCityName: z.string().min(1, 'Nama kota harus ada'),
+  originDistrictId: z.string().min(1, 'Kecamatan harus dipilih'),
+  originDistrictName: z.string().min(1, 'Nama kecamatan harus ada'),
+  originPostalCode: z
+    .string()
+    .regex(/^\d{5}$/, 'Kode pos harus 5 digit'),
+  originAddressText: z
+    .string()
+    .min(5, 'Alamat minimal 5 karakter')
+    .max(500, 'Alamat maksimal 500 karakter'),
+  bankName: z.string().min(1, 'Nama bank harus diisi').max(100),
+  accountNumber: z
+    .string()
+    .regex(/^\d{10,15}$/, 'Nomor rekening harus 10-15 digit'),
+  accountHolderName: z
+    .string()
+    .min(2, 'Nama pemegang rekening minimal 2 karakter')
+    .max(100, 'Nama pemegang rekening maksimal 100 karakter'),
+})
+
 // Type exports
 export type RegisterInput = z.infer<typeof registerSchema>
 export type LoginInput = z.infer<typeof loginSchema>
@@ -256,3 +288,4 @@ export type CreateOrderInput = z.infer<typeof createOrderSchema>
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>
 export type CreateSocialMediaInput = z.infer<typeof createSocialMediaSchema>
 export type UpdateSocialMediaInput = z.infer<typeof updateSocialMediaSchema>
+export type CompleteProfileInput = z.infer<typeof completeProfileSchema>

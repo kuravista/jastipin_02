@@ -9,6 +9,7 @@ import cors from 'cors'
 
 import authRoutes from './routes/auth.js'
 import profileRoutes from './routes/profile.js'
+import onboardingRoutes from './routes/onboarding.js'
 import bankAccountsRoutes from './routes/bank-accounts.js'
 import tripRoutes from './routes/trips.js'
 import productRoutes from './routes/products.js'
@@ -94,6 +95,7 @@ app.use('/api/upload', uploadRoutes)
 app.use('/api/images', imagesRoutes)
 app.use('/api/analytics', analyticsRoutes)
 app.use('/api', profileRoutes)
+app.use('/api', onboardingRoutes)
 app.use('/api', bankAccountsRoutes)
 app.use('/api', tripRoutes)
 app.use('/api', productRoutes)

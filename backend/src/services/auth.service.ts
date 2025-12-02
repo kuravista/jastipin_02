@@ -168,6 +168,9 @@ export class AuthService {
         bankName: true,
         accountNumber: true,
         accountHolderName: true,
+        isProfileComplete: true,
+        tutorialStep: true,
+        onboardingCompletedAt: true,
         createdAt: true,
         updatedAt: true,
         BankAccount: {
