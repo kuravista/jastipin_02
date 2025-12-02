@@ -101,7 +101,8 @@ function DashboardContent() {
 }
 
 function DashboardPageWrapper() {
-  const { user, setModalOpen } = useOnboarding()
+  const { user } = useAuth()
+  const { setModalOpen } = useOnboarding()
   const { refreshUser } = useAuth()
   const [showTourIntro, setShowTourIntro] = useState(false)
   const [runTour, setRunTour] = useState(false)

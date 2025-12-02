@@ -26,6 +26,9 @@ export interface User {
   originDistrictName?: string
   originPostalCode?: string
   originAddressText?: string
+  isProfileComplete?: boolean
+  tutorialStep?: string | null
+  onboardingCompletedAt?: string | null
 }
 
 interface AuthContextType {
@@ -35,6 +38,7 @@ interface AuthContextType {
   register: (email: string, password: string, fullName: string) => Promise<void>
   login: (email: string, password: string) => Promise<void>
   logout: () => void
+  refreshUser: () => Promise<void>
   isAuthenticated: boolean
 }
 
@@ -176,6 +180,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     register,
     login,
     logout,
+    refreshUser: fetchUserProfile,
     isAuthenticated: !!user || !!getAuthToken(),
   }
 
