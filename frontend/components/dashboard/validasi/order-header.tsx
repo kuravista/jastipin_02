@@ -32,49 +32,50 @@ export function OrderHeader({
   onExportLabels 
 }: OrderHeaderProps) {
   return (
-    <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-      <div>
+    <div className="mb-4 space-y-2">
+      <div className="flex items-center justify-between gap-3">
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Validasi Order</h1>
-        <p className="text-sm text-gray-600 mt-1">Kelola semua order yang masuk</p>
+        
+        {/* Export Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-9 gap-2"
+              disabled={exporting || loading}
+            >
+              {exporting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+              <span>Export</span>
+              <ChevronDown className="w-3 h-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem 
+              onClick={onExportExcel}
+              disabled={exporting}
+              className="cursor-pointer"
+            >
+              <FileSpreadsheet className="w-4 h-4 mr-2 text-green-600" />
+              <span>Export Excel</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={onExportLabels}
+              disabled={exporting}
+              className="cursor-pointer"
+            >
+              <Tag className="w-4 h-4 mr-2 text-blue-600" />
+              <span>Export Label</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       
-      {/* Export Dropdown */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="h-9 gap-2"
-            disabled={exporting || loading}
-          >
-            {exporting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Download className="w-4 h-4" />
-            )}
-            <span>Export</span>
-            <ChevronDown className="w-3 h-3" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuItem 
-            onClick={onExportExcel}
-            disabled={exporting}
-            className="cursor-pointer"
-          >
-            <FileSpreadsheet className="w-4 h-4 mr-2 text-green-600" />
-            <span>Export Excel</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem 
-            onClick={onExportLabels}
-            disabled={exporting}
-            className="cursor-pointer"
-          >
-            <Tag className="w-4 h-4 mr-2 text-blue-600" />
-            <span>Export Label</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <p className="text-sm text-gray-600">Kelola semua order yang masuk</p>
     </div>
   )
 }
