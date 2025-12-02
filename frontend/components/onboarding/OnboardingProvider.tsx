@@ -73,9 +73,6 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       if (!formData.originDistrictId) {
         newErrors.originDistrictId = 'Kecamatan wajib dipilih'
       }
-      if (!formData.originRajaOngkirDistrictId) {
-        newErrors.originRajaOngkirDistrictId = 'Kecamatan untuk ongkir wajib dipilih'
-      }
       if (!formData.originPostalCode) {
         newErrors.originPostalCode = 'Kode pos wajib diisi'
       } else if (!/^\d{5}$/.test(formData.originPostalCode)) {

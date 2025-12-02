@@ -7,7 +7,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useOnboarding } from '../OnboardingProvider'
-import { LocationOption, RajaOngkirSearchResult } from '../types'
+import { LocationOption } from '../types'
 import { apiGet } from '@/lib/api-client'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -26,8 +26,7 @@ export function Step2OriginAddress() {
   const [provinces, setProvinces] = useState<LocationOption[]>([])
   const [cities, setCities] = useState<LocationOption[]>([])
   const [districts, setDistricts] = useState<LocationOption[]>([])
-  const [rajaOngkirResults, setRajaOngkirResults] = useState<RajaOngkirSearchResult[]>([])
-  const [loading, setLoading] = useState({ provinces: false, cities: false, districts: false, search: false })
+  const [loading, setLoading] = useState({ provinces: false, cities: false, districts: false })
 
   // Fetch provinces on mount
   useEffect(() => {
@@ -47,13 +46,6 @@ export function Step2OriginAddress() {
       fetchDistricts(formData.originCityId)
     }
   }, [formData.originCityId])
-
-  // Search RajaOngkir when district selected
-  useEffect(() => {
-    if (formData.originDistrictName && formData.originCityName) {
-      searchRajaOngkir(`${formData.originDistrictName} ${formData.originCityName}`)
-    }
-  }, [formData.originDistrictName, formData.originCityName])
 
   const fetchProvinces = async () => {
     try {
@@ -88,7 +80,6 @@ export function Step2OriginAddress() {
     try {
       setLoading((prev) => ({ ...prev, districts: true }))
       setDistricts([])
-      setRajaOngkirResults([])
       const response = await apiGet<{ data: LocationOption[] }>(
         `/locations/districts/${cityId}`,
       )
@@ -100,17 +91,33 @@ export function Step2OriginAddress() {
     }
   }
 
-  const searchRajaOngkir = async (query: string) => {
-    try {
-      setLoading((prev) => ({ ...prev, search: true }))
-      const response = await apiGet<{ data: RajaOngkirSearchResult[] }>(
-        `/locations/rajaongkir/search?q=${encodeURIComponent(query)}`,
-      )
-      setRajaOngkirResults(response.data || [])
-    } catch (error) {
-      console.error('Failed to search RajaOngkir:', error)
-    } finally {
-      setLoading((prev) => ({ ...prev, search: false }))
+  // Auto-fetch RajaOngkir ID when district is selected
+  const handleDistrictChange = async (districtId: string) => {
+    const district = districts.find((d) => d.id === districtId)
+    
+    // Update district info first
+    updateFormData({
+      originDistrictId: districtId,
+      originDistrictName: district?.name,
+      originRajaOngkirDistrictId: '', // Clear while fetching
+    })
+
+    // Auto-fetch RajaOngkir ID
+    if (formData.originCityName && formData.originProvinceName && district?.name) {
+      try {
+        const searchQuery = `${district.name}, ${formData.originCityName}, ${formData.originProvinceName}`
+        const response = await apiGet<{ success: boolean; data: any[] }>(
+          `/locations/rajaongkir/search?q=${encodeURIComponent(searchQuery)}`,
+        )
+        
+        if (response.success && response.data && response.data.length > 0) {
+          const rajaOngkirId = response.data[0].districtId || response.data[0].id
+          updateFormData({ originRajaOngkirDistrictId: rajaOngkirId })
+        }
+      } catch (error) {
+        console.error('Failed to fetch RajaOngkir ID:', error)
+        // Continue without RajaOngkir ID - not critical
+      }
     }
   }
 
@@ -210,14 +217,7 @@ export function Step2OriginAddress() {
         </Label>
         <Select
           value={formData.originDistrictId || ''}
-          onValueChange={(value) => {
-            const district = districts.find((d) => d.id === value)
-            updateFormData({
-              originDistrictId: value,
-              originDistrictName: district?.name,
-              originRajaOngkirDistrictId: '',
-            })
-          }}
+          onValueChange={handleDistrictChange}
           disabled={!formData.originCityId || loading.districts}
         >
           <SelectTrigger className="mt-2 border-gray-300">
@@ -241,35 +241,6 @@ export function Step2OriginAddress() {
           <p className="text-sm text-red-500 mt-1">{errors.originDistrictId}</p>
         )}
       </div>
-
-      {/* RajaOngkir District Selection */}
-      {rajaOngkirResults.length > 0 && (
-        <div>
-          <Label htmlFor="rajaOngkir" className="text-sm font-semibold text-gray-700">
-            Kecamatan untuk Ongkir <span className="text-red-500">*</span>
-          </Label>
-          <Select
-            value={formData.originRajaOngkirDistrictId || ''}
-            onValueChange={(value) => {
-              updateFormData({ originRajaOngkirDistrictId: value })
-            }}
-          >
-            <SelectTrigger className="mt-2 border-gray-300">
-              <SelectValue placeholder="Pilih Kecamatan untuk Ongkir" />
-            </SelectTrigger>
-            <SelectContent>
-              {rajaOngkirResults.map((r) => (
-                <SelectItem key={r.id} value={r.id}>
-                  {r.name} {r.province_name ? `- ${r.province_name}` : ''}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {errors.originRajaOngkirDistrictId && (
-            <p className="text-sm text-red-500 mt-1">{errors.originRajaOngkirDistrictId}</p>
-          )}
-        </div>
-      )}
 
       {/* Postal Code */}
       <div>
