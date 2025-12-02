@@ -27,11 +27,12 @@ export interface LocationOption {
 }
 
 export interface RajaOngkirSearchResult {
-  subdistrict_id: string
-  subdistrict_name: string
-  type: string
-  city: string
-  province: string
+  id: string
+  districtId?: string
+  name: string
+  type?: string
+  province_id?: string
+  province_name?: string
 }
 
 export type OnboardingStep = 1 | 2 | 3

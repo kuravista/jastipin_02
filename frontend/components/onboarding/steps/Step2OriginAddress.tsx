@@ -259,8 +259,8 @@ export function Step2OriginAddress() {
             </SelectTrigger>
             <SelectContent>
               {rajaOngkirResults.map((r) => (
-                <SelectItem key={r.subdistrict_id} value={r.subdistrict_id}>
-                  {r.subdistrict_name} - {r.city}
+                <SelectItem key={r.id} value={r.id}>
+                  {r.name} {r.province_name ? `- ${r.province_name}` : ''}
                 </SelectItem>
               ))}
             </SelectContent>
