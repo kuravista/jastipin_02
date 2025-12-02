@@ -4,8 +4,8 @@ import db from '../lib/prisma.js'
  * Jastiper validates order and sets final price
  */
 
-import { calculatePriceBreakdown, OrderItemInput } from './price-calculator.service'
-import { releaseStock, lockStock, StockLockItem } from './stock-lock.service'
+import { calculatePriceBreakdown, OrderItemInput } from './price-calculator.service.js'
+import { releaseStock, lockStock, StockLockItem } from './stock-lock.service.js'
 import { EmailTriggerService } from './email/email-trigger.service.js'
 
 
