@@ -55,6 +55,7 @@ interface ProfileData {
   catalog: Array<{
     id: string
     tripId: string
+    slug: string
     title: string
     price: number
     image?: string
@@ -88,6 +89,9 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
   
   const itemsPerPage = 10
 
+  // Filter catalog: sesuai current trip (jika tripId ada) + search filter
+  const currentTrip = profile?.trips?.[currentTripIndex]
+
   // Clear cart dan reset page ketika user berganti trip
   useEffect(() => {
     setCartItems([])
@@ -95,8 +99,22 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
     setCurrentPage(1)
   }, [currentTripIndex])
 
-  // Filter catalog: sesuai current trip (jika tripId ada) + search filter
-  const currentTrip = profile?.trips?.[currentTripIndex]
+  // Listen for cart updates from modal
+  useEffect(() => {
+    const handleCartUpdate = (event: CustomEvent<{ tripId: string; items: Array<{ product: any; quantity: number }> }>) => {
+      const { tripId, items } = event.detail
+      // Only update if it's for the current trip
+      if (currentTrip?.id === tripId) {
+        setCartItems(items)
+      }
+    }
+
+    window.addEventListener('jastipin-cart-updated', handleCartUpdate as EventListener)
+    return () => {
+      window.removeEventListener('jastipin-cart-updated', handleCartUpdate as EventListener)
+    }
+  }, [currentTrip?.id])
+
   const filteredCatalog = profile?.catalog.filter((item) => {
     // Jika product punya tripId, hanya tampilkan product dari trip yang currently selected
     if (item.tripId && item.tripId !== currentTrip?.id) return false
@@ -431,11 +449,14 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                   key={item.id}
                   className={`overflow-hidden flex flex-col gap-0 p-0 transition-all min-w-0 ${!item.available && item.type !== 'tasks' ? "opacity-50" : ""}`}
                 >
-                  <div className="relative w-full h-32 flex-shrink-0">
+                  <Link 
+                    href={`/${username}/p/${item.slug}?tripId=${item.tripId}`}
+                    className="relative w-full h-32 flex-shrink-0 block cursor-pointer group/image"
+                  >
                     <img
                       src={item.image || "/placeholder.svg?height=128&width=200"}
                       alt={item.title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-transform group-hover/image:scale-105"
                     />
                     <div className="absolute top-2 left-2 right-2 flex justify-between gap-1">
                       <Badge
@@ -451,7 +472,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                         {item.available ? "Ada" : item.type === 'tasks' ? "Ada" : "Habis"}
                       </Badge>
                     </div>
-                  </div>
+                  </Link>
                   <div className="p-2 flex-1 flex flex-col justify-between min-w-0">
                     <div className="min-w-0">
                       <p className="font-semibold text-sm line-clamp-2 break-words mb-0">{item.title}</p>
@@ -631,11 +652,11 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
         </DialogContent>
       </Dialog>
 
-      {/* Floating Cart Button */}
+      {/* Floating Cart Button - z-[60] to stay above sheet modal (z-50) */}
       {cartItems.length > 0 && (
         <button
           onClick={() => setShowCart(!showCart)}
-          className="fixed bottom-6 right-6 bg-orange-500 hover:bg-orange-600 text-white rounded-full p-4 shadow-2xl z-40 transition-transform hover:scale-110"
+          className="fixed bottom-6 right-6 bg-orange-500 hover:bg-orange-600 text-white rounded-full p-4 shadow-2xl z-[60] transition-transform hover:scale-110"
         >
           <div className="relative">
             <ShoppingCart className="w-6 h-6" />
@@ -648,7 +669,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
 
       {/* Cart Detail Modal */}
       {cartItems.length > 0 && showCart && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
+        <div className="fixed inset-0 bg-black/50 z-[60] flex items-end">
           <div className="bg-white rounded-t-2xl w-full max-h-96 overflow-y-auto p-4 shadow-2xl">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">

@@ -71,6 +71,102 @@ router.get('/profile/:slug', optionalAuth, async (req: AuthRequest, res: Respons
 })
 
 /**
+ * GET /profile/:slug/products/:productSlug
+ * Get product detail for public profile
+ * Query params:
+ *   - tripId: Optional. If provided, filter by this trip to get correct product when same slug exists in multiple trips
+ */
+router.get('/profile/:slug/products/:productSlug', async (req: AuthRequest, res: Response) => {
+  try {
+    const { slug, productSlug } = req.params
+    const { tripId } = req.query
+
+    // Find user by slug
+    const user = await db.user.findUnique({
+      where: { slug },
+      select: {
+        id: true,
+        slug: true,
+        profileName: true,
+        avatar: true,
+      },
+    })
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found' })
+      return
+    }
+
+    // Find product by slug where trip belongs to user
+    // If tripId is provided, filter by that specific trip to avoid ambiguity
+    // when same slug exists in multiple trips
+    const productWhere: { slug: string; tripId?: string; Trip: { jastiperId: string } } = {
+      slug: productSlug,
+      Trip: { jastiperId: user.id },
+    }
+    
+    // Add tripId filter if provided to get the correct product
+    if (tripId) {
+      productWhere.tripId = tripId as string
+    }
+    
+    const product = await db.product.findFirst({
+      where: productWhere,
+      include: {
+        Trip: {
+          select: {
+            id: true,
+            title: true,
+            isActive: true,
+            paymentType: true,
+          },
+        },
+      },
+    })
+
+    if (!product) {
+      res.status(404).json({ error: 'Product not found' })
+      return
+    }
+
+    // Calculate availability
+    const available = product.isUnlimitedStock || (product.stock !== null && product.stock > 0)
+
+    res.json({
+      product: {
+        id: product.id,
+        slug: product.slug,
+        title: product.title,
+        price: product.price,
+        description: product.description,
+        image: product.image,
+        stock: product.stock,
+        isUnlimitedStock: product.isUnlimitedStock,
+        unit: product.unit,
+        weightGram: product.weightGram,
+        type: product.type,
+        available,
+        tripId: product.tripId,
+      },
+      trip: {
+        id: product.Trip.id,
+        title: product.Trip.title,
+        status: product.Trip.isActive ? 'Buka' : 'Tutup',
+        paymentType: product.Trip.paymentType,
+      },
+      jastiper: {
+        slug: user.slug,
+        profileName: user.profileName,
+        avatar: user.avatar,
+      },
+    })
+  } catch (error: unknown) {
+    console.error('Product detail error:', error)
+    res.status(500).json({ error: 'Failed to fetch product detail' })
+  }
+})
+
+/**
  * POST /profile/change-password
  * Change authenticated user's password
  */

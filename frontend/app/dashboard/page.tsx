@@ -8,7 +8,7 @@ import { OnboardingProvider, useOnboarding } from "@/components/onboarding/Onboa
 import { ProfileCompletionModal } from "@/components/onboarding/ProfileCompletionModal"
 import { TourIntroDialog } from "@/components/onboarding/TourIntroDialog"
 import { DashboardTour } from "@/components/onboarding/DashboardTour"
-import { apiPatch } from "@/lib/api-client"
+import { apiPatch, apiGet } from "@/lib/api-client"
 import DashboardHome from "@/components/dashboard/dashboard-home"
 import DashboardValidasi from "@/components/dashboard/dashboard-validasi"
 import DashboardProduk from "@/components/dashboard/dashboard-produk"
@@ -19,6 +19,8 @@ import DashboardAccount from "@/components/dashboard/dashboard-account"
 function DashboardContent() {
   const [activeTab, setActiveTab] = useState("home")
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null)
+  const [pendingCount, setPendingCount] = useState(0)
+  const [loadingPendingCount, setLoadingPendingCount] = useState(false)
 
   // Check for URL params on mount to handle navigation from other pages
   useEffect(() => {
@@ -32,12 +34,38 @@ function DashboardContent() {
     }
   }, [])
 
+  // Function to fetch pending orders count
+  const fetchPendingCount = async () => {
+    try {
+      setLoadingPendingCount(true)
+      const response = await apiGet('/orders/pending-count') as any
+      setPendingCount(response?.data?.total || 0)
+    } catch (error) {
+      console.error('Failed to fetch pending count:', error)
+      setPendingCount(0)
+    } finally {
+      setLoadingPendingCount(false)
+    }
+  }
+
+  // Fetch on initial load
+  useEffect(() => {
+    fetchPendingCount()
+  }, [])
+
+  // Refetch when navigating to home or validasi tab (real-time updates)
+  useEffect(() => {
+    if (activeTab === 'home' || activeTab === 'validasi') {
+      fetchPendingCount()
+    }
+  }, [activeTab])
+
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-orange-50 via-white to-violet-50">
       {/* Main Content - Scrollable with padding bottom for navbar */}
       <div className="flex-1 overflow-y-auto pb-20">
         <div className="container mx-auto px-4 py-6 max-w-2xl">
-          {activeTab === "home" && <DashboardHome onNavigate={setActiveTab} />}
+          {activeTab === "home" && <DashboardHome onNavigate={setActiveTab} pendingValidationCount={pendingCount} />}
           {activeTab === "validasi" && <DashboardValidasi />}
           {activeTab === "produk" && <DashboardProduk initialFilterTrip={selectedTripId} />}
           {activeTab === "profile" && <DashboardProfile onBack={() => setActiveTab("account")} />}
@@ -68,10 +96,12 @@ function DashboardContent() {
             >
               <DollarSign className="w-6 h-6" />
               <span className="text-xs font-medium">Validasi</span>
-              {/* Badge for pending orders */}
-              <span className="absolute top-1 right-6 bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                3
-              </span>
+              {/* Badge for pending orders - only show if there are pending orders */}
+              {pendingCount > 0 && (
+                <span className="absolute top-1 right-6 bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {pendingCount > 99 ? '99+' : pendingCount}
+                </span>
+              )}
             </button>
 
             <button

@@ -6,6 +6,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
+import { getApiUrl } from "@/lib/config"
 import {
   validateEmail,
   validatePassword,
@@ -90,7 +91,7 @@ export default function AuthPage() {
   const checkUsernameAvailability = async (username: string) => {
     setCheckingUsername(true)
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/check-username/${username}`)
+      const response = await fetch(`${getApiUrl()}/auth/check-username/${username}`)
       const data = await response.json()
 
       if (response.ok) {
@@ -233,34 +234,37 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-violet-50 flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center px-4 py-12 font-sans">
+      <div className="w-full max-w-[480px]">
+        {/* Header Logo */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center text-white font-bold text-lg">
+          <Link href="/" className="inline-flex items-center gap-2 transition-transform hover:scale-105">
+            <div className="w-10 h-10 bg-orange-500 rounded-xl shadow-lg shadow-orange-200 flex items-center justify-center text-white font-bold text-xl">
               J
             </div>
-            <span className="font-bold text-2xl">Jastipin.me</span>
+            <span className="font-bold text-2xl text-gray-900 tracking-tight">Jastipin.me</span>
           </Link>
+        </div>
 
-          {/* Username Availability Banner */}
+        <div className="bg-white rounded-3xl shadow-2xl shadow-black/5 border border-gray-100 overflow-hidden">
+          {/* Username Availability Banner - Integrated Top Section */}
           {(checkingUsername || usernameCheck) && (
-            <div className={`mb-4 p-4 border rounded-lg transition-all ${
+            <div className={`px-6 py-5 border-b ${
               checkingUsername
-                ? 'bg-blue-50 border-blue-200'
+                ? 'bg-blue-50/50 border-blue-100'
                 : usernameCheck?.available
-                ? 'bg-green-50 border-green-200'
-                : 'bg-red-50 border-red-200'
+                ? 'bg-green-50/50 border-green-100'
+                : 'bg-red-50/50 border-red-100'
             }`}>
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-start gap-3">
                 {checkingUsername ? (
-                  <Loader2 className="w-5 h-5 text-blue-600 animate-spin shrink-0" />
+                  <Loader2 className="w-5 h-5 text-blue-600 animate-spin mt-0.5 shrink-0" />
                 ) : usernameCheck?.available ? (
-                  <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
                 ) : (
-                  <XCircle className="w-5 h-5 text-red-600 shrink-0" />
+                  <XCircle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
                 )}
-                <div className="text-left flex-1">
+                <div className="flex-1 space-y-3">
                   <p className={`text-sm font-medium ${
                     checkingUsername
                       ? 'text-blue-900'
@@ -268,228 +272,218 @@ export default function AuthPage() {
                       ? 'text-green-900'
                       : 'text-red-900'
                   }`}>
-                    {checkingUsername ? 'Memeriksa username...' : usernameCheck?.message}
+                    {checkingUsername ? 'Memeriksa ketersediaan...' : usernameCheck?.message}
                   </p>
+                  
+                  <div className="space-y-1.5">
+                    <Label htmlFor="username-search" className="text-xs text-gray-500 font-semibold uppercase tracking-wider">
+                      {usernameCheck?.available ? 'Username Terpilih' : 'Cari Username Lain'}
+                    </Label>
+                    <div className={`flex items-center bg-white rounded-lg border px-3 py-2 gap-2 shadow-sm transition-all ${
+                      checkingUsername
+                        ? 'border-blue-200 ring-2 ring-blue-50'
+                        : usernameCheck?.available
+                        ? 'border-green-200 ring-2 ring-green-50'
+                        : 'border-red-200 ring-2 ring-red-50'
+                    }`}>
+                      <span className="text-gray-400 text-sm font-medium select-none">jastipin.me/</span>
+                      <Input
+                        id="username-search"
+                        type="text"
+                        value={editingUsername}
+                        onChange={(e) => handleUsernameChange(e.target.value)}
+                        placeholder="username"
+                        className="border-0 h-auto p-0 focus-visible:ring-0 text-sm font-medium text-gray-900 placeholder:text-gray-300"
+                        autoFocus
+                      />
+                    </div>
+                    {usernameCheck?.available && (
+                      <p className="text-xs text-green-700 font-medium animate-in fade-in slide-in-from-top-1">
+                        ✓ Username ini tersedia untuk Anda!
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-
-              {/* Always show input field when username check is initiated */}
-              <div className="space-y-2">
-                <Label htmlFor="username-search" className={`text-xs ${
-                  usernameCheck?.available ? 'text-green-700' : 'text-gray-700'
-                }`}>
-                  {usernameCheck?.available ? 'Username Anda:' : 'Coba username lain:'}
-                </Label>
-                <div className={`flex items-center bg-white rounded-lg border px-3 py-2 gap-2 transition-colors ${
-                  checkingUsername
-                    ? 'border-blue-300'
-                    : usernameCheck?.available
-                    ? 'border-green-300 focus-within:border-green-400'
-                    : 'border-red-300 focus-within:border-red-400'
-                }`}>
-                  <span className="text-gray-500 text-sm shrink-0">jastipin.me/</span>
-                  <Input
-                    id="username-search"
-                    type="text"
-                    value={editingUsername}
-                    onChange={(e) => handleUsernameChange(e.target.value)}
-                    placeholder="username-anda"
-                    className="border-0 h-8 px-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm"
-                    autoFocus
-                  />
-                  {checkingUsername ? (
-                    <Loader2 className="w-4 h-4 text-blue-500 animate-spin shrink-0" />
-                  ) : usernameCheck?.available ? (
-                    <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
-                  ) : (
-                    <XCircle className="w-4 h-4 text-red-600 shrink-0" />
-                  )}
-                </div>
-                <p className={`text-xs ${
-                  usernameCheck?.available ? 'text-green-700 font-medium' : 'text-gray-600'
-                }`}>
-                  {usernameCheck?.available
-                    ? '✓ Username ini tersedia untuk Anda!'
-                    : 'Username akan otomatis dicek saat Anda mengetik'}
-                </p>
               </div>
             </div>
           )}
 
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {isLogin ? "Selamat Datang Kembali!" : "Mulai Gratis Hari Ini"}
-          </h1>
-          <p className="text-gray-600">
-            {isLogin ? "Login untuk kelola jastip dengan mudah" : "Buat akun dan otomatisasi pesanan WhatsApp"}
-          </p>
-        </div>
+          <div className="p-8">
+            <div className="text-center mb-8">
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                {isLogin ? "Selamat Datang!" : "Buat Akun Baru"}
+              </h1>
+              <p className="text-gray-500 text-sm">
+                {isLogin ? "Masuk untuk mengelola jastip Anda" : "Bergabunglah dengan ribuan jastiper lainnya"}
+              </p>
+            </div>
 
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-          <div className="flex gap-2 mb-6">
-            <Button
-              variant={isLogin ? "default" : "outline"}
-              onClick={() => {
-                setIsLogin(true)
-                setFieldErrors({})
-              }}
-              className={
-                isLogin
-                  ? "flex-1 bg-orange-500 hover:bg-orange-600"
-                  : "flex-1 border-gray-200 text-gray-600 hover:bg-gray-50"
-              }
-            >
-              Login
-            </Button>
-            <Button
-              variant={!isLogin ? "default" : "outline"}
-              onClick={() => {
-                setIsLogin(false)
-                setFieldErrors({})
-              }}
-              className={
-                !isLogin
-                  ? "flex-1 bg-orange-500 hover:bg-orange-600"
-                  : "flex-1 border-gray-200 text-gray-600 hover:bg-gray-50"
-              }
-            >
-              Daftar
-            </Button>
-          </div>
+            {/* Tabs */}
+            <div className="grid grid-cols-2 gap-1 p-1 bg-gray-50 rounded-xl mb-8">
+              <button
+                onClick={() => {
+                  setIsLogin(true)
+                  setFieldErrors({})
+                }}
+                className={`text-sm font-medium py-2.5 rounded-lg transition-all duration-200 ${
+                  isLogin
+                    ? "bg-white text-gray-900 shadow-sm ring-1 ring-black/5"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-100/50"
+                }`}
+              >
+                Login
+              </button>
+              <button
+                onClick={() => {
+                  setIsLogin(false)
+                  setFieldErrors({})
+                }}
+                className={`text-sm font-medium py-2.5 rounded-lg transition-all duration-200 ${
+                  !isLogin
+                    ? "bg-white text-gray-900 shadow-sm ring-1 ring-black/5"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-100/50"
+                }`}
+              >
+                Daftar
+              </button>
+            </div>
 
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="name">Nama Lengkap</Label>
+            {/* Google Login - Prominent Placement */}
+            <div className="mb-8">
+              <GoogleLoginButton />
+              <div className="relative mt-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200"></div>
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-4 text-gray-400 font-medium tracking-wider">atau dengan email</span>
+                </div>
+              </div>
+            </div>
+
+            <form className="space-y-5" onSubmit={handleSubmit}>
+              {!isLogin && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="name" className="text-gray-700 font-medium text-sm">Nama Lengkap</Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Contoh: Budi Santoso"
+                    className={`h-11 bg-gray-50 border-gray-200 focus:bg-white transition-colors ${fieldErrors.fullName ? "border-red-500 focus:ring-red-200" : "focus:border-orange-500 focus:ring-orange-100"}`}
+                    value={fullName}
+                    onChange={(e) => handleFieldChange("fullName", e.target.value)}
+                    disabled={loading}
+                  />
+                  {fieldErrors.fullName && (
+                    <p className="text-red-600 text-xs flex items-center gap-1 mt-1">
+                      <AlertCircle className="w-3 h-3" /> {fieldErrors.fullName}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <Label htmlFor="email" className="text-gray-700 font-medium text-sm">Email</Label>
                 <Input
-                  id="name"
+                  id="email"
                   type="text"
-                  placeholder="Masukkan nama lengkap"
-                  className={`h-11 ${fieldErrors.fullName ? "border-red-500 focus:border-red-500" : ""}`}
-                  value={fullName}
-                  onChange={(e) => handleFieldChange("fullName", e.target.value)}
+                  placeholder="nama@email.com"
+                  className={`h-11 bg-gray-50 border-gray-200 focus:bg-white transition-colors ${fieldErrors.email ? "border-red-500 focus:ring-red-200" : "focus:border-orange-500 focus:ring-orange-100"}`}
+                  value={email}
+                  onChange={(e) => handleFieldChange("email", e.target.value)}
                   disabled={loading}
-                  aria-invalid={!!fieldErrors.fullName}
                 />
-                {fieldErrors.fullName && (
-                  <div className="flex items-center gap-2 text-red-600 text-sm">
-                    <AlertCircle className="w-4 h-4" />
-                    <span>{fieldErrors.fullName}</span>
-                  </div>
+                {fieldErrors.email && (
+                  <p className="text-red-600 text-xs flex items-center gap-1 mt-1">
+                    <AlertCircle className="w-3 h-3" /> {fieldErrors.email}
+                  </p>
                 )}
               </div>
-            )}
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="text"
-                placeholder="email@example.com atau 08123456789"
-                className={`h-11 ${fieldErrors.email ? "border-red-500 focus:border-red-500" : ""}`}
-                value={email}
-                onChange={(e) => handleFieldChange("email", e.target.value)}
+              <div className="space-y-1.5">
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="password" className="text-gray-700 font-medium text-sm">Password</Label>
+                  {isLogin && (
+                    <Link href="#" className="text-xs font-medium text-orange-600 hover:text-orange-700 hover:underline">
+                      Lupa password?
+                    </Link>
+                  )}
+                </div>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    className={`h-11 bg-gray-50 border-gray-200 pr-10 focus:bg-white transition-colors ${fieldErrors.password ? "border-red-500 focus:ring-red-200" : "focus:border-orange-500 focus:ring-orange-100"}`}
+                    value={password}
+                    onChange={(e) => handleFieldChange("password", e.target.value)}
+                    disabled={loading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 rounded-md hover:bg-gray-100 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {fieldErrors.password && (
+                  <p className="text-red-600 text-xs flex items-center gap-1 mt-1">
+                    <AlertCircle className="w-3 h-3" /> {fieldErrors.password}
+                  </p>
+                )}
+              </div>
+
+              {!isLogin && (
+                <div className="flex items-start gap-2 text-sm">
+                  <input type="checkbox" id="terms" className="w-4 h-4 mt-0.5 rounded border-gray-300 accent-orange-500" />
+                  <label htmlFor="terms" className="text-gray-600 text-xs leading-relaxed">
+                    Saya setuju dengan{" "}
+                    <Link href="#" className="text-orange-600 hover:underline font-medium">
+                      Syarat & Ketentuan
+                    </Link>{" "}
+                    dan{" "}
+                    <Link href="#" className="text-orange-600 hover:underline font-medium">
+                      Kebijakan Privasi
+                    </Link>
+                  </label>
+                </div>
+              )}
+
+              <Button
+                type="submit"
                 disabled={loading}
-                aria-invalid={!!fieldErrors.email}
-              />
-              {fieldErrors.email && (
-                <div className="flex items-center gap-2 text-red-600 text-sm">
-                  <AlertCircle className="w-4 h-4" />
-                  <span>{fieldErrors.email}</span>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Minimal 8 karakter"
-                  className={`h-11 pr-10 ${fieldErrors.password ? "border-red-500 focus:border-red-500" : ""}`}
-                  value={password}
-                  onChange={(e) => handleFieldChange("password", e.target.value)}
-                  disabled={loading}
-                  aria-invalid={!!fieldErrors.password}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-              {fieldErrors.password && (
-                <div className="flex items-center gap-2 text-red-600 text-sm">
-                  <AlertCircle className="w-4 h-4" />
-                  <span>{fieldErrors.password}</span>
-                </div>
-              )}
-            </div>
-
-            {isLogin && (
-              <div className="flex items-center justify-between text-sm">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" className="w-4 h-4 rounded border-gray-300 accent-orange-500" />
-                  <span className="text-gray-600">Ingat saya</span>
-                </label>
-                <Link href="#" className="text-violet-600 hover:underline">
-                  Lupa password?
-                </Link>
-              </div>
-            )}
-
-            {!isLogin && (
-              <div className="flex items-start gap-2 text-sm">
-                <input type="checkbox" className="w-4 h-4 mt-0.5 rounded border-gray-300 accent-orange-500" />
-                <span className="text-gray-600">
-                  Saya setuju dengan{" "}
-                  <Link href="#" className="text-violet-600 hover:underline">
-                    Syarat & Ketentuan
-                  </Link>{" "}
-                  dan{" "}
-                  <Link href="#" className="text-violet-600 hover:underline">
-                    Kebijakan Privasi
-                  </Link>
-                </span>
-              </div>
-            )}
-
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full h-11 bg-orange-500 hover:bg-orange-600 text-white font-semibold"
-            >
-              {loading ? (isLogin ? "Masuk..." : "Mendaftar...") : isLogin ? "Masuk Sekarang" : "Daftar Gratis"}
-            </Button>
-          </form>
-
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-gray-500">atau lanjutkan dengan</span>
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <GoogleLoginButton />
-            </div>
+                className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-500/20 transition-all hover:shadow-orange-500/30 hover:-translate-y-0.5"
+              >
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" /> {isLogin ? "Masuk..." : "Mendaftar..."}
+                  </span>
+                ) : (
+                  isLogin ? "Masuk Sekarang" : "Daftar Gratis"
+                )}
+              </Button>
+            </form>
           </div>
 
-          <p className="mt-6 text-center text-sm text-gray-600">
-            {isLogin ? "Belum punya akun? " : "Sudah punya akun? "}
-            <button onClick={() => setIsLogin(!isLogin)} className="text-orange-500 font-semibold hover:underline">
-              {isLogin ? "Daftar Gratis" : "Login"}
-            </button>
-          </p>
+          <div className="bg-gray-50 p-4 text-center border-t border-gray-100">
+            <p className="text-sm text-gray-600">
+              {isLogin ? "Belum punya akun? " : "Sudah punya akun? "}
+              <button 
+                onClick={() => {
+                  setIsLogin(!isLogin)
+                  setFieldErrors({})
+                }} 
+                className="text-orange-600 font-bold hover:text-orange-700 hover:underline"
+              >
+                {isLogin ? "Buat Akun" : "Login"}
+              </button>
+            </p>
+          </div>
         </div>
 
-        <div className="mt-6 text-center">
-          <Link href="/" className="text-sm text-gray-600 hover:text-orange-500">
+        <div className="mt-8 text-center">
+          <Link href="/" className="text-sm text-gray-400 hover:text-gray-600 transition-colors inline-flex items-center gap-1">
             ← Kembali ke Beranda
           </Link>
         </div>

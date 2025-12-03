@@ -9,6 +9,8 @@ import { clearAuthToken } from "@/lib/api-client"
 import { EditProfileDialog } from "@/components/dialogs/edit-profile-dialog"
 import { EditPrivateDataDialog } from "@/components/dialogs/edit-private-data-dialog"
 import { ChangePasswordDialog } from "@/components/dialogs/change-password-dialog"
+import { NotificationsDialog } from "@/components/dialogs/notifications-dialog"
+import { BillingDialog } from "@/components/dialogs/billing-dialog"
 
 export default function DashboardAccount({ onNavigate }: { onNavigate?: (tab: string) => void }) {
   const router = useRouter()
@@ -16,6 +18,8 @@ export default function DashboardAccount({ onNavigate }: { onNavigate?: (tab: st
   const [editProfileOpen, setEditProfileOpen] = useState(false)
   const [editPrivateDataOpen, setEditPrivateDataOpen] = useState(false)
   const [changePasswordOpen, setChangePasswordOpen] = useState(false)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [billingOpen, setBillingOpen] = useState(false)
 
   const handleLogout = () => {
     clearAuthToken()
@@ -104,7 +108,10 @@ export default function DashboardAccount({ onNavigate }: { onNavigate?: (tab: st
             </div>
           </button>
 
-          <button className="w-full flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors">
+          <button 
+            onClick={() => setNotificationsOpen(true)}
+            className="w-full flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors"
+          >
             <Bell className="w-5 h-5 text-gray-600" />
             <div className="flex-1 text-left">
               <div className="font-semibold text-gray-900">Notifikasi</div>
@@ -112,7 +119,10 @@ export default function DashboardAccount({ onNavigate }: { onNavigate?: (tab: st
             </div>
           </button>
 
-          <button className="w-full flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors">
+          <button 
+            onClick={() => setBillingOpen(true)}
+            className="w-full flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors"
+          >
             <CreditCard className="w-5 h-5 text-gray-600" />
             <div className="flex-1 text-left">
               <div className="font-semibold text-gray-900">Paket & Billing</div>
@@ -147,6 +157,8 @@ export default function DashboardAccount({ onNavigate }: { onNavigate?: (tab: st
       <EditProfileDialog open={editProfileOpen} onOpenChange={setEditProfileOpen} />
       <EditPrivateDataDialog open={editPrivateDataOpen} onOpenChange={setEditPrivateDataOpen} />
       <ChangePasswordDialog open={changePasswordOpen} onOpenChange={setChangePasswordOpen} />
+      <NotificationsDialog open={notificationsOpen} onOpenChange={setNotificationsOpen} />
+      <BillingDialog open={billingOpen} onOpenChange={setBillingOpen} />
     </div>
   )
 }

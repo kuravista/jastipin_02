@@ -12,9 +12,10 @@ import { useDashboardAnalytics } from "@/hooks/useDashboardAnalytics"
 
 interface DashboardHomeProps {
   onNavigate: (tab: string) => void
+  pendingValidationCount?: number
 }
 
-export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
+export default function DashboardHome({ onNavigate, pendingValidationCount = 0 }: DashboardHomeProps) {
   const { user } = useAuth()
   const { analytics, alerts, loading } = useDashboardAnalytics()
   const [productDialogOpen, setProductDialogOpen] = useState(false)
@@ -236,8 +237,8 @@ export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
           </div>
         ) : (
           <>
-            {/* Card Summary 1: Validasi (Priority 1) */}
-            {alerts && alerts.pendingValidationCount > 0 && (
+            {/* Card Summary 1: Validasi (Priority 1) - Using real-time count from prop */}
+            {pendingValidationCount > 0 && (
               <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -246,7 +247,7 @@ export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
                   <div className="flex-1">
                     <div className="text-sm text-gray-600 mb-1">Validasi Order</div>
                     <div className="text-lg font-bold text-gray-900 mb-3">
-                      Anda punya <span className="text-red-500">{alerts.pendingValidationCount}</span> order baru yang perlu divalidasi
+                      Anda punya <span className="text-red-500">{pendingValidationCount}</span> order baru yang perlu divalidasi
                     </div>
                     <Button
                       onClick={() => onNavigate("validasi")}
@@ -289,7 +290,7 @@ export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
             )}
 
             {/* No alerts message */}
-            {alerts && alerts.pendingValidationCount === 0 && alerts.lowStockProductsCount === 0 && (
+            {pendingValidationCount === 0 && alerts && alerts.lowStockProductsCount === 0 && (
               <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100 text-center">
                 <div className="text-gray-400 mb-2">
                   <Check className="w-12 h-12 mx-auto" />

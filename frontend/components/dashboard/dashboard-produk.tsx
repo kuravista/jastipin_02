@@ -195,8 +195,9 @@ export default function DashboardProduk({ initialFilterTrip }: { initialFilterTr
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 {paginatedProducts.map((product) => {
                   const isUnlimited = product.isUnlimitedStock === true
-                  const stockPercentage = isUnlimited ? 100 : (product.stock && product.stock > 0 ? Math.min((product.stock / 50) * 100, 100) : 0)
-                  const stockLabel = isUnlimited ? "∞ Unlimited" : (product.stock === 0 ? "HABIS" : `${product.stock} tersisa`)
+                  const stock = product.stock ?? 0
+                  const stockPercentage = isUnlimited ? 100 : (stock > 0 ? Math.min((stock / 50) * 100, 100) : 0)
+                  const stockLabel = isUnlimited ? "∞ Unlimited" : (stock === 0 ? "HABIS" : `${stock} tersisa`)
                   
                   return (
                     <div 
@@ -282,9 +283,9 @@ export default function DashboardProduk({ initialFilterTrip }: { initialFilterTr
                             <span className={`text-[10px] font-bold ${
                               isUnlimited
                                 ? "text-blue-600"
-                                : product.stock === 0
+                                : stock === 0
                                 ? "text-red-600"
-                                : product.stock < 5
+                                : stock < 5
                                 ? "text-yellow-600"
                                 : "text-green-600"
                             }`}>
@@ -296,9 +297,9 @@ export default function DashboardProduk({ initialFilterTrip }: { initialFilterTr
                               className={`h-1.5 rounded-full transition-all ${
                                 isUnlimited
                                   ? "bg-blue-500"
-                                  : product.stock === 0
+                                  : stock === 0
                                   ? "bg-red-500"
-                                  : product.stock < 5
+                                  : stock < 5
                                   ? "bg-yellow-500"
                                   : "bg-green-500"
                               }`}

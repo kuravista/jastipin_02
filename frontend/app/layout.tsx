@@ -79,7 +79,7 @@ export default function RootLayout({
         <SupabaseAuthProvider>
           <AuthProvider>
             {children}
-            <Toaster position="bottom-center" richColors />
+            <Toaster position="top-center" richColors />
           </AuthProvider>
         </SupabaseAuthProvider>
         <Script

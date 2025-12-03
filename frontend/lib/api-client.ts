@@ -5,6 +5,9 @@
 
 import { getApiUrl } from './config'
 
+// Re-export getApiUrl for use in components
+export { getApiUrl }
+
 // Get API URL at runtime, which will use the current domain's /api proxy
 function API_URL(): string {
   return getApiUrl()

@@ -67,6 +67,7 @@ export function EditProductDialog({ open, onOpenChange, onSuccess, product }: Ed
     title: "",
     price: 0,
     stock: 0,
+    isUnlimitedStock: false,
     description: "",
     type: "goods",
   })
