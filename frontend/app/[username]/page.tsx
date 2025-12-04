@@ -40,6 +40,13 @@ interface Trip {
   paymentType?: 'full' | 'dp'
 }
 
+interface ProfileDesign {
+  id: string
+  layoutId: string
+  themeId: string
+  updatedAt: string
+}
+
 interface ProfileData {
   user: {
     id: string
@@ -55,6 +62,7 @@ interface ProfileData {
       rating: number
     }
     socialMedia?: SocialMedia[]
+    profileDesign?: ProfileDesign
   }
   trips: Trip[]
   catalog: Array<{
@@ -366,7 +374,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
   }
 
   const renderLayout = () => {
-    const layoutId = (profile as any).profileDesign?.layoutId || 'classic'
+    const layoutId = profile?.user?.profileDesign?.layoutId || 'classic'
     
     switch (layoutId) {
       case 'store':
@@ -384,7 +392,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
   }
 
   return (
-    <ThemeWrapper themeId={(profile as any).profileDesign?.themeId || 'jastip'}>
+    <ThemeWrapper themeId={profile?.user?.profileDesign?.themeId || 'jastip'}>
       <div className="min-h-screen flex flex-col bg-gradient-to-br from-orange-50 via-white to-violet-50"
            style={{ 
              background: `linear-gradient(to bottom right, var(--color-secondary, #fff7ed), #ffffff, var(--color-secondary, #f5f3ff))`

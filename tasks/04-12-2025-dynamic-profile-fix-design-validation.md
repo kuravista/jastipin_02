@@ -288,11 +288,105 @@ SELECT * FROM "ProfileDesign" WHERE "userId" = 'xxx';
 
 ---
 
+## Additional Fix: TypeScript Interface (PART 2)
+
+### The Second Problem
+Even after fixing the validation schema, the frontend still wasn't displaying the layout because:
+
+1. **ProfileData Interface Missing Field**
+   - The `ProfileData` TypeScript interface in `frontend/app/[username]/page.tsx` didn't include `profileDesign` field
+   - Code used `(profile as any).profileDesign?.layoutId` (unsafe `as any` cast)
+   - This worked but was not type-safe and made it easy to miss issues
+
+2. **Type Safety Issues**
+   - `renderLayout()` accessed `profile.profileDesign` via unsafe cast
+   - `ThemeWrapper` received `themeId` via unsafe cast
+   - No TypeScript compilation errors because of `as any`
+
+### The Fix (Part 2)
+**File:** `/app/frontend/app/[username]/page.tsx`
+
+#### Added ProfileDesign Interface (Lines 43-48)
+```typescript
+interface ProfileDesign {
+  id: string
+  layoutId: string
+  themeId: string
+  updatedAt: string
+}
+```
+
+#### Updated ProfileData Interface (Line 65)
+```typescript
+interface ProfileData {
+  user: {
+    // ... existing fields ...
+    socialMedia?: SocialMedia[]
+    profileDesign?: ProfileDesign  // ✅ ADDED
+  }
+  trips: Trip[]
+  catalog: Array<{ ... }>
+}
+```
+
+#### Updated renderLayout (Line 377)
+**Before:**
+```typescript
+const layoutId = (profile as any).profileDesign?.layoutId || 'classic'
+```
+
+**After:**
+```typescript
+const layoutId = profile?.user?.profileDesign?.layoutId || 'classic'
+```
+
+#### Updated ThemeWrapper (Line 395)
+**Before:**
+```typescript
+<ThemeWrapper themeId={(profile as any).profileDesign?.themeId || 'jastip'}>
+```
+
+**After:**
+```typescript
+<ThemeWrapper themeId={profile?.user?.profileDesign?.themeId || 'jastip'}>
+```
+
+---
+
+## Complete Flow (FULLY FIXED)
+
+Now the complete flow works end-to-end:
+
+```
+1. User edits profile design in EditProfileDialog
+                ↓
+2. Frontend sends: { design: { layoutId: "immersive", themeId: "midnight" } }
+                ↓
+3. Backend validator ✅ accepts design field (PART 1 FIX)
+                ↓
+4. AuthService upserts ProfileDesign table ✅
+                ↓
+5. API returns: user.profileDesign = { layoutId: "immersive", themeId: "midnight" }
+                ↓
+6. Frontend fetches profile ✅
+                ↓
+7. TypeScript interface recognizes profileDesign field (PART 2 FIX)
+                ↓
+8. renderLayout() gets correct layoutId from profile.user.profileDesign.layoutId ✅
+                ↓
+9. ThemeWrapper applies theme colors via CSS variables ✅
+                ↓
+10. Profile page displays Immersive layout with Midnight theme ✅✅✅
+```
+
+---
+
 ## Files Changed
 
 | File | Change | Lines |
 |------|--------|-------|
 | `backend/src/utils/validators.ts` | Added `design` field to `updateProfileSchema` | 80-84 (added) |
+| `frontend/app/[username]/page.tsx` | Added ProfileDesign interface & updated accesses | 43-48 (added), 65, 377, 395 (modified) |
 
 ---
 
