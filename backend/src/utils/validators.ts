@@ -77,6 +77,11 @@ export const updateProfileSchema = z.object({
     .regex(/[a-zA-Z]/, 'Alamat harus mengandung huruf')
     .optional()
     .or(z.literal('')),
+  // Profile Design
+  design: z.object({
+    layoutId: z.enum(['classic', 'store', 'bento', 'editorial', 'immersive']).optional(),
+    themeId: z.enum(['jastip', 'ocean', 'forest', 'midnight', 'sunset', 'gold', 'lavender', 'coffee', 'monochrome', 'cherry']).optional(),
+  }).optional(),
 })
 
 // Trip schemas
