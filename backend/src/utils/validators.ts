@@ -77,20 +77,6 @@ export const updateProfileSchema = z.object({
     .regex(/[a-zA-Z]/, 'Alamat harus mengandung huruf')
     .optional()
     .or(z.literal('')),
-  // Bank Account Information
-  bankName: z.string()
-    .max(100)
-    .optional()
-    .or(z.literal('')),
-  accountNumber: z.string()
-    .regex(/^[0-9]{8,20}$/, 'Nomor rekening harus 8-20 digit')
-    .optional()
-    .or(z.literal('')),
-  accountHolderName: z.string()
-    .min(2)
-    .max(100)
-    .optional()
-    .or(z.literal('')),
 })
 
 // Trip schemas

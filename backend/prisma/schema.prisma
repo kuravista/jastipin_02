@@ -229,11 +229,6 @@ model User {
   originPostalCode         String?
   originAddressText        String?
 
-  // Bank Account Information (LEGACY - Deprecated, use BankAccount relation)
-  bankName           String?
-  accountNumber      String?
-  accountHolderName  String?
-
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   SocialMedia SocialMedia[]

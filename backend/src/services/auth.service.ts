@@ -181,9 +181,6 @@ export class AuthService {
         originDistrictName: true,
         originPostalCode: true,
         originAddressText: true,
-        bankName: true,
-        accountNumber: true,
-        accountHolderName: true,
         isProfileComplete: true,
         tutorialStep: true,
         onboardingCompletedAt: true,
@@ -242,9 +239,6 @@ export class AuthService {
       originRajaOngkirDistrictId?: string
       originPostalCode?: string
       originAddressText?: string
-      bankName?: string
-      accountNumber?: string
-      accountHolderName?: string
     }
   ) {
     // Check if slug is being updated and if it's unique
@@ -309,9 +303,6 @@ export class AuthService {
         originRajaOngkirDistrictId: true,
         originPostalCode: true,
         originAddressText: true,
-        bankName: true,
-        accountNumber: true,
-        accountHolderName: true,
         updatedAt: true,
       },
     })
