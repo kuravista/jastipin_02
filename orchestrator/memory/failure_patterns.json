@@ -100,6 +100,28 @@
         "Implement secret management",
         "Use different configs per environment"
       ]
+    },
+    {
+      "id": "prisma-schema-code-mismatch-2025-12",
+      "name": "Prisma Schema Code Mismatch",
+      "description": "Compilation errors due to Prisma Client types not matching the actual usage in code because of missing schema fields or outdated client.",
+      "category": "backend",
+      "failure_rate": 0.6,
+      "common_issues": [
+        "Property does not exist on type errors",
+        "Type mismatch assignments",
+        "Build failure after code updates"
+      ],
+      "solutions": [
+        "Identify missing or mismatched fields in schema.prisma",
+        "Update schema.prisma to match code usage",
+        "Run 'prisma generate' to update client types"
+      ],
+      "warning_signs": [
+        "TS2339 Property does not exist errors",
+        "TS2322 Type assignability errors",
+        "New features implemented without schema updates"
+      ]
     }
   ],
   "insights": {

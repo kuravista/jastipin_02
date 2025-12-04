@@ -18,6 +18,10 @@
   /* Updated secondary to Soft Blush #FFB6B9 */
   --secondary: oklch(0.84 0.08 5);
   --secondary-foreground: oklch(0.21 0 0);
+  
+  /* Dynamic theme colors for profile design (set by ThemeWrapper) */
+  --color-primary: #f97316;
+  --color-secondary: #fff;
   /* Updated muted to Mist Gray #F8F9FA */
   --muted: oklch(0.98 0 0);
   --muted-foreground: oklch(0.556 0 0);
@@ -181,5 +185,47 @@
   body {
     padding-top: constant(safe-area-inset-top);
     padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* Profile theme-aware utilities for dynamic colors */
+@layer utilities {
+  .theme-primary-bg {
+    background-color: var(--color-primary, #f97316);
+  }
+
+  .theme-primary-text {
+    color: var(--color-primary, #f97316);
+  }
+
+  .theme-primary-border {
+    border-color: var(--color-primary, #f97316);
+  }
+
+  .theme-secondary-bg {
+    background-color: var(--color-secondary, #fff);
+  }
+
+  .theme-secondary-text {
+    color: var(--color-secondary, #fff);
+  }
+
+  .theme-primary-button {
+    @apply px-4 py-2 rounded-lg font-semibold transition-colors;
+    background-color: var(--color-primary, #f97316);
+    color: white;
+  }
+
+  .theme-primary-button:hover {
+    filter: brightness(0.9);
+  }
+
+  .theme-gradient-bg {
+    background: linear-gradient(
+      to bottom right,
+      color-mix(in srgb, var(--color-secondary, #fff) 30%, white),
+      white,
+      color-mix(in srgb, var(--color-secondary, #fff) 20%, white)
+    );
   }
 }

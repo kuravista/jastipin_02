@@ -393,10 +393,15 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
 
   return (
     <ThemeWrapper themeId={profile?.user?.profileDesign?.themeId || 'jastip'}>
-      <div className="min-h-screen flex flex-col bg-gradient-to-br from-orange-50 via-white to-violet-50"
-           style={{ 
-             background: `linear-gradient(to bottom right, var(--color-secondary, #fff7ed), #ffffff, var(--color-secondary, #f5f3ff))`
-           }}
+      <div 
+        className="min-h-screen flex flex-col"
+        style={{ 
+          background: `linear-gradient(to bottom right, 
+            color-mix(in srgb, var(--color-secondary, #fff) 30%, white),
+            white,
+            color-mix(in srgb, var(--color-secondary, #fff) 20%, white)
+          )`
+        }}
       >
         
         {renderLayout()}

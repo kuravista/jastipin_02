@@ -133,7 +133,7 @@ export function ClassicLayout({
             <div className="mt-12 space-y-3">
               <div className="flex items-center justify-center gap-2">
                 <h1 className="text-2xl font-bold text-gray-900 leading-tight">{profile.user.profileName}</h1>
-                <Badge className="bg-amber-400 hover:bg-amber-500 text-white border-none flex items-center gap-1 px-2 h-6 rounded-full shadow-sm">
+                <Badge className="theme-primary-bg text-white border-none flex items-center gap-1 px-2 h-6 rounded-full shadow-sm">
                   <Star className="w-3 h-3 fill-white" />
                   {profile.user.stats.rating}
                 </Badge>
