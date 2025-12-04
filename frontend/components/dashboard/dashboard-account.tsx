@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { Bell, Lock, LogOut, User, CreditCard, HelpCircle, Plane, UserCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
-import { clearAuthToken } from "@/lib/api-client"
 import { EditProfileDialog } from "@/components/dialogs/edit-profile-dialog"
 import { EditPrivateDataDialog } from "@/components/dialogs/edit-private-data-dialog"
 import { ChangePasswordDialog } from "@/components/dialogs/change-password-dialog"
@@ -14,16 +13,16 @@ import { BillingDialog } from "@/components/dialogs/billing-dialog"
 
 export default function DashboardAccount({ onNavigate }: { onNavigate?: (tab: string) => void }) {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const [editProfileOpen, setEditProfileOpen] = useState(false)
   const [editPrivateDataOpen, setEditPrivateDataOpen] = useState(false)
   const [changePasswordOpen, setChangePasswordOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [billingOpen, setBillingOpen] = useState(false)
 
-  const handleLogout = () => {
-    clearAuthToken()
-    router.push("/auth/login")
+  const handleLogout = async () => {
+    await logout()
+    router.push("/auth")
   }
 
   return (

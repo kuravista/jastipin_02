@@ -190,6 +190,22 @@ export function clearAuthToken() {
 }
 
 /**
+ * Logout user - calls backend to clear cookies and clears local token
+ */
+export async function logout(): Promise<void> {
+  try {
+    // Call backend to clear httpOnly refresh token cookie
+    await apiPost('/auth/logout')
+  } catch (error) {
+    // Continue with logout even if backend call fails
+    console.error('Backend logout failed:', error)
+  } finally {
+    // Always clear local token
+    clearAuthToken()
+  }
+}
+
+/**
  * Refresh token by calling backend
  */
 async function refreshToken(): Promise<boolean> {

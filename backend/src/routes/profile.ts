@@ -12,7 +12,7 @@ import { OnboardingService } from '../services/onboarding.service.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { optionalAuth } from '../middleware/auth.js'
 import { validate } from '../middleware/validate.js'
-import { updateProfileSchema, changePasswordSchema } from '../utils/validators.js'
+import { updateProfileSchema, changePasswordSchema, updateProfileDesignSchema } from '../utils/validators.js'
 import { AuthRequest } from '../types/index.js'
 
 const router: ExpressRouter = Router()
@@ -61,6 +61,55 @@ router.patch(
     } catch (error: any) {
       const status = error.status || 500
       const message = error.message || 'Failed to update profile'
+      res.status(status).json({ error: message })
+    }
+  }
+)
+
+/**
+ * PATCH /profile/design
+ * Update authenticated user's profile design settings (layout and theme)
+ * Body: { layoutId: string, themeId: string }
+ */
+router.patch(
+  '/profile/design',
+  authMiddleware,
+  validate(updateProfileDesignSchema),
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { layoutId, themeId } = req.body
+      
+      // Update profile design using auth service's updateUserProfile with nested design update
+      await authService.updateUserProfile(
+        req.user!.id,
+        {
+          design: {
+            layoutId,
+            themeId
+          }
+        }
+      )
+      
+      // Fetch updated profile design to return
+      const updatedDesign = await db.profileDesign.findUnique({
+        where: { userId: req.user!.id },
+        select: {
+          id: true,
+          layoutId: true,
+          themeId: true,
+          updatedAt: true
+        }
+      })
+      
+      if (!updatedDesign) {
+        res.status(404).json({ error: 'Profile design not found' })
+        return
+      }
+      
+      res.json(updatedDesign)
+    } catch (error: any) {
+      const status = error.status || 500
+      const message = error.message || 'Failed to update profile design'
       res.status(status).json({ error: message })
     }
   }

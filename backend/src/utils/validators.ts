@@ -263,6 +263,16 @@ export const completeProfileSchema = z.object({
     .max(100, 'Nama pemegang rekening maksimal 100 karakter'),
 })
 
+// Profile Design schema
+export const updateProfileDesignSchema = z.object({
+  layoutId: z.enum(['classic', 'store', 'bento', 'editorial', 'immersive'], {
+    errorMap: () => ({ message: 'Invalid layout ID' }),
+  }),
+  themeId: z.enum(['jastip', 'ocean', 'forest', 'midnight', 'sunset', 'gold', 'lavender', 'coffee', 'monochrome', 'cherry'], {
+    errorMap: () => ({ message: 'Invalid theme ID' }),
+  }),
+})
+
 // Type exports
 export type RegisterInput = z.infer<typeof registerSchema>
 export type LoginInput = z.infer<typeof loginSchema>
@@ -275,3 +285,4 @@ export type UpdateProfileInput = z.infer<typeof updateProfileSchema>
 export type CreateSocialMediaInput = z.infer<typeof createSocialMediaSchema>
 export type UpdateSocialMediaInput = z.infer<typeof updateSocialMediaSchema>
 export type CompleteProfileInput = z.infer<typeof completeProfileSchema>
+export type UpdateProfileDesignInput = z.infer<typeof updateProfileDesignSchema>

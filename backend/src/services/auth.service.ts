@@ -186,6 +186,7 @@ export class AuthService {
         onboardingCompletedAt: true,
         createdAt: true,
         updatedAt: true,
+        profileDesign: true, // Include profile design config
         BankAccount: {
           where: {
             status: 'active'
@@ -239,6 +240,10 @@ export class AuthService {
       originRajaOngkirDistrictId?: string
       originPostalCode?: string
       originAddressText?: string
+      design?: { // Nested design update
+        layoutId: string
+        themeId: string
+      }
     }
   ) {
     // Check if slug is being updated and if it's unique
@@ -278,11 +283,29 @@ export class AuthService {
       }
     }
 
+    // Destructure design from profileData to handle it separately or in nested update
+    const { design, ...userData } = profileData
+
     const user = await this.db.user.update({
       where: { id: userId },
       data: {
-        ...profileData,
-        originRajaOngkirDistrictId: rajaOngkirDistrictId || null
+        ...userData,
+        originRajaOngkirDistrictId: rajaOngkirDistrictId || null,
+        // Handle nested profileDesign update/create
+        ...(design ? {
+          profileDesign: {
+            upsert: {
+              create: {
+                layoutId: design.layoutId,
+                themeId: design.themeId
+              },
+              update: {
+                layoutId: design.layoutId,
+                themeId: design.themeId
+              }
+            }
+          }
+        } : {})
       },
       select: {
         id: true,
@@ -304,6 +327,7 @@ export class AuthService {
         originPostalCode: true,
         originAddressText: true,
         updatedAt: true,
+        profileDesign: true, // Return updated design
       },
     })
 
@@ -327,6 +351,7 @@ export class AuthService {
         coverImage: true,
         coverPosition: true,
         createdAt: true,
+        profileDesign: true, // Include public design config
       },
     })
 

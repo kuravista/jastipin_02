@@ -6,7 +6,7 @@
 'use client'
 
 import React, { createContext, useState, useContext, useEffect } from 'react'
-import { apiPost, apiGet } from './api-client'
+import { apiPost, apiGet, logout as apiLogout } from './api-client'
 import { clearAuthToken } from './api-client'
 
 export interface User {
@@ -159,9 +159,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  function logout() {
-    setUser(null)
-    clearAuthToken()
+  async function logout() {
+    try {
+      await apiLogout()
+    } finally {
+      setUser(null)
+    }
   }
 
   const getAuthToken = () => {

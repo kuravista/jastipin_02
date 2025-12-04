@@ -5,10 +5,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/use-toast"
 import { apiPost, apiPatch, apiGet } from "@/lib/api-client"
 import { uploadImage, getUserIdFromToken } from "@/lib/image-upload"
-import { Upload, Trash2, Camera } from "lucide-react"
+import { Upload, Trash2, Camera, Layout, Palette } from "lucide-react"
+import { SocialMediaManager } from "@/components/profile/social-media-manager"
+import { LAYOUT_OPTIONS, THEME_OPTIONS } from "@/lib/design-config"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
 interface EditProfileDialogProps {
   open: boolean
@@ -23,6 +27,10 @@ interface ProfileFormData {
   avatar?: string
   coverImage?: string
   coverPosition?: number
+  design?: {
+    layoutId: string
+    themeId: string
+  }
 }
 
 interface ProfileData {
@@ -32,6 +40,10 @@ interface ProfileData {
   avatar?: string
   coverImage?: string
   coverPosition?: number
+  profileDesign?: {
+    layoutId: string
+    themeId: string
+  }
 }
 
 export function EditProfileDialog({ open, onOpenChange, onSuccess }: EditProfileDialogProps) {
@@ -41,6 +53,10 @@ export function EditProfileDialog({ open, onOpenChange, onSuccess }: EditProfile
     profileBio: "",
     slug: "",
     coverPosition: 50,
+    design: {
+      layoutId: "classic",
+      themeId: "jastip"
+    }
   })
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [coverPreview, setCoverPreview] = useState<string | null>(null)
@@ -60,6 +76,10 @@ export function EditProfileDialog({ open, onOpenChange, onSuccess }: EditProfile
         profileBio: data.profileBio || "",
         slug: data.slug || "",
         coverPosition: data.coverPosition || 50,
+        design: {
+          layoutId: data.profileDesign?.layoutId || "classic",
+          themeId: data.profileDesign?.themeId || "jastip"
+        }
       })
       setAvatarPreview(data.avatar || null)
       setCoverPreview(data.coverImage || null)
@@ -71,6 +91,16 @@ export function EditProfileDialog({ open, onOpenChange, onSuccess }: EditProfile
   const handleInputChange = (field: keyof ProfileFormData, value: string) => {
     setFormData((prev: ProfileFormData) => ({ ...prev, [field]: value }))
     setError(null)
+  }
+
+  const handleDesignChange = (type: 'layoutId' | 'themeId', value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      design: {
+        ...prev.design!,
+        [type]: value
+      }
+    }))
   }
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>, field: 'avatar' | 'coverImage') => {
@@ -139,8 +169,18 @@ export function EditProfileDialog({ open, onOpenChange, onSuccess }: EditProfile
           <SheetTitle>Edit Profil</SheetTitle>
           <SheetDescription>Ubah informasi publik Anda</SheetDescription>
         </SheetHeader>
-        <form className="mt-6 space-y-4 pb-6" onSubmit={handleSubmit}>
-          {error && <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{error}</div>}
+        
+        <Tabs defaultValue="profile" className="mt-6">
+          <TabsList className="w-full grid grid-cols-3">
+            <TabsTrigger value="profile">Profil</TabsTrigger>
+            <TabsTrigger value="design">Tampilan</TabsTrigger>
+            <TabsTrigger value="social">Social Media</TabsTrigger>
+          </TabsList>
+
+          {/* Profile Tab */}
+          <TabsContent value="profile">
+            <form className="mt-4 space-y-4 pb-6" onSubmit={handleSubmit}>
+              {error && <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{error}</div>}
 
           {/* Cover Image */}
           <div>
@@ -245,10 +285,97 @@ export function EditProfileDialog({ open, onOpenChange, onSuccess }: EditProfile
             />
           </div>
 
-          <Button type="submit" className="w-full bg-[#FB923C] hover:bg-[#EA7C2C] h-12 font-semibold" disabled={loading}>
-            {loading ? "Menyimpan..." : "Simpan Perubahan"}
-          </Button>
-        </form>
+              <Button type="submit" className="w-full bg-[#FB923C] hover:bg-[#EA7C2C] h-12 font-semibold" disabled={loading}>
+                {loading ? "Menyimpan..." : "Simpan Perubahan"}
+              </Button>
+            </form>
+          </TabsContent>
+
+          {/* Design Tab */}
+          <TabsContent value="design">
+            <form className="mt-4 space-y-8 pb-6" onSubmit={handleSubmit}>
+              {/* Layout Selector */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-medium flex items-center gap-2">
+                    <Layout className="w-4 h-4" />
+                    Pilih Layout
+                  </h3>
+                </div>
+                <RadioGroup 
+                  value={formData.design?.layoutId} 
+                  onValueChange={(val) => handleDesignChange('layoutId', val)}
+                  className="grid grid-cols-2 gap-4"
+                >
+                  {LAYOUT_OPTIONS.map((layout) => (
+                    <div key={layout.id}>
+                      <RadioGroupItem value={layout.id} id={layout.id} className="peer sr-only" />
+                      <Label
+                        htmlFor={layout.id}
+                        className="flex flex-col items-center justify-between rounded-xl border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-orange-500 [&:has([data-state=checked])]:border-orange-500 cursor-pointer transition-all"
+                      >
+                        <div className="relative w-full aspect-[3/4] rounded-lg bg-gray-100 mb-2 overflow-hidden group">
+                           {/* Placeholder visualization since we don't have images yet */}
+                           <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 text-gray-300 group-hover:bg-gray-100 transition-colors">
+                              {layout.id === 'classic' && <div className="w-8 h-8 rounded-full bg-gray-300 mb-2" />}
+                              {layout.id === 'store' && <div className="w-12 h-8 rounded bg-gray-300 mb-2" />}
+                              <span className="text-[10px] uppercase font-bold">{layout.name}</span>
+                           </div>
+                        </div>
+                        <span className="text-xs font-medium">{layout.name}</span>
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </div>
+
+              {/* Theme Selector */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-medium flex items-center gap-2">
+                    <Palette className="w-4 h-4" />
+                    Tema Warna
+                  </h3>
+                  <span className="text-xs text-muted-foreground">{THEME_OPTIONS.find(t => t.id === formData.design?.themeId)?.name}</span>
+                </div>
+                
+                <div className="grid grid-cols-5 gap-3">
+                  {THEME_OPTIONS.map((theme) => (
+                    <button
+                      key={theme.id}
+                      type="button"
+                      onClick={() => handleDesignChange('themeId', theme.id)}
+                      className={`group relative w-full aspect-square rounded-full flex items-center justify-center transition-all ${
+                        formData.design?.themeId === theme.id 
+                          ? 'ring-2 ring-offset-2 ring-orange-500 scale-110' 
+                          : 'hover:scale-105'
+                      }`}
+                      style={{ background: `linear-gradient(135deg, ${theme.colors.primary} 50%, ${theme.colors.secondary} 50%)` }}
+                      title={theme.name}
+                    >
+                      {formData.design?.themeId === theme.id && (
+                        <div className="bg-white rounded-full p-1 shadow-sm">
+                          <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full bg-[#FB923C] hover:bg-[#EA7C2C] h-12 font-semibold" disabled={loading}>
+                {loading ? "Menyimpan..." : "Terapkan Tampilan"}
+              </Button>
+            </form>
+          </TabsContent>
+
+          {/* Social Media Tab */}
+          <TabsContent value="social">
+            <div className="mt-4 pb-6">
+              <SocialMediaManager />
+            </div>
+          </TabsContent>
+        </Tabs>
       </SheetContent>
     </Sheet>
   )

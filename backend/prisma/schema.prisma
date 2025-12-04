@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Address {
@@ -229,14 +230,30 @@ model User {
   originPostalCode         String?
   originAddressText        String?
 
+  isProfileComplete        Boolean       @default(false)
+  tutorialStep             String        @default("pending")
+  onboardingCompletedAt    DateTime?
+
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   SocialMedia SocialMedia[]
   Trip        Trip[]
   BankAccount BankAccount[]
+  profileDesign ProfileDesign?
 
   @@index([email])
   @@index([slug])
+}
+
+model ProfileDesign {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  layoutId    String   @default("classic") 
+  themeId     String   @default("jastip")  
+  
+  updatedAt   DateTime @updatedAt
 }
 
 model BankAccount {
