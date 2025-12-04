@@ -8,6 +8,7 @@
 import { Router, Response, Router as ExpressRouter } from 'express'
 import db from '../lib/prisma.js'
 import { AuthService } from '../services/auth.service.js'
+import { OnboardingService } from '../services/onboarding.service.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { optionalAuth } from '../middleware/auth.js'
 import { validate } from '../middleware/validate.js'
@@ -16,6 +17,7 @@ import { AuthRequest } from '../types/index.js'
 
 const router: ExpressRouter = Router()
 const authService = new AuthService(db)
+const onboardingService = new OnboardingService(db)
 
 /**
  * GET /profile
@@ -46,6 +48,15 @@ router.patch(
         req.user!.id,
         req.body
       )
+      
+      // Auto-sync profile completion status based on actual field values
+      try {
+        await onboardingService.syncProfileCompleteStatus(req.user!.id)
+      } catch (syncError) {
+        // Log but don't fail the request
+        console.error('[Profile Update] Failed to sync profile status:', syncError)
+      }
+      
       res.json(profile)
     } catch (error: any) {
       const status = error.status || 500
@@ -249,6 +260,14 @@ router.patch(
           originRajaOngkirDistrictId: true
         }
       })
+
+      // Auto-sync profile completion status based on actual field values
+      try {
+        await onboardingService.syncProfileCompleteStatus(req.user!.id)
+      } catch (syncError) {
+        // Log but don't fail the request
+        console.error('[Profile Origin Update] Failed to sync profile status:', syncError)
+      }
 
       res.json({
         success: true,

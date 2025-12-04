@@ -110,4 +110,29 @@ router.get(
   }
 )
 
+/**
+ * POST /users/sync-profile-status
+ * Sync isProfileComplete flag with actual field values
+ * Used when user may have filled profile via multiple endpoints
+ */
+router.post(
+  '/users/sync-profile-status',
+  authMiddleware,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const user = await onboardingService.syncProfileCompleteStatus(req.user!.id)
+
+      res.json({
+        success: true,
+        message: 'Profile status synced successfully',
+        user: onboardingService.serializeUser(user),
+      })
+    } catch (error: any) {
+      const status = error.status || 500
+      const message = error.message || 'Failed to sync profile status'
+      res.status(status).json({ error: message })
+    }
+  }
+)
+
 export default router

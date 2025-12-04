@@ -43,6 +43,34 @@ export class OnboardingService {
   }
 
   /**
+   * Sync isProfileComplete flag with actual field values
+   * Updates database flag based on whether all required fields are filled
+   * @param userId - User ID
+   * @returns Updated user data
+   */
+  async syncProfileCompleteStatus(userId: string) {
+    const isComplete = await this.checkProfileComplete(userId)
+
+    const user = await this.db.user.update({
+      where: { id: userId },
+      data: {
+        isProfileComplete: isComplete,
+        tutorialStep: isComplete ? 'profile_complete' : 'pending',
+        onboardingCompletedAt: isComplete ? new Date() : null,
+      },
+      select: {
+        id: true,
+        email: true,
+        isProfileComplete: true,
+        tutorialStep: true,
+        onboardingCompletedAt: true,
+      },
+    })
+
+    return user
+  }
+
+  /**
    * Complete user profile and create/update bank account
    * @param userId - User ID
    * @param data - Profile completion data

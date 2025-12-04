@@ -59,6 +59,9 @@ export class AuthService {
         email: user.email,
         slug: user.slug,
         profileName: user.profileName,
+        isProfileComplete: user.isProfileComplete,
+        tutorialStep: user.tutorialStep,
+        onboardingCompletedAt: user.onboardingCompletedAt,
       },
       token,
       refreshToken,
@@ -74,6 +77,16 @@ export class AuthService {
   async login(email: string, password: string) {
     const user = await this.db.user.findUnique({
       where: { email },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        slug: true,
+        profileName: true,
+        isProfileComplete: true,
+        tutorialStep: true,
+        onboardingCompletedAt: true,
+      },
     })
 
     if (!user) {
@@ -84,7 +97,7 @@ export class AuthService {
       throw error
     }
 
-    const isPasswordValid = await verifyPassword(password, user.password)
+    const isPasswordValid = await verifyPassword(password, user.password || '')
     if (!isPasswordValid) {
       const error: ApiError = {
         status: 401,
@@ -102,6 +115,9 @@ export class AuthService {
         email: user.email,
         slug: user.slug,
         profileName: user.profileName,
+        isProfileComplete: user.isProfileComplete,
+        tutorialStep: user.tutorialStep,
+        onboardingCompletedAt: user.onboardingCompletedAt,
       },
       token,
       refreshToken,
