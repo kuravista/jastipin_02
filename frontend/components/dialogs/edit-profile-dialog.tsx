@@ -12,7 +12,13 @@ import { uploadImage, getUserIdFromToken } from "@/lib/image-upload"
 import { Upload, Trash2, Camera, Layout, Palette } from "lucide-react"
 import { SocialMediaManager } from "@/components/profile/social-media-manager"
 import { LAYOUT_OPTIONS, THEME_OPTIONS } from "@/lib/design-config"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface EditProfileDialogProps {
   open: boolean
@@ -302,31 +308,25 @@ export function EditProfileDialog({ open, onOpenChange, onSuccess }: EditProfile
                     Pilih Layout
                   </h3>
                 </div>
-                <RadioGroup 
-                  value={formData.design?.layoutId} 
+                
+                <Select
+                  value={formData.design?.layoutId}
                   onValueChange={(val) => handleDesignChange('layoutId', val)}
-                  className="grid grid-cols-2 gap-4"
                 >
-                  {LAYOUT_OPTIONS.map((layout) => (
-                    <div key={layout.id}>
-                      <RadioGroupItem value={layout.id} id={layout.id} className="peer sr-only" />
-                      <Label
-                        htmlFor={layout.id}
-                        className="flex flex-col items-center justify-between rounded-xl border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-orange-500 [&:has([data-state=checked])]:border-orange-500 cursor-pointer transition-all"
-                      >
-                        <div className="relative w-full aspect-[3/4] rounded-lg bg-gray-100 mb-2 overflow-hidden group">
-                           {/* Placeholder visualization since we don't have images yet */}
-                           <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 text-gray-300 group-hover:bg-gray-100 transition-colors">
-                              {layout.id === 'classic' && <div className="w-8 h-8 rounded-full bg-gray-300 mb-2" />}
-                              {layout.id === 'store' && <div className="w-12 h-8 rounded bg-gray-300 mb-2" />}
-                              <span className="text-[10px] uppercase font-bold">{layout.name}</span>
-                           </div>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Pilih layout" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LAYOUT_OPTIONS.map((layout) => (
+                      <SelectItem key={layout.id} value={layout.id}>
+                        <div className="flex flex-col items-start text-left">
+                          <span className="font-medium">{layout.name}</span>
+                          <span className="text-xs text-muted-foreground line-clamp-1">{layout.description}</span>
                         </div>
-                        <span className="text-xs font-medium">{layout.name}</span>
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Theme Selector */}

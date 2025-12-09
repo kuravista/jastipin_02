@@ -125,9 +125,9 @@ export function StoreLayout({
                       key={social.id}
                       onClick={() => window.open(social.url, "_blank")}
                       title={`${config.label} - ${social.handle}`}
-                      className="group p-2 rounded-full bg-gray-50 hover:bg-orange-50 transition-all duration-200 border border-gray-100 hover:border-orange-200"
+                      className="group p-2 rounded-full bg-gray-50 hover:bg-gray-100 transition-all duration-200 border border-gray-100 hover:border-gray-300"
                     >
-                      <Icon className={`w-4 h-4 ${config.color} opacity-80 group-hover:opacity-100`} />
+                      <Icon className={`w-4 h-4 text-gray-600 group-hover:text-gray-900`} />
                     </button>
                   )
                 })}
@@ -157,8 +157,8 @@ export function StoreLayout({
                   onClick={() => setCurrentTripIndex(idx)}
                   className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     idx === currentTripIndex
-                      ? "bg-orange-500 text-white shadow-lg"
-                      : "bg-white text-gray-700 border border-gray-200 hover:border-orange-300"
+                      ? "theme-primary-bg text-white shadow-lg"
+                      : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
                   }`}
                 >
                   <div className="flex items-center gap-2">
@@ -227,7 +227,7 @@ export function StoreLayout({
                         variant={item.type === 'goods' ? 'default' : 'secondary'}
                         className="text-[10px] px-2 py-0.5 backdrop-blur-sm"
                       >
-                        {item.type === 'goods' ? '📦 Product' : '🔧 Service'}
+                        {item.type === 'goods' ? '📦' : '🔧'}
                       </Badge>
                       <Badge
                         className="text-[10px] px-2 py-0.5 backdrop-blur-sm"
@@ -249,13 +249,13 @@ export function StoreLayout({
                     </div>
                     
                     <div className="flex justify-between items-center pt-2 border-t mt-2 gap-2">
-                      <p className="text-orange-500 font-bold text-sm sm:text-base truncate">
+                      <p className="theme-primary-text font-bold text-sm sm:text-base truncate">
                         Rp {item.price.toLocaleString('id-ID')}
                       </p>
                       <button
                         onClick={() => addToCart(item)}
                         disabled={!item.available && item.type !== 'tasks'}
-                        className="text-orange-500 hover:text-orange-600 disabled:text-gray-300 transition-colors p-2 hover:bg-orange-50 rounded-full disabled:hover:bg-transparent flex-shrink-0"
+                        className="theme-primary-text hover:brightness-90 disabled:text-gray-300 transition-colors p-2 hover:bg-gray-100 rounded-full disabled:hover:bg-transparent flex-shrink-0"
                       >
                         <Plus className="w-5 h-5" />
                       </button>
@@ -299,7 +299,7 @@ export function StoreLayout({
         {/* Footer */}
         <div className="text-center mt-8 pt-6 border-t text-sm text-muted-foreground">
           <p>
-            Powered by <span className="font-semibold text-orange-500">Jastipin.me</span>
+            Powered by <span className="font-semibold theme-primary-text">Jastipin.me</span>
           </p>
         </div>
       </div>

@@ -27,6 +27,10 @@ interface ProductDetailResponse {
     slug: string
     profileName: string
     avatar: string | null
+    profileDesign?: {
+      layoutId: string
+      themeId: string
+    }
   }
 }
 

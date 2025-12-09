@@ -79,7 +79,7 @@ export const updateProfileSchema = z.object({
     .or(z.literal('')),
   // Profile Design
   design: z.object({
-    layoutId: z.enum(['classic', 'store', 'bento', 'editorial', 'immersive']).optional(),
+    layoutId: z.enum(['classic', 'store', 'bento', 'editorial', 'immersive', 'neo-brutalist']).optional(),
     themeId: z.enum(['jastip', 'ocean', 'forest', 'midnight', 'sunset', 'gold', 'lavender', 'coffee', 'monochrome', 'cherry']).optional(),
   }).optional(),
 })
@@ -270,7 +270,7 @@ export const completeProfileSchema = z.object({
 
 // Profile Design schema
 export const updateProfileDesignSchema = z.object({
-  layoutId: z.enum(['classic', 'store', 'bento', 'editorial', 'immersive'], {
+  layoutId: z.enum(['classic', 'store', 'bento', 'editorial', 'immersive', 'neo-brutalist'], {
     errorMap: () => ({ message: 'Invalid layout ID' }),
   }),
   themeId: z.enum(['jastip', 'ocean', 'forest', 'midnight', 'sunset', 'gold', 'lavender', 'coffee', 'monochrome', 'cherry'], {

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Traveler Storefront</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#1392ec",
+              "background-light": "#f6f7f8",
+              "background-dark": "#101a22",
+            },
+            fontFamily: {
+              "display": ["Plus Jakarta Sans", "Noto Sans", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#111518] dark:text-gray-200">
+<div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+<!-- Compact Header -->
+<header class="flex p-4 @container bg-background-light dark:bg-background-dark sticky top-0 z-10 border-b border-gray-200 dark:border-gray-800">
+<div class="flex w-full flex-row justify-between items-center">
+<div class="flex gap-3 items-center">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-10 w-10" data-alt="Profile picture of a traveler" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBxWDWnrGFNyzeHLIiy5eSW-OOr2hpupVarzYsvi5Mp-s9YspkpY1SD2Z7HBhPl3eWfP9oj-a5AykhV3DQ66VZSUMRGUYAm1u9BehcbhI8E3fzLMEk06ieJCtwnSEBiIXpGusYE3AcgFJLK22bqXsdTcaGtKlsyY2cIcjdr00R0Ahpz144kl60KdGMt6A8T5omoyJDwN0booi95AOEb4KQMoDWLmRnpfCFQUG-DSF-1Jsdm2OX8o6w5Oorg4x_YI8kci7K-n1gyez0");'></div>
+<div class="flex flex-col">
+<p class="text-[#111518] dark:text-white text-base font-bold leading-tight tracking-[-0.01em]">@alexatravels</p>
+<p class="text-[#617989] dark:text-gray-400 text-xs font-normal leading-normal">Digital Nomad | Bali</p>
+</div>
+</div>
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-4 bg-[#f0f3f4] dark:bg-gray-700/50 text-[#111518] dark:text-white text-sm font-bold leading-normal tracking-[0.015em]">
+<span class="truncate">Follow</span>
+</button>
+</div>
+</header>
+<!-- Active Trips Carousel -->
+<section class="py-4 bg-background-light dark:bg-background-dark">
+<h2 class="px-4 text-lg font-bold text-[#111518] dark:text-white mb-2">Currently Exploring</h2>
+<div class="flex overflow-x-auto [-ms-scrollbar-style:none] [scrollbar-width:none] [&amp;::-webkit-scrollbar]:hidden">
+<div class="flex items-stretch px-4 gap-3">
+<div class="flex h-full flex-1 flex-col gap-2 rounded-lg min-w-40">
+<div class="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-xl" data-alt="Scenic view of Kyoto, Japan" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDG1lTqnHNZvATTAp2BzTxUJkGeXkJaEG68qZ4TZjXFAkZOkqEcZqScheKATk3DoJr5xn7UN7iJ8RFII--dh55EeI541cOONRTUlfrd-GNoiy4Kgz55HuC0DLbGNDLZa7Xv6rfen7HQVOImYIEczG0wDsqAzaN1KHjp5qigkGeQKw0Oo3SBkZsz2_MrZSwEbdsbhJbd1uoe2CAFP2W_87qSCNCxC1mxwVMWdy6lVP6KunWlzFxyz_wjDzhg9fTA2FyVqtooFRXYFSk");'></div>
+<div>
+<p class="text-[#111518] dark:text-white text-base font-medium leading-normal">Kyoto, Japan</p>
+<p class="text-[#617989] dark:text-gray-400 text-sm font-normal leading-normal">May '24</p>
+</div>
+</div>
+<div class="flex h-full flex-1 flex-col gap-2 rounded-lg min-w-40">
+<div class="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-xl" data-alt="Mountain landscape in Patagonia, Chile" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCqZhO-0evZ_t4vJWgKB2SPP9fTdsEOn3aK-8FczLIHEjECxLV1Vj8socAcGSLjGLeGtEnGcou2vcL_ZGuOPgvXKvdlJL9IHh9_G03bhMgLtjy27xQbsEFUUz5h_NkAC9bUHGZEG1MWJZAC475QPu-iBiMi2HJXppsPL8nGAnRPMZ7Ckqu8eltWONYAUmWm58TL7vNKMKSEQtufWs5T2HNqogtFZXlLjFYXfWkqXdISgHE-QtYTTAoNCieekhwDffg_AR_7jF5FB44");'></div>
+<div>
+<p class="text-[#111518] dark:text-white text-base font-medium leading-normal">Patagonia, Chile</p>
+<p class="text-[#617989] dark:text-gray-400 text-sm font-normal leading-normal">On The Road</p>
+</div>
+</div>
+<div class="flex h-full flex-1 flex-col gap-2 rounded-lg min-w-40">
+<div class="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-xl" data-alt="Beach scene in Bali, Indonesia" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCXBus0Jt-bXz2vYvDpLKM4wwROyIId8L_-Y3PLUI4V9gj8x1BZV9OPjqTBI4_ddwlq-U4srg7-Mg8Cz31yshYYgiT5SaXoB_doMEbh1QXfalMEc5T__e9SWzQPUyxZQjBEnkl9JNPPhp4cHiun8ciV1LGq32pWs1RAv0zH_H3lnj_14GgS48adPhrioIdjNsZuMYUVM2InLKx7mtrbzDkGqvSvitq3yekUy8zKYieoKjtmqYqQCjA-dp0SKS5yIyOf48zCuziK9Fs");'></div>
+<div>
+<p class="text-[#111518] dark:text-white text-base font-medium leading-normal">Bali, Indonesia</p>
+<p class="text-[#617989] dark:text-gray-400 text-sm font-normal leading-normal">Next Stop</p>
+</div>
+</div>
+<div class="flex h-full flex-1 flex-col gap-2 rounded-lg min-w-40">
+<div class="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-xl" data-alt="Cityscape of Seoul, South Korea" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAgOJxgZ9ySkAjKTYk7YuxjQJAjepKaAGaWYoGWGunJJNpyQu_LwOY_gxwyPR3E8-Zse6aoysvHygzUDLWtYZFKhh4vU2rV3RyyIiU85x4sC2wbfdVqFhYBYvfxTamDvwbU-DTb3qR8wvgV8nOvtaG08DASN7Bx72zH9Dj2e7PUl83tI2ACjjATrHQokLbfLkxk0xMEuE2QjrbjLheOsRBBlMSjKnRqJ0LJ29bjTmjpGGUIVKtrDWoALDq6PGy9U6-PKqN60erQz_A");'></div>
+<div>
+<p class="text-[#111518] dark:text-white text-base font-medium leading-normal">Seoul, S. Korea</p>
+<p class="text-[#617989] dark:text-gray-400 text-sm font-normal leading-normal">August '24</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Product Grid -->
+<main class="flex-1 p-4">
+<h2 class="text-lg font-bold text-[#111518] dark:text-white mb-4">Shop My Gear</h2>
+<div class="grid grid-cols-2 gap-4">
+<div class="relative group">
+<div class="bg-cover bg-center flex flex-col gap-3 rounded-xl justify-end p-4 aspect-[3/4] overflow-hidden" data-alt="A lightweight travel backpack in a natural setting." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAX__zgvgecKgdZJQi5FhGFpgUKbraOTYnUr1bqeOK-8FrSMyN7wCWdsm74AY4nh9XdU5h8U2N9NtfBiSk2mUcpwfcUBpZuPzPJsy04Az1VzxG3x7gNWcZnTjN_1Cy4mxZux0kBOn9UU7Eoofgp4Pd_TO65kal3KuYkdCFOhhxK799hxHEv_UqINKGwgdQY0yG_X77_QIz71lmgwWpIuFLFtF_HZMWy5uJdJ8RCg5wzUpKsYq8wX8TILOuxeciP2_Zwt7jwANKkdH8");'>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+<div class="relative z-10">
+<p class="text-white text-base font-bold leading-tight line-clamp-2">Lightweight Travel Backpack</p>
+<p class="text-white text-sm font-medium leading-normal">$120.00</p>
+</div>
+</div>
+<button class="absolute top-3 right-3 flex cursor-pointer items-center justify-center rounded-full h-9 w-9 bg-primary text-white transition-transform duration-200 group-hover:scale-110">
+<span class="material-symbols-outlined !text-[20px]">add_shopping_cart</span>
+</button>
+</div>
+<div class="relative group">
+<div class="bg-cover bg-center flex flex-col gap-3 rounded-xl justify-end p-4 aspect-[3/4] overflow-hidden" data-alt="A portable power bank charging a phone." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuB4da9H15cGhWbAoV8oeoFY2KscS7sY9fNlGACD6MNMvQXq6Rc-JUJ8XhYY2LR14A9k9f68u2tzJHn0Wzsx0zKkpRkg_rQClxMBgcTJWOrbY1IYzd_bjssiA8ZFb_5QwoJxMuj1NCvdTQk3Ja-sjzxFgWMaRfYUAM8FWps6xr1QBqAio2Wv2WKcjXeLKOI0G6uXU4b3gkyte-G-xL_Vsu8P3-UJjI6k5A1SJ9PmOqvT9CVU9dSn2A1Z8rboyOK7iRNHh8geJV8HW3g");'>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+<div class="relative z-10">
+<p class="text-white text-base font-bold leading-tight line-clamp-2">Portable Power Bank</p>
+<p class="text-white text-sm font-medium leading-normal">$45.00</p>
+</div>
+</div>
+<button class="absolute top-3 right-3 flex cursor-pointer items-center justify-center rounded-full h-9 w-9 bg-primary text-white transition-transform duration-200 group-hover:scale-110">
+<span class="material-symbols-outlined !text-[20px]">add_shopping_cart</span>
+</button>
+</div>
+<div class="relative group">
+<div class="bg-cover bg-center flex flex-col gap-3 rounded-xl justify-end p-4 aspect-[3/4] overflow-hidden" data-alt="A pair of sturdy hiking boots on a rocky trail." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCUzsJGFTlRgFAPEEpai0RPYbeCewUbHYPSUczadP_k6ARjOV6Qp12EZ6QiA0QgOaigO-MTQh0Pg-RfofL2u-R1LUoCeDh_2CmdSaoLL4gdp5jzjL4bbZyCwQNRIMWpmrwZkMmLkJwIYvJsXED-o-d5mLFrIVDRnSky3M_tlyf_NgA4qz-wpcfr9Ek0NKuh20elPSy0lRwxj-Tu6zeOgmjqIDGKAVM2G-q_9HNr7zuXfW4wJmT_0BVf-_mD29QB_PwypAO2TfrJWFw");'>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+<div class="relative z-10">
+<p class="text-white text-base font-bold leading-tight line-clamp-2">My Favorite Hiking Boots</p>
+<p class="text-white text-sm font-medium leading-normal">$250.00</p>
+</div>
+</div>
+<button class="absolute top-3 right-3 flex cursor-pointer items-center justify-center rounded-full h-9 w-9 bg-primary text-white transition-transform duration-200 group-hover:scale-110">
+<span class="material-symbols-outlined !text-[20px]">add_shopping_cart</span>
+</button>
+</div>
+<div class="relative group">
+<div class="bg-cover bg-center flex flex-col gap-3 rounded-xl justify-end p-4 aspect-[3/4] overflow-hidden" data-alt="Smartphone displaying a digital city guide map." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDBAQtARDQUd1Fwu8LLF5Bpk7HdwhgS-rYli3tY5WviuGhO4FcK94qJSfCXKDc7_lUhZM8c4A307_W9IxF6RfGPLyJrcwZZadblWUWAfqAsvDN_Fn5l_Kj4CrVe6NAHdspohNsJtJbAcGS4GRSdC1fQy8VF3hsLhOyNYplw8tjQH1YfAIksIXW25NPwXdJvJUkF49eoGAMTl5HpWhGnmZJPmWKAk1wSxt5l3OWOhbTEUT6hWRcEAJWJYR-WsatXhBibzPP_lLnC3cQ");'>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+<div class="relative z-10">
+<p class="text-white text-base font-bold leading-tight line-clamp-2">Digital City Guides</p>
+<p class="text-white text-sm font-medium leading-normal">$15.00</p>
+</div>
+</div>
+<button class="absolute top-3 right-3 flex cursor-pointer items-center justify-center rounded-full h-9 w-9 bg-primary text-white transition-transform duration-200 group-hover:scale-110">
+<span class="material-symbols-outlined !text-[20px]">add_shopping_cart</span>
+</button>
+</div>
+<div class="relative group">
+<div class="bg-cover bg-center flex flex-col gap-3 rounded-xl justify-end p-4 aspect-[3/4] overflow-hidden" data-alt="A camera with a vibrant photo on its screen, representing photo presets." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCSvRY_xBonsMcfhvEsjCZ0ZLlIVcmb2Dt8ZJjLqXJaf66IPZN9JepLfTQCOeMSqaexmhCqgqw-woyewUDNRiXmuE_1rNtUvxMTBgQsyh0qmS1_OIZw_smOclO75LWRzznIqkimPTbXl7IGqyBhSnvcajbaT1jGMhzLB_6GcBqzHS5z4NaCQbJtDTwP2PCNsXb_xRAZhqX8ij_qFNm6yfrYlA18hj3BbQEjfqmH2AtdEcCpkGUs18go0_1G2kfj5TydC8GXOT5B9IQ");'>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+<div class="relative z-10">
+<p class="text-white text-base font-bold leading-tight line-clamp-2">Custom Photo Presets</p>
+<p class="text-white text-sm font-medium leading-normal">$29.99</p>
+</div>
+</div>
+<button class="absolute top-3 right-3 flex cursor-pointer items-center justify-center rounded-full h-9 w-9 bg-primary text-white transition-transform duration-200 group-hover:scale-110">
+<span class="material-symbols-outlined !text-[20px]">add_shopping_cart</span>
+</button>
+</div>
+<div class="relative group">
+<div class="bg-cover bg-center flex flex-col gap-3 rounded-xl justify-end p-4 aspect-[3/4] overflow-hidden" data-alt="A pair of sleek, modern noise-cancelling headphones." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAToQGhKZ-qovmlsbtc2mCtoTEmfWI160cOR9shr5KjrtnoU6vMvtA5b4I1mNB7hqs9Y3SyqVAYOXLfBS22198S5BwtmDKKgcE9rOLweWkysbML89T1NMbIAuSrnhksGcE7pTe9rdiBesidA9-l_2xqhanTe8zi3DZPK76sYyOOIFkpN9iplhd2MmCPOohDu5qCzWAtFvcB1J1vjlOqpAEjeDwe6CbPe2iwwEbiZxz2z2O7q9ITcjXq1fUMtrZnfVCT2PHsL5EV_vY");'>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+<div class="relative z-10">
+<p class="text-white text-base font-bold leading-tight line-clamp-2">Noise-Cancelling Headphones</p>
+<p class="text-white text-sm font-medium leading-normal">$350.00</p>
+</div>
+</div>
+<button class="absolute top-3 right-3 flex cursor-pointer items-center justify-center rounded-full h-9 w-9 bg-primary text-white transition-transform duration-200 group-hover:scale-110">
+<span class="material-symbols-outlined !text-[20px]">add_shopping_cart</span>
+</button>
+</div>
+</div>
+</main>
+<!-- Floating Action Button -->
+<div class="fixed bottom-6 right-6 z-20">
+<button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-14 w-14 bg-primary text-white text-base font-bold leading-normal tracking-[0.015em] shadow-lg">
+<span class="material-symbols-outlined">shopping_bag</span>
+</button>
+</div>
+</div>
+</body></html>

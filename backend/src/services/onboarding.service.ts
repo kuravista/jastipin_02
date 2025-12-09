@@ -51,12 +51,23 @@ export class OnboardingService {
   async syncProfileCompleteStatus(userId: string) {
     const isComplete = await this.checkProfileComplete(userId)
 
+    // Check existing status first to prevent regression from 'completed'
+    const existingUser = await this.db.user.findUnique({
+      where: { id: userId },
+      select: { tutorialStep: true }
+    })
+
+    // Only update tutorialStep if it's not already 'completed'
+    const tutorialStepUpdate = existingUser?.tutorialStep === 'completed' 
+      ? 'completed' 
+      : (isComplete ? 'profile_complete' : 'pending')
+
     const user = await this.db.user.update({
       where: { id: userId },
       data: {
         isProfileComplete: isComplete,
-        tutorialStep: isComplete ? 'profile_complete' : 'pending',
-        onboardingCompletedAt: isComplete ? new Date() : null,
+        tutorialStep: tutorialStepUpdate,
+        onboardingCompletedAt: isComplete ? (existingUser?.tutorialStep === 'completed' ? undefined : new Date()) : null,
       },
       select: {
         id: true,

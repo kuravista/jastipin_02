@@ -5,6 +5,7 @@ import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { ProductDetailContent } from "@/components/profile/product-detail-content"
 import { addToCartItem, CartProduct } from "@/lib/cart-events"
+import { ThemeWrapper } from "@/components/profile/ThemeWrapper"
 
 interface ProductDetailResponse {
   product: {
@@ -31,6 +32,10 @@ interface ProductDetailResponse {
     slug: string
     profileName: string
     avatar: string | null
+    profileDesign?: {
+      layoutId: string
+      themeId: string
+    }
   }
 }
 
@@ -96,38 +101,40 @@ export function ProductDetailPageClient({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-violet-50">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
-          <Link
-            href={`/${username}`}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span className="text-sm font-medium">Kembali ke {data.jastiper.profileName}</span>
-          </Link>
+    <ThemeWrapper themeId={data.jastiper.profileDesign?.themeId || 'jastip'}>
+      <div className="min-h-screen theme-gradient-bg">
+        {/* Header */}
+        <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b">
+          <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
+            <Link
+              href={`/${username}`}
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="text-sm font-medium">Kembali ke {data.jastiper.profileName}</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="max-w-md mx-auto px-4 py-6">
+          <ProductDetailContent
+            product={data.product}
+            trip={data.trip}
+            jastiper={data.jastiper}
+            username={username}
+            onAddToCart={handleAction}
+            isDirectAccess={true}
+          />
+        </div>
+
+        {/* Footer */}
+        <div className="text-center py-6 text-sm text-muted-foreground">
+          <p>
+            Powered by <span className="font-semibold theme-primary-text">Jastipin.me</span>
+          </p>
         </div>
       </div>
-
-      {/* Content */}
-      <div className="max-w-md mx-auto px-4 py-6">
-        <ProductDetailContent
-          product={data.product}
-          trip={data.trip}
-          jastiper={data.jastiper}
-          username={username}
-          onAddToCart={handleAction}
-          isDirectAccess={true}
-        />
-      </div>
-
-      {/* Footer */}
-      <div className="text-center py-6 text-sm text-muted-foreground">
-        <p>
-          Powered by <span className="font-semibold text-orange-500">Jastipin.me</span>
-        </p>
-      </div>
-    </div>
+    </ThemeWrapper>
   )
 }

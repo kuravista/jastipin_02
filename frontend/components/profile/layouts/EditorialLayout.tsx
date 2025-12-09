@@ -91,251 +91,185 @@ export function EditorialLayout({
   handleProductClick,
 }: EditorialLayoutProps) {
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-3xl mx-auto px-6 py-12">
-        {/* Minimalist Header - Left Aligned */}
-        <div className="mb-16 pb-8 border-b border-gray-200">
-          <div className="flex items-start gap-6 mb-6">
-            <img
-              src={profile.user.avatar || "/placeholder.svg?height=80&width=80"}
-              alt={profile.user.profileName}
-              className="w-20 h-20 rounded-full object-cover bg-gray-100 flex-shrink-0"
+    <div className="min-h-screen bg-[#f6f7f8]">
+      <div className="max-w-3xl mx-auto px-4 py-12">
+        
+        {/* Header Section */}
+        <div className="flex flex-col gap-4 items-start mb-6">
+          <div className="flex gap-4 flex-col items-start w-full">
+            <div 
+              className="bg-center bg-no-repeat aspect-square bg-cover rounded-xl min-h-24 w-24 shadow-sm"
+              style={{ backgroundImage: `url(${profile.user.avatar || "/placeholder.svg?height=120&width=120"})` }}
             />
-            
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-serif font-bold text-gray-900 tracking-tight">
-                  {profile.user.profileName}
-                </h1>
-                <Badge className="bg-amber-400 text-white border-none flex items-center gap-1 px-2 h-6 rounded-md">
-                  <Star className="w-3.5 h-3.5 fill-white" />
-                  {profile.user.stats.rating}
-                </Badge>
-              </div>
-              
-              {profile.user.profileBio && (
-                <p className="text-gray-600 text-base leading-relaxed mb-4 max-w-xl">
-                  {profile.user.profileBio}
-                </p>
-              )}
-
-              {/* Stats - Minimal */}
-              <div className="flex items-center gap-6 text-sm text-gray-500 mb-4">
-                <div>
-                  <span className="font-semibold text-gray-900">{profile.user.stats.totalTrips}</span> Trips
-                </div>
-                <div>
-                  <span className="font-semibold text-gray-900">{profile.user.stats.happyCustomers}</span> Customers
-                </div>
-              </div>
-
-              {/* Social Links - Minimal Buttons */}
-              {profile.user.socialMedia && profile.user.socialMedia.length > 0 && (
-                <div className="flex gap-2">
-                  {profile.user.socialMedia.map((social) => {
-                    const config = getSocialMediaConfig(social.platform)
-                    const Icon = config.icon
-                    return (
-                      <button
-                        key={social.id}
-                        onClick={() => window.open(social.url, "_blank")}
-                        title={`${config.label}`}
-                        className="px-3 py-1.5 text-xs font-medium border border-gray-200 rounded hover:bg-gray-50 transition-colors flex items-center gap-1.5"
-                      >
-                        <Icon className={`w-3.5 h-3.5 ${config.color}`} />
-                        {config.label}
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
+            <div className="flex flex-col">
+              <h1 className="text-[22px] font-bold leading-tight tracking-[-0.015em] text-[#111518] theme-primary-text">
+                {profile.user.profileName}
+              </h1>
+              <p className="text-base font-normal leading-normal text-[#617989]">
+                {profile.user.slug} | {profile.user.stats.rating} ★
+              </p>
             </div>
           </div>
         </div>
 
+        {profile.user.profileBio && (
+          <p className="text-base font-normal leading-normal pb-6 pt-1 text-[#111518]">
+            {profile.user.profileBio}
+          </p>
+        )}
+
+        <div className="w-full border-t border-gray-200 mb-8" />
+
         {/* Active Trips Section */}
         {profile.trips && profile.trips.length > 0 && (
-          <div className="mb-16">
-            <h2 className="text-2xl font-serif font-bold text-gray-900 mb-6">
-              Active Journeys
-            </h2>
-            
-            <div className="space-y-6">
-              {profile.trips.map((trip, idx) => (
-                <div 
-                  key={trip.id}
-                  className={`border-l-4 pl-6 py-4 transition-all cursor-pointer ${
-                    idx === currentTripIndex 
-                      ? 'border-orange-500 bg-orange-50/50' 
-                      : 'border-gray-200 hover:border-gray-400'
-                  }`}
-                  onClick={() => setCurrentTripIndex(idx)}
-                >
-                  <div className="flex justify-between items-start gap-4">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                        {trip.title}
-                      </h3>
-                      {trip.description && (
-                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                          {trip.description}
-                        </p>
-                      )}
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
-                        {trip.deadline && (
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-3.5 h-3.5" />
-                            {new Date(trip.deadline).toLocaleDateString('id-ID', { 
-                              day: 'numeric', 
-                              month: 'long',
-                              year: 'numeric'
-                            })}
-                          </div>
-                        )}
-                        <div className="flex items-center gap-1">
-                          <Package className="w-3.5 h-3.5" />
-                          {trip.spotsLeft} slots available
-                        </div>
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                          {trip.status}
-                        </Badge>
-                      </div>
+          <div className="mb-8">
+            <h3 className="text-sm font-bold leading-tight tracking-widest pb-4 text-[#617989]">ACTIVE TRIPS</h3>
+            <div className="w-full overflow-x-auto pb-4 scrollbar-hide">
+              <div className="flex w-max gap-4">
+                {profile.trips.map((trip, idx) => (
+                  <div 
+                    key={trip.id}
+                    onClick={() => setCurrentTripIndex(idx)}
+                    className={`flex h-full w-64 flex-col rounded-lg border bg-white p-4 transition-all cursor-pointer hover:shadow-md ${
+                      currentTripIndex === idx ? 'border-2 theme-primary-border' : 'border-gray-200'
+                    }`}
+                  >
+                    <div 
+                      className="mb-2 aspect-[4/3] w-full rounded-md bg-cover bg-center"
+                      style={{ backgroundImage: `url(${trip.image || "/placeholder.svg?height=200&width=300"})` }}
+                    />
+                    <p className="font-medium text-[#111518] line-clamp-1">{trip.title}</p>
+                    <div className="flex justify-between items-center mt-1">
+                      <p className="text-sm text-[#617989]">{trip.deadline ? new Date(trip.deadline).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' }) : 'No date'}</p>
+                      <Badge variant="secondary" className="text-[10px] px-1.5 h-5">{trip.status}</Badge>
                     </div>
-                    
-                    {trip.image && (
-                      <img
-                        src={trip.image}
-                        alt={trip.title}
-                        className="w-24 h-24 object-cover rounded flex-shrink-0"
-                      />
-                    )}
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         )}
 
-        {/* Catalog Section */}
-        <div className="mb-16">
-          <div className="flex items-baseline justify-between mb-6">
-            <h2 className="text-2xl font-serif font-bold text-gray-900">
-              Product Collection
-            </h2>
-            <span className="text-sm text-gray-500">{filteredCatalog.length} items</span>
-          </div>
+        <div className="w-full border-t border-gray-200 mb-8" />
 
-          {/* Search Bar - Minimal */}
-          <div className="mb-8">
-            <div className="flex items-center gap-3 border-b border-gray-300 pb-2">
-              <Search className="w-4 h-4 text-gray-400" />
+        {/* Shop My Gear / Catalog Section */}
+        <div className="mb-8">
+          <div className="flex justify-between items-end pb-2 pt-4">
+            <h3 className="text-sm font-bold leading-tight tracking-widest text-[#617989]">SHOP MY GEAR</h3>
+            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2 py-1.5 w-48">
+              <Search className="w-3.5 h-3.5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search products..."
+                placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 bg-transparent outline-none text-sm placeholder:text-gray-400"
+                className="flex-1 bg-transparent outline-none text-xs min-w-0"
               />
             </div>
           </div>
 
-          {paginatedCatalog.length > 0 ? (
-            <div className="space-y-6">
-              {paginatedCatalog.map((item) => (
-                <div
+          <div className="flex flex-col gap-0">
+            {paginatedCatalog.length > 0 ? (
+              paginatedCatalog.map((item) => (
+                <Link
+                  href={`/${username}/p/${item.slug}?tripId=${item.tripId}`}
                   key={item.id}
-                  className={`group border-b border-gray-100 pb-6 last:border-0 transition-all ${
-                    !item.available && item.type !== 'tasks' ? "opacity-50" : ""
-                  }`}
+                  className="group block hover:bg-black/5 transition-colors duration-200 cursor-pointer border-b border-gray-100 last:border-0"
                 >
-                  <Link 
-                    href={`/${username}/p/${item.slug}?tripId=${item.tripId}`}
-                    className="flex gap-6 hover:opacity-75 transition-opacity"
-                  >
-                    <div className="w-32 h-32 flex-shrink-0 rounded overflow-hidden bg-gray-100">
-                      <img
-                        src={item.image || "/placeholder.svg?height=128&width=128"}
+                  <div className="flex items-center gap-4 px-2 min-h-[80px] py-3 justify-between">
+                    <div className="w-16 h-16 rounded-md bg-gray-100 flex-shrink-0 overflow-hidden">
+                      <img 
+                        src={item.image || "/placeholder.svg?height=64&width=64"} 
                         alt={item.title}
                         className="w-full h-full object-cover"
                       />
                     </div>
                     
-                    <div className="flex-1 flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-start justify-between gap-4 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">
-                            {item.title}
-                          </h3>
-                          <Badge 
-                            variant={item.available || item.type === 'tasks' ? "default" : "secondary"}
-                            className="text-[10px] px-2 py-0.5 flex-shrink-0"
-                          >
-                            {item.available ? "In Stock" : item.type === 'tasks' ? "Available" : "Sold Out"}
-                          </Badge>
-                        </div>
-                        {item.unit && (
-                          <p className="text-sm text-gray-500 mb-2">{item.unit}</p>
+                    <div className="flex flex-1 flex-col justify-center min-w-0 pr-4">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <p className="text-base font-medium leading-normal line-clamp-1 text-[#111518] group-hover:theme-primary-text transition-colors">
+                          {item.title}
+                        </p>
+                        {!item.available && item.type !== 'tasks' && (
+                          <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4">Habis</Badge>
                         )}
                       </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <p className="text-xl font-bold text-gray-900">
-                          Rp {item.price.toLocaleString('id-ID')}
-                        </p>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault()
-                            addToCart(item)
-                          }}
-                          disabled={!item.available && item.type !== 'tasks'}
-                          className="px-4 py-2 text-sm font-medium border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-                        >
-                          Add to Cart
-                          <ArrowRight className="w-4 h-4" />
-                        </button>
-                      </div>
+                      <p className="text-sm font-normal leading-normal line-clamp-1 text-[#617989]">
+                        {item.unit || "Item"} • {item.type === 'goods' ? 'Product' : 'Service'}
+                      </p>
                     </div>
-                  </Link>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-16 text-gray-500">
-              <p>No products found</p>
-            </div>
-          )}
+                    
+                    <div className="flex items-center gap-4">
+                      <p className="shrink-0 text-sm font-medium text-[#111518]">
+                        Rp {item.price.toLocaleString('id-ID')}
+                      </p>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault(); // Prevent navigation when clicking add to cart
+                          e.stopPropagation();
+                          addToCart(item);
+                        }}
+                        disabled={!item.available && item.type !== 'tasks'}
+                        className="flex size-8 items-center justify-center rounded-full hover:bg-white hover:shadow-sm transition-all disabled:opacity-30"
+                      >
+                        <Plus className="w-5 h-5 theme-primary-text" />
+                      </button>
+                    </div>
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <div className="py-8 text-center text-gray-500 text-sm">No items found</div>
+            )}
+          </div>
 
-          {/* Pagination - Minimal */}
+          {/* Pagination */}
           {filteredCatalog.length > 0 && totalPages > 1 && (
-            <div className="flex items-center justify-center gap-8 mt-12 pt-8 border-t border-gray-200">
+            <div className="flex items-center justify-center gap-6 mt-6 pt-4 border-t border-gray-200">
               <button
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
-                className="text-sm font-medium text-gray-600 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                className="p-2 hover:bg-gray-100 rounded-full disabled:opacity-30 transition-colors"
               >
-                <ChevronLeft className="w-4 h-4" />
-                Previous
+                <ChevronLeft className="w-4 h-4 text-gray-600" />
               </button>
-              <span className="text-sm text-gray-500">
+              <span className="text-xs font-medium text-gray-500">
                 {currentPage} / {totalPages}
               </span>
               <button
                 onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                 disabled={currentPage === totalPages}
-                className="text-sm font-medium text-gray-600 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                className="p-2 hover:bg-gray-100 rounded-full disabled:opacity-30 transition-colors"
               >
-                Next
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-4 h-4 text-gray-600" />
               </button>
             </div>
           )}
         </div>
 
-        {/* Footer - Minimal */}
-        <div className="text-center pt-12 border-t border-gray-200 text-sm text-gray-400">
-          <p>
-            Powered by <span className="font-medium text-gray-600">Jastipin.me</span>
-          </p>
+        {/* Social Links Footer */}
+        <div className="flex items-center justify-center gap-6 pt-4 pb-8">
+          {profile.user.socialMedia && profile.user.socialMedia.map((social) => {
+            const config = getSocialMediaConfig(social.platform)
+            const Icon = config.icon
+            return (
+              <a
+                key={social.id}
+                href={social.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#617989] hover:theme-primary-text transition-colors"
+                title={config.label}
+              >
+                <Icon className="w-6 h-6" />
+              </a>
+            )
+          })}
+        </div>
+
+        {/* Footer */}
+        <div className="text-center text-xs text-[#617989]">
+          <p>Powered by <span className="font-semibold theme-primary-text">Jastipin.me</span></p>
         </div>
       </div>
     </div>

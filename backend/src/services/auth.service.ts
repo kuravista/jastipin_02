@@ -364,8 +364,19 @@ export class AuthService {
     }
 
     // Fetch user's trips and products for profile enrichment
+    // Only include active trips with deadline today or in the future
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
     const trips = await this.db.trip.findMany({
-      where: { jastiperId: user.id },
+      where: { 
+        jastiperId: user.id,
+        isActive: true,
+        OR: [
+          { deadline: { gte: today } },  // deadline today or in future
+          { deadline: null }              // lifetime trips (no deadline)
+        ]
+      },
       orderBy: { createdAt: 'desc' },
       select: { 
         id: true, 
@@ -380,7 +391,16 @@ export class AuthService {
     })
 
     const products = await this.db.product.findMany({
-      where: { Trip: { jastiperId: user.id } },
+      where: { 
+        Trip: { 
+          jastiperId: user.id,
+          isActive: true,
+          OR: [
+            { deadline: { gte: today } },  // deadline today or in future
+            { deadline: null }              // lifetime trips (no deadline)
+          ]
+        }
+      },
       select: { 
         id: true,
         tripId: true,

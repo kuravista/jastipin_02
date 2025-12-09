@@ -1,15 +1,11 @@
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { ExternalLink, Instagram, MessageCircle, Heart, Calendar, MapPin, Package, CheckCircle2, Star, ChevronLeft, ChevronRight, Search, Plus, ShoppingCart, X } from "lucide-react"
+import { CheckCircle2, Star, Search, Plus, ChevronLeft, ChevronRight, Calendar, Package, MapPin } from "lucide-react"
 import Link from "next/link"
 import { getGradientBySeed } from "@/lib/gradient-utils"
 import { getSocialMediaConfig } from "@/lib/social-media-icons"
 
-// Define interfaces locally since they are not exported from page.tsx
 interface SocialMedia {
   id: string
   platform: string
@@ -116,7 +112,7 @@ export function ClassicLayout({
       <div className="max-w-2xl mx-auto px-4 pb-8 flex-1 w-full flex flex-col">
         {/* Profile Header - Compact Card Design */}
         <div className="relative z-10 mb-8">
-          <div className="bg-white/55 backdrop-blur-sm rounded-3xl shadow-xl p-6 pb-8 text-center -mt-20 mx-2 border border-white/50">
+          <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-xl p-6 pb-8 text-center -mt-20 mx-2 border border-white/50">
             <div className="absolute -top-12 left-1/2 -translate-x-1/2">
               <div className="relative">
                 <img
@@ -156,9 +152,9 @@ export function ClassicLayout({
                         key={social.id}
                         onClick={() => window.open(social.url, "_blank")}
                         title={`${config.label} - ${social.handle}`}
-                        className="group p-2.5 rounded-full bg-gray-50 hover:bg-orange-50 transition-all duration-200 border border-gray-100 hover:border-orange-200 hover:shadow-sm hover:-translate-y-0.5"
+                        className="group p-2.5 rounded-full bg-gray-50 hover:bg-gray-100 transition-all duration-200 border border-gray-100 hover:border-gray-300 hover:shadow-sm hover:-translate-y-0.5"
                       >
-                        <Icon className={`w-5 h-5 ${config.color} opacity-80 group-hover:opacity-100`} />
+                        <Icon className={`w-5 h-5 text-gray-600 group-hover:text-gray-900`} />
                       </button>
                     )
                   })}
@@ -180,7 +176,7 @@ export function ClassicLayout({
 
             <div className="relative group">
               {/* Current Trip Card - Compact Horizontal Design */}
-              <div className="overflow-hidden border border-orange-100 shadow-lg rounded-2xl bg-white">
+              <div className="overflow-hidden border border-gray-100 shadow-lg rounded-2xl bg-white">
                 <div className="flex h-40 sm:h-44">
                   {/* Image Section */}
                   <div className="relative w-1/3 sm:w-2/5 flex-shrink-0">
@@ -223,14 +219,14 @@ export function ClassicLayout({
                       <div className="space-y-1">
                         {profile.trips[currentTripIndex].deadline && (
                           <div className="flex items-center gap-1.5 text-gray-500 text-xs">
-                            <Calendar className="w-3.5 h-3.5 text-orange-400" />
+                            <Calendar className="w-3.5 h-3.5 theme-primary-text" />
                             <span className="font-medium">
                               {new Date(profile.trips[currentTripIndex].deadline!).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
                             </span>
                           </div>
                         )}
                         <div className="flex items-center gap-1.5 text-gray-500 text-xs">
-                          <Package className="w-3.5 h-3.5 text-blue-400" />
+                          <Package className="w-3.5 h-3.5 text-blue-500" />
                           <span className="font-medium">
                             {profile.trips[currentTripIndex].spotsLeft} Slot
                           </span>
@@ -238,7 +234,7 @@ export function ClassicLayout({
                       </div>
 
                       <Button 
-                        className="bg-orange-500 hover:bg-orange-600 text-white h-8 px-4 text-xs font-semibold shadow-orange-100 shadow-lg rounded-full"
+                        className="theme-primary-button h-8 px-4 text-xs font-semibold shadow-lg rounded-full"
                       >
                         Ikut
                       </Button>
@@ -274,7 +270,7 @@ export function ClassicLayout({
                     {profile.trips.map((_: Trip, idx: number) => (
                       <div 
                         key={idx}
-                        className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentTripIndex ? 'bg-orange-500 w-3' : 'bg-gray-300'}`}
+                        className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentTripIndex ? 'theme-primary-bg w-3' : 'bg-gray-300'}`}
                       />
                     ))}
                   </div>
@@ -338,11 +334,11 @@ export function ClassicLayout({
                       </div>
                     </div>
                     <div className="flex justify-between items-center pt-1 border-t gap-1 min-w-0">
-                      <p className="text-orange-500 font-bold text-xs sm:text-sm truncate">Rp {item.price.toLocaleString('id-ID')}</p>
+                      <p className="theme-primary-text font-bold text-xs sm:text-sm truncate">Rp {item.price.toLocaleString('id-ID')}</p>
                       <button
                         onClick={() => addToCart(item)}
                         disabled={!item.available && item.type !== 'tasks'}
-                        className="text-orange-500 hover:text-orange-600 disabled:text-gray-300 transition-colors p-1 hover:bg-orange-50 rounded disabled:hover:bg-transparent flex-shrink-0"
+                        className="theme-primary-text hover:brightness-90 disabled:text-gray-300 transition-colors p-1 hover:bg-gray-100 rounded disabled:hover:bg-transparent flex-shrink-0"
                       >
                         <Plus className="w-5 h-5" />
                       </button>
@@ -384,7 +380,7 @@ export function ClassicLayout({
         {/* Footer */}
         <div className="text-center mt-auto pt-8 text-sm text-muted-foreground">
           <p>
-            Powered by <span className="font-semibold text-orange-500">Jastipin.me</span>
+            Powered by <span className="font-semibold theme-primary-text">Jastipin.me</span>
           </p>
         </div>
       </div>

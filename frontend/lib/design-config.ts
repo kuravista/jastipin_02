@@ -29,6 +29,12 @@ export const LAYOUT_OPTIONS = [
     description: "Full-screen background experience.",
     image: "/layouts/immersive.png",
   },
+  {
+    id: "neo-brutalist",
+    name: "Neo Brutalist",
+    description: "Bold, raw, and high contrast.",
+    image: "/layouts/neo-brutalist.png",
+  },
 ];
 
 export const THEME_OPTIONS = [

@@ -129,7 +129,7 @@ export function ProductDetailContent({
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <h2 className="text-lg font-bold text-gray-900 line-clamp-2">{product.title}</h2>
-            <p className="text-xl font-bold text-orange-500 mt-0.5">
+            <p className="text-xl font-bold theme-primary-text mt-0.5">
               Rp {product.price.toLocaleString("id-ID")}
             </p>
           </div>
@@ -183,11 +183,11 @@ export function ProductDetailContent({
         {/* Trip Info */}
         <div className="pt-2 border-t">
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Package className="w-4 h-4 text-orange-500 flex-shrink-0" />
+            <Package className="w-4 h-4 theme-primary-text flex-shrink-0" />
             <span className="flex-shrink-0">Dari trip:</span>
             <Link 
               href={`/${username}`}
-              className="font-medium text-orange-600 hover:underline flex items-center gap-1 truncate"
+              className="font-medium theme-primary-text hover:underline flex items-center gap-1 truncate"
             >
               <span className="truncate">{trip.title}</span>
               <ExternalLink className="w-3 h-3 flex-shrink-0" />
@@ -219,7 +219,7 @@ export function ProductDetailContent({
         <Button
           onClick={handleAddToCart}
           disabled={!product.available || isAdding}
-          className="flex-1 bg-orange-500 hover:bg-orange-600 text-white h-11 text-sm font-semibold"
+          className="flex-1 theme-primary-button h-11 text-sm font-semibold"
         >
           {isAdding ? (
             <>

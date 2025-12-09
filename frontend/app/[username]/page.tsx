@@ -18,6 +18,7 @@ import { StoreLayout } from "@/components/profile/layouts/StoreLayout"
 import { BentoLayout } from "@/components/profile/layouts/BentoLayout"
 import { EditorialLayout } from "@/components/profile/layouts/EditorialLayout"
 import { ImmersiveLayout } from "@/components/profile/layouts/ImmersiveLayout"
+import { NeoBrutalistLayout } from "@/components/profile/layouts/NeoBrutalistLayout"
 import { ThemeWrapper } from "@/components/profile/ThemeWrapper"
 
 interface SocialMedia {
@@ -278,7 +279,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-white to-violet-50">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 theme-primary-border"></div>
           <p className="mt-4 text-gray-600">Loading profile...</p>
         </div>
       </div>
@@ -385,6 +386,8 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
         return <EditorialLayout {...layoutProps} />
       case 'immersive':
         return <ImmersiveLayout {...layoutProps} />
+      case 'neo-brutalist':
+        return <NeoBrutalistLayout {...layoutProps} />
       case 'classic':
       default:
         return <ClassicLayout {...layoutProps} />
@@ -414,9 +417,9 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
           </DialogHeader>
           <div className="space-y-4">
             {selectedProduct && (
-              <div className="bg-orange-50 p-3 rounded-lg mb-4">
+              <div className="bg-gray-50 p-3 rounded-lg mb-4 border theme-primary-border">
                 <p className="text-sm font-semibold">{selectedProduct.title}</p>
-                <p className="text-sm text-orange-600">Rp {selectedProduct.price.toLocaleString('id-ID')}</p>
+                <p className="text-sm theme-primary-text">Rp {selectedProduct.price.toLocaleString('id-ID')}</p>
               </div>
             )}
             
@@ -443,7 +446,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
 
             <div className="space-y-2">
               <Label htmlFor="nomor">Nomor WhatsApp</Label>
-              <div className="flex border border-gray-300 rounded-md overflow-hidden focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
+              <div className="flex border border-gray-300 rounded-md overflow-hidden focus-within:theme-primary-border focus-within:ring-1 focus-within:ring-[var(--color-primary)]">
                 <span className="bg-gray-100 px-3 py-2 text-sm font-medium text-gray-600 flex items-center whitespace-nowrap">+62</span>
                 <Input
                   id="nomor"
@@ -492,7 +495,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
               </Button>
               <Button
                 onClick={handleOrderSubmit}
-                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
+                className="flex-1 theme-primary-button"
               >
                 Pesan Sekarang
               </Button>
@@ -505,7 +508,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
       {cartItems.length > 0 && (
         <button
           onClick={() => setShowCart(!showCart)}
-          className="fixed bottom-6 right-6 bg-orange-500 hover:bg-orange-600 text-white rounded-full p-4 shadow-2xl z-[60] transition-transform hover:scale-110"
+          className="fixed bottom-6 right-6 theme-primary-bg hover:opacity-90 text-white rounded-full p-4 shadow-2xl z-[60] transition-transform hover:scale-110"
         >
           <div className="relative">
             <ShoppingCart className="w-6 h-6" />
@@ -522,7 +525,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
           <div className="bg-white rounded-t-2xl w-full max-h-96 overflow-y-auto p-4 shadow-2xl">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <ShoppingCart className="w-5 h-5 text-orange-500" />
+                <ShoppingCart className="w-5 h-5 theme-primary-text" />
                 <span className="font-bold text-lg">Checkout ({cartItems.length})</span>
               </div>
               <button onClick={() => setShowCart(false)}>
@@ -564,7 +567,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
 
             <Button 
               onClick={handleCheckout}
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+              className="w-full theme-primary-button"
             >
               Checkout Sekarang
             </Button>

@@ -246,7 +246,7 @@ export function ImmersiveLayout({
                         onClick={() => setCurrentTripIndex(idx)}
                         className={`flex-shrink-0 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
                           idx === currentTripIndex
-                            ? "bg-orange-500 text-white shadow-lg"
+                            ? "theme-primary-bg text-white shadow-lg"
                             : "bg-white/10 text-white/80 border border-white/20 hover:bg-white/20"
                         }`}
                       >
@@ -318,13 +318,13 @@ export function ImmersiveLayout({
                         </div>
                         
                         <div className="flex justify-between items-center pt-2 border-t border-white/20 mt-2 gap-2">
-                          <p className="text-orange-400 font-bold text-sm truncate">
+                          <p className="theme-primary-text font-bold text-sm truncate">
                             Rp {item.price.toLocaleString('id-ID')}
                           </p>
                           <button
                             onClick={() => addToCart(item)}
                             disabled={!item.available && item.type !== 'tasks'}
-                            className="text-orange-400 hover:text-orange-300 disabled:text-gray-500 transition-colors p-1.5 hover:bg-white/10 rounded-full disabled:hover:bg-transparent flex-shrink-0"
+                            className="theme-primary-text hover:brightness-90 disabled:text-gray-500 transition-colors p-1.5 hover:bg-white/10 rounded-full disabled:hover:bg-transparent flex-shrink-0"
                           >
                             <Plus className="w-5 h-5" />
                           </button>

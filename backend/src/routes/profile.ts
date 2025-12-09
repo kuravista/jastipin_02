@@ -149,6 +149,12 @@ router.get('/profile/:slug/products/:productSlug', async (req: AuthRequest, res:
         slug: true,
         profileName: true,
         avatar: true,
+        profileDesign: {
+          select: {
+            layoutId: true,
+            themeId: true,
+          }
+        }
       },
     })
 
@@ -160,9 +166,20 @@ router.get('/profile/:slug/products/:productSlug', async (req: AuthRequest, res:
     // Find product by slug where trip belongs to user
     // If tripId is provided, filter by that specific trip to avoid ambiguity
     // when same slug exists in multiple trips
-    const productWhere: { slug: string; tripId?: string; Trip: { jastiperId: string } } = {
+    // Only show products from active trips with deadline today/future or lifetime trips (no deadline)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    const productWhere: any = {
       slug: productSlug,
-      Trip: { jastiperId: user.id },
+      Trip: { 
+        jastiperId: user.id,
+        isActive: true,
+        OR: [
+          { deadline: { gte: today } },  // deadline today or in future
+          { deadline: null }              // lifetime trips (no deadline)
+        ]
+      },
     }
     
     // Add tripId filter if provided to get the correct product
@@ -218,6 +235,7 @@ router.get('/profile/:slug/products/:productSlug', async (req: AuthRequest, res:
         slug: user.slug,
         profileName: user.profileName,
         avatar: user.avatar,
+        profileDesign: user.profileDesign,
       },
     })
   } catch (error: unknown) {

@@ -7,6 +7,8 @@ import { ProductDetailContent } from "@/components/profile/product-detail-conten
 import { addToCartItem, CartProduct } from "@/lib/cart-events"
 import { getApiUrl } from "@/lib/api-client"
 
+import { ThemeWrapper } from "@/components/profile/ThemeWrapper"
+
 interface ProductDetailResponse {
   product: {
     id: string
@@ -32,6 +34,10 @@ interface ProductDetailResponse {
     slug: string
     profileName: string
     avatar: string | null
+    profileDesign?: {
+      layoutId: string
+      themeId: string
+    }
   }
 }
 
@@ -109,49 +115,51 @@ export default function ProductDetailModal({ params }: PageProps) {
   }
 
   return (
-    <Sheet open onOpenChange={handleOpenChange}>
-      <SheetContent 
-        side="bottom" 
-        className="rounded-t-3xl px-4 sm:px-6 pb-6 max-h-[85vh] overflow-y-auto"
-      >
-        <SheetTitle className="sr-only">
-          {data?.product.title || "Detail Produk"}
-        </SheetTitle>
-        
-        {/* Drag handle indicator */}
-        <div className="flex justify-center pt-2 pb-4">
-          <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
-        </div>
-        
-        {loading && (
-          <div className="flex items-center justify-center py-16">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500" />
+    <ThemeWrapper themeId={data?.jastiper.profileDesign?.themeId || 'jastip'}>
+      <Sheet open onOpenChange={handleOpenChange}>
+        <SheetContent 
+          side="bottom" 
+          className="rounded-t-3xl px-4 sm:px-6 pb-6 max-h-[85vh] overflow-y-auto"
+        >
+          <SheetTitle className="sr-only">
+            {data?.product.title || "Detail Produk"}
+          </SheetTitle>
+          
+          {/* Drag handle indicator */}
+          <div className="flex justify-center pt-2 pb-4">
+            <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
           </div>
-        )}
+          
+          {loading && (
+            <div className="flex items-center justify-center py-16">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 theme-primary-border" />
+            </div>
+          )}
 
-        {error && (
-          <div className="text-center py-16">
-            <p className="text-red-500 mb-4">{error}</p>
-            <button
-              onClick={() => router.back()}
-              className="text-orange-500 hover:underline"
-            >
-              Kembali ke profile
-            </button>
-          </div>
-        )}
+          {error && (
+            <div className="text-center py-16">
+              <p className="text-red-500 mb-4">{error}</p>
+              <button
+                onClick={() => router.back()}
+                className="theme-primary-text hover:underline"
+              >
+                Kembali ke profile
+              </button>
+            </div>
+          )}
 
-        {data && !loading && !error && (
-          <ProductDetailContent
-            product={data.product}
-            trip={data.trip}
-            jastiper={data.jastiper}
-            username={username}
-            onAddToCart={handleAddToCart}
-            isModal
-          />
-        )}
-      </SheetContent>
-    </Sheet>
+          {data && !loading && !error && (
+            <ProductDetailContent
+              product={data.product}
+              trip={data.trip}
+              jastiper={data.jastiper}
+              username={username}
+              onAddToCart={handleAddToCart}
+              isModal
+            />
+          )}
+        </SheetContent>
+      </Sheet>
+    </ThemeWrapper>
   )
 }
