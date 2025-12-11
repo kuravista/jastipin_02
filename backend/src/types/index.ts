@@ -25,6 +25,23 @@ export interface ApiError {
 }
 
 /**
+ * API Error Class - can be thrown at runtime
+ */
+export class ApiErrorClass extends Error implements ApiError {
+  status: number
+  message: string
+  details?: Record<string, unknown>
+
+  constructor(status: number, message: string, details?: Record<string, unknown>) {
+    super(message)
+    this.status = status
+    this.message = message
+    this.details = details
+    Object.setPrototypeOf(this, ApiErrorClass.prototype)
+  }
+}
+
+/**
  * Standard API Success Response
  */
 export interface ApiResponse<T = unknown> {

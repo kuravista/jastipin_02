@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label"
 import { Eye, EyeOff, AlertCircle, CheckCircle2, XCircle, Loader2 } from "lucide-react"
 import { GoogleLoginButton } from "@/components/auth/google-login-button"
 import { TermsPrivacyDialog } from "@/components/auth/TermsPrivacyDialog"
+import { ForgotPasswordDialog } from "@/components/auth/ForgotPasswordDialog"
 
 interface FieldErrors {
   email?: string
@@ -98,6 +99,7 @@ export default function AuthPage() {
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [termsError, setTermsError] = useState<string | null>(null)
   const [isTermsDialogOpen, setIsTermsDialogOpen] = useState(false)
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false)
   const [usernameCheck, setUsernameCheck] = useState<UsernameCheckResult | null>(null)
   const [checkingUsername, setCheckingUsername] = useState(false)
   const [editingUsername, setEditingUsername] = useState("")
@@ -459,9 +461,13 @@ export default function AuthPage() {
                 <div className="flex justify-between items-center">
                   <Label htmlFor="password" className="text-gray-700 font-medium text-sm">Password</Label>
                   {isLogin && (
-                    <Link href="#" className="text-xs font-medium text-orange-600 hover:text-orange-700 hover:underline">
+                    <button
+                      type="button"
+                      onClick={() => setIsForgotPasswordOpen(true)}
+                      className="text-xs font-medium text-orange-600 hover:text-orange-700 hover:underline focus:outline-none"
+                    >
                       Lupa password?
-                    </Link>
+                    </button>
                   )}
                 </div>
                 <div className="relative">
@@ -581,6 +587,11 @@ export default function AuthPage() {
       <TermsPrivacyDialog 
         isOpen={isTermsDialogOpen}
         onClose={() => setIsTermsDialogOpen(false)}
+      />
+
+      <ForgotPasswordDialog
+        isOpen={isForgotPasswordOpen}
+        onClose={() => setIsForgotPasswordOpen(false)}
       />
     </div>
   )

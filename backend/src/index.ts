@@ -8,6 +8,7 @@ import express, { Express } from 'express'
 import cors from 'cors'
 
 import authRoutes from './routes/auth.js'
+import passwordRoutes from './routes/password.js'
 import profileRoutes from './routes/profile.js'
 import onboardingRoutes from './routes/onboarding.js'
 import bankAccountsRoutes from './routes/bank-accounts.js'
@@ -85,6 +86,7 @@ app.use('/health', healthRoutes)
 
 // API routes
 app.use('/api/auth', authRoutes)
+app.use('/api/auth', passwordRoutes)
 app.use('/api/debug', debugRoutes)
 app.use('/api/locations', locationsRoutes)
 app.use('/api/checkout', checkoutRoutes)

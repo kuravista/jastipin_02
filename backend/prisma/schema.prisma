@@ -3,9 +3,10 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  directUrl         = env("DIRECT_URL")
+  shadowDatabaseUrl = env("DIRECT_URL")
 }
 
 model Address {
@@ -240,6 +241,7 @@ model User {
   Trip        Trip[]
   BankAccount BankAccount[]
   profileDesign ProfileDesign?
+  passwordResetToken PasswordResetToken[]
 
   @@index([email])
   @@index([slug])
@@ -348,4 +350,19 @@ model NotificationLog {
   @@index([eventType])
   @@index([status])
   @@index([createdAt])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  User User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([tokenHash])
 }

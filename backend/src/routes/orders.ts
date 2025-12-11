@@ -874,8 +874,8 @@ router.post(
       // Calculate shipping using RajaOngkir district IDs
       const { calculateShippingCost, getBestShippingOption } = await import('../services/rajaongkir.service.js')
       const shippingOptions = await calculateShippingCost(
-        jastiper.originRajaOngkirDistrictId,
-        destination,
+        jastiper.originRajaOngkirDistrictId as string,
+        destination as string,
         totalWeight,
         courier || 'jne:tiki:pos:jnt'
       )

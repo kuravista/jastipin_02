@@ -428,4 +428,244 @@ Jastipin - Platform Jastip Terpercaya
 © 2025 Jastipin. Email otomatis, tidak perlu dibalas.
     `.trim()
   }
+
+  /**
+   * Render Password Reset Email (HTML)
+   */
+  static renderPasswordResetEmail(data: {
+    recipientName: string
+    email: string
+    resetLink: string
+    expiresAt: string
+  }): string {
+    return `
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset Password Jastipin</title>
+  <style>
+    ${compactStyles}
+    .hero { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); padding: 32px 20px; text-align: center; }
+    .hero-icon { font-size: 48px; margin-bottom: 12px; }
+    .hero h1 { margin: 0; font-size: 24px; font-weight: 700; color: #fff; }
+    .hero-desc { color: rgba(255,255,255,0.95); font-size: 14px; margin: 8px 0 0 0; }
+    .greeting { font-size: 16px; color: #111827; margin: 0 0 12px 0; font-weight: 500; }
+    .description { font-size: 14px; color: #4b5563; line-height: 1.6; margin: 0 0 24px 0; }
+    .cta-wrapper { margin: 28px 0; }
+    .btn-reset { display: inline-block; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: #fff !important; padding: 14px 36px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px; box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3); transition: all 0.3s ease; }
+    .btn-reset:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4); }
+    .security-box { background: linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, rgba(234, 88, 12, 0.08) 100%); border: 1px solid #fed7aa; border-radius: 8px; padding: 16px; margin: 20px 0; }
+    .security-box .icon { display: inline-block; margin-right: 8px; }
+    .security-title { font-weight: 600; color: #92400e; font-size: 13px; margin-bottom: 8px; }
+    .security-content { font-size: 13px; color: #78350f; line-height: 1.5; }
+    .security-content li { margin: 6px 0; }
+    .divider { height: 1px; background: #e5e7eb; margin: 20px 0; }
+    .copy-section { background: #f9fafb; border: 1px dashed #d1d5db; border-radius: 6px; padding: 12px; margin: 16px 0; }
+    .copy-label { font-size: 12px; color: #6b7280; font-weight: 500; margin-bottom: 8px; }
+    .copy-link { word-break: break-all; font-size: 11px; color: #f97316; font-family: 'Courier New', monospace; line-height: 1.4; }
+    .warning-banner { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px 14px; border-radius: 4px; margin: 16px 0; }
+    .warning-banner .icon { margin-right: 8px; }
+    .warning-title { font-weight: 600; color: #92400e; font-size: 12px; }
+    .warning-text { font-size: 12px; color: #78350f; margin-top: 4px; }
+    .footer-support { text-align: center; margin: 24px 0 0 0; font-size: 12px; color: #6b7280; }
+    .footer-support a { color: #f97316; text-decoration: none; font-weight: 500; }
+    .timer { background: #fef3c7; color: #92400e; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; display: inline-block; margin: 12px 0; }
+    @media (max-width: 540px) { 
+      .hero { padding: 24px 16px; } 
+      .hero h1 { font-size: 20px; } 
+      .btn-reset { padding: 12px 28px; font-size: 14px; }
+      .copy-section { padding: 10px; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <div class="hero-icon">🔐</div>
+    <h1>Reset Password Anda</h1>
+    <p class="hero-desc">Permintaan perubahan password dari akun Jastipin Anda</p>
+  </div>
+
+  <div class="body">
+    <p class="greeting">Halo ${data.recipientName},</p>
+    
+    <p class="description">
+      Kami menerima permintaan untuk mereset password akun Anda. Klik tombol di bawah untuk membuat password baru yang aman.
+    </p>
+
+    <div class="cta-wrapper">
+      <a href="${data.resetLink}" class="btn-reset">🔓 Reset Password Sekarang</a>
+    </div>
+
+    <div class="timer">⏰ Link berlaku selama 1 jam</div>
+
+    <div class="divider"></div>
+
+    <div class="copy-section">
+      <div class="copy-label">Atau salin link ini jika tombol tidak bekerja:</div>
+      <div class="copy-link">${data.resetLink}</div>
+    </div>
+
+    <div class="warning-banner">
+      <div class="warning-title">⚠️ PENTING - Jaga Keamanan Akun Anda</div>
+      <div class="warning-text">
+        <strong>Jangan bagikan link ini</strong> kepada siapa pun, bahkan ke tim support Jastipin. Link ini hanya untuk Anda.
+      </div>
+    </div>
+
+    <div class="security-box">
+      <div class="security-title">✓ Tip Keamanan Password</div>
+      <div class="security-content">
+        <ul style="margin: 0; padding-left: 18px;">
+          <li>Gunakan kombinasi huruf besar, kecil, angka & simbol</li>
+          <li>Minimal 8 karakter, semakin panjang semakin aman</li>
+          <li>Jangan gunakan nama, email, atau tanggal lahir Anda</li>
+          <li>Gunakan password yang berbeda untuk setiap akun</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <p style="font-size: 13px; color: #4b5563; margin: 16px 0;">
+      Jika Anda <strong>tidak meminta</strong> reset password ini, abaikan email ini. Link akan otomatis hangus dalam 1 jam dan akun Anda tetap aman.
+    </p>
+
+    <div class="footer-support">
+      Ada pertanyaan? Hubungi kami di <a href="mailto:support@jastipin.me">support@jastipin.me</a>
+    </div>
+  </div>
+
+  <div class="foot">
+    <b>Jastipin</b> — Platform Jastip Terpercaya<br>
+    © 2025 Jastipin. Email otomatis, tidak perlu dibalas.
+  </div>
+</div>
+</body>
+</html>
+    `.trim()
+  }
+
+  /**
+   * Render Password Reset Email (Text)
+   */
+  static renderPasswordResetText(data: {
+    recipientName: string
+    email: string
+    resetLink: string
+    expiresAt: string
+  }): string {
+    return `
+╔════════════════════════════════════════╗
+║    🔐 RESET PASSWORD JASTIPIN          ║
+╚════════════════════════════════════════╝
+
+Halo ${data.recipientName},
+
+Kami menerima permintaan untuk mereset password akun Anda di Jastipin. 
+Klik link di bawah untuk membuat password baru yang aman:
+
+👇 RESET PASSWORD SEKARANG 👇
+${data.resetLink}
+
+⏰ WAKTU BERLAKU: Link hanya berlaku 1 jam dari sekarang
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ TIPS KEAMANAN PASSWORD:
+  • Gunakan kombinasi huruf besar, kecil, angka & simbol
+  • Minimal 8 karakter (semakin panjang semakin aman)
+  • Jangan gunakan nama, email, atau tanggal lahir
+  • Gunakan password yang berbeda untuk setiap akun
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️  KEAMANAN AKUN:
+  • JANGAN bagikan link ini kepada siapa pun
+  • Bahkan tim support Jastipin tidak akan pernah meminta link ini
+  • Jika Anda TIDAK meminta reset password, abaikan email ini
+  • Link akan otomatis hangus setelah 1 jam
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Ada pertanyaan atau tidak meminta reset password?
+Hubungi kami: support@jastipin.me
+
+---
+Jastipin - Platform Jastip Terpercaya
+© 2025 Jastipin. Email otomatis, tidak perlu dibalas.
+    `.trim()
+  }
+
+  /**
+   * Render Password Reset Confirmation Email (HTML)
+   * Sent after successful password reset
+   */
+  static renderPasswordResetConfirmation(data: {
+    recipientName: string
+    email: string
+  }): string {
+    return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body>
+<style>${compactStyles}</style>
+<div class="wrap">
+  <div class="head" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+    <h1>✅ Password Diperbarui</h1>
+  </div>
+  <div class="body">
+    <p class="hi">Halo ${data.recipientName},</p>
+    
+    <p>Password akun Anda telah berhasil direset. Anda sekarang dapat login dengan password baru.</p>
+    
+    <div class="info info-green">
+      <b>✓ Akun Anda Aman</b>
+      <p>Jika Anda tidak melakukan ini, segera ubah password Anda.</p>
+    </div>
+
+    <div class="cta">
+      <a href="https://jastipin.me/login" class="btn btn-green">Masuk Sekarang</a>
+    </div>
+
+    <p style="font-size: 13px; color: #6b7280; margin-top: 16px;">Pertanyaan? Hubungi support@jastipin.me</p>
+  </div>
+
+  <div class="foot">
+    <b>Jastipin</b> - Platform Jastip Terpercaya<br>
+    © 2025 Jastipin. Email otomatis, tidak perlu dibalas.
+  </div>
+</div>
+</body>
+</html>
+    `.trim()
+  }
+
+  /**
+   * Render Password Reset Confirmation Email (Text)
+   */
+  static renderPasswordResetConfirmationText(data: {
+    recipientName: string
+    email: string
+  }): string {
+    return `
+Halo ${data.recipientName},
+
+Password akun Anda telah berhasil direset. Anda sekarang dapat login dengan password baru.
+
+🔒 KEAMANAN:
+Jika Anda tidak melakukan ini, segera ubah password Anda.
+
+Masuk: https://jastipin.me/login
+
+Pertanyaan? Hubungi: support@jastipin.me
+
+---
+Jastipin - Platform Jastip Terpercaya
+© 2025 Jastipin. Email otomatis, tidak perlu dibalas.
+    `.trim()
+  }
 }

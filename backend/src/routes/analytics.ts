@@ -10,7 +10,7 @@ import { authMiddleware } from '../middleware/auth.js';
 import { AuthRequest } from '../types/index.js';
 import { analyticsService } from '../services/analytics.service.js';
 
-const router = Router();
+const router: Router = Router();
 
 /**
  * GET /analytics/dashboard
