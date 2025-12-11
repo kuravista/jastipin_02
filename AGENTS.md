@@ -66,7 +66,7 @@ Treat this as a mandatory checklist item—work isn’t ‘done’ until the tes
 
 ## 🧠 Cross-Project Memory System (MANDATORY)
 
-### Memory Location: `D:/Data/jastipin03/orchestrator/memory/`
+### Memory Location: `D:/DATA/VibeCoding/jastipin_02/orchestrator/memory/`
 
 **CRITICAL:** All agents must read and write to the cross-project memory system to build a knowledge base that persists across ALL projects.
 
@@ -75,9 +75,9 @@ Treat this as a mandatory checklist item—work isn’t ‘done’ until the tes
 Before starting ANY task:
 
 1. **Read all three memory files:**
-- `D:/Data/jastipin03/orchestrator/memory/failure_patterns.json` - Bug solutions from past projects
-- `D:/Data/jastipin03/orchestrator/memory/success_patterns.json` - Architectural patterns that worked well
-- `D:/Data/jastipin03/orchestrator/memory/project_templates.json` - Reusable configurations and boilerplate
+- `D:/DATA/VibeCoding/jastipin_02/orchestrator/memory/failure_patterns.json` - Bug solutions from past projects
+- `D:/DATA/VibeCoding/jastipin_02/orchestrator/memory/success_patterns.json` - Architectural patterns that worked well
+- `D:/DATA/VibeCoding/jastipin_02/orchestrator/memory/project_templates.json` - Reusable configurations and boilerplate
 
 2. **Search for relevant patterns** matching:
 - Technology stack (React, PostgreSQL, Docker, Terraform, etc.)
@@ -154,7 +154,7 @@ If **YES**, write to the appropriate memory file:
 
 ### Required Memory Structure
 
-#### `D:/Data/jastipin03/orchestrator/memory/failure_patterns.json`
+#### `D:/DATA/VibeCoding/jastipin_02/orchestrator/memory/failure_patterns.json`
 ```json
 [
 {
@@ -170,7 +170,7 @@ If **YES**, write to the appropriate memory file:
 ]
 ```
 
-#### `D:/Data/jastipin03/orchestrator/memory/success_patterns.json`
+#### `D:/DATA/VibeCoding/jastipin_02/orchestrator/memory/success_patterns.json`
 ```json
 [
 {
@@ -185,7 +185,7 @@ If **YES**, write to the appropriate memory file:
 ]
 ```
 
-#### `D:/Data/jastipin03/orchestrator/memory/project_templates.json`
+#### `D:/DATA/VibeCoding/jastipin_02/orchestrator/memory/project_templates.json`
 ```json
 [
 {
@@ -221,9 +221,9 @@ Update your workflow to include memory operations:
 
 ```
 PHASE 0: MEMORY READ (NEW - MANDATORY)
-├─ Read D:/Data/jastipin03/orchestrator/memory/failure_patterns.json
-├─ Read D:/Data/jastipin03/orchestrator/memory/success_patterns.json
-├─ Read D:/Data/jastipin03/orchestrator/memory/project_templates.json
+├─ Read D:/DATA/VibeCoding/jastipin_02/orchestrator/memory/failure_patterns.json
+├─ Read D:/DATA/VibeCoding/jastipin_02/orchestrator/memory/success_patterns.json
+├─ Read D:/DATA/VibeCoding/jastipin_02/orchestrator/memory/project_templates.json
 ├─ Identify patterns matching current technology stack
 └─ Note applicable patterns in research.md
 
