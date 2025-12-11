@@ -745,6 +745,8 @@ router.post(
         return
       }
       
+      console.log(`[Shipping] Calculate request for order: ${orderId}, jastiperId: ${jastiperId}`)
+      
       // Get order with items and address
       const order = await db.order.findUnique({
         where: { id: orderId },
@@ -759,6 +761,8 @@ router.post(
         }
       })
       
+      console.log(`[Shipping] Order found: ${!!order}, has Address: ${!!order?.Address}, addressId: ${order?.addressId}`)
+      
       if (!order) {
         res.status(404).json({ error: 'Order not found' })
         return
@@ -771,7 +775,13 @@ router.post(
       }
       
       if (!order.Address) {
-        res.status(400).json({ error: 'Order has no address' })
+        console.log(`[Shipping] ERROR: Order ${orderId} has no address. addressId=${order.addressId}`)
+        res.status(400).json({ 
+          error: 'Order has no address',
+          orderId,
+          addressId: order.addressId,
+          hint: 'Order must have a delivery address. Please update the order address in the system.'
+        })
         return
       }
       
@@ -785,7 +795,7 @@ router.post(
       )
 
       // Get jastiper user profile for origin
-      const jastiper = await db.user.findUnique({
+      let jastiper = await db.user.findUnique({
         where: { id: jastiperId },
         select: {
           originDistrictId: true,
@@ -796,23 +806,67 @@ router.post(
         }
       })
 
-      // Check if jastiper has set origin with RajaOngkir mapping
-      if (!jastiper?.originRajaOngkirDistrictId) {
+      console.log(`[Shipping] Jastiper origin: rajaOngkirDistrictId=${jastiper?.originRajaOngkirDistrictId}, city=${jastiper?.originCityName}`)
+
+      // Check if jastiper has origin address set
+      if (!jastiper?.originCityName || !jastiper?.originDistrictName) {
+        console.log(`[Shipping] ERROR: Jastiper ${jastiperId} has no origin address`)
         res.status(400).json({
           error: 'Origin address not configured',
-          message: 'Please set your origin address in profile settings. RajaOngkir mapping will be done automatically.',
-          hint: 'Go to profile settings and update your origin address'
+          message: 'Please set your origin address (city & district) in profile settings first.',
+          hint: 'Go to profile settings > Origin Address and update your city and district'
         })
         return
+      }
+
+      // Auto-map to RajaOngkir if not already mapped
+      if (!jastiper.originRajaOngkirDistrictId) {
+        console.log(`[Shipping] Auto-mapping RajaOngkir for jastiper...`)
+        const { autoMapToRajaOngkir } = await import('../services/rajaongkir.service.js')
+        const mappedDistrictId = await autoMapToRajaOngkir(
+          jastiper.originCityName!,
+          jastiper.originDistrictName!
+        )
+
+        if (mappedDistrictId) {
+          // Update user profile with mapped RajaOngkir district ID
+          jastiper = await db.user.update({
+            where: { id: jastiperId },
+            data: {
+              originRajaOngkirDistrictId: mappedDistrictId
+            },
+            select: {
+              originDistrictId: true,
+              originDistrictName: true,
+              originCityName: true,
+              originProvinceName: true,
+              originRajaOngkirDistrictId: true
+            }
+          })
+          console.log(`[Shipping] ✅ Auto-mapped to RajaOngkir ID: ${mappedDistrictId}`)
+        } else {
+          console.log(`[Shipping] ⚠️ Failed to auto-map RajaOngkir district`)
+          res.status(400).json({
+            error: 'Cannot map your origin to RajaOngkir',
+            message: `Failed to find RajaOngkir mapping for city "${jastiper.originCityName}"`,
+            hint: 'Please verify your origin city and district are correctly set'
+          })
+          return
+        }
       }
 
       // Get destination from address (must use rajaOngkirDistrictId if available)
       const destination = order.Address.rajaOngkirDistrictId || order.Address.districtId
 
+      console.log(`[Shipping] Destination: rajaOngkirDistrictId=${order.Address.rajaOngkirDistrictId}, districtId=${order.Address.districtId}, resolved=${destination}`)
+
       if (!destination) {
+        console.log(`[Shipping] ERROR: Order ${orderId} address has no rajaOngkir mapping. districtName=${order.Address.districtName}`)
         res.status(400).json({
           error: 'Destination address incomplete',
-          message: 'Order address does not have RajaOngkir district ID'
+          message: 'Order address does not have RajaOngkir district ID',
+          districtName: order.Address.districtName,
+          hint: 'Address needs RajaOngkir mapping. Please update the address.'
         })
         return
       }
@@ -827,6 +881,8 @@ router.post(
       )
 
       const recommendedOption = getBestShippingOption(shippingOptions)
+
+      console.log(`[Shipping] SUCCESS: Got ${shippingOptions?.length || 0} options for order ${orderId}`)
 
       res.json({
         success: true,

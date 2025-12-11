@@ -118,11 +118,19 @@ export async function validateOrder(
       markupValue: item.Product.markupValue
     }))
 
+    // Determine DP percentage based on payment type
+    let dpPercentage: number
+    if (order.Trip?.paymentType === 'full') {
+      dpPercentage = 100  // Full payment: DP = 100% of total
+    } else {
+      dpPercentage = order.Trip?.dpPercentage || 20  // DP payment: use trip's percentage
+    }
+
     const breakdown = await calculatePriceBreakdown({
       items: itemsForCalculation,
       shippingFee: input.shippingFee || 0,
       serviceFee: input.serviceFee || 0,
-      dpPercentage: order.Trip?.dpPercentage || 20  // Use trip's DP percentage
+      dpPercentage: dpPercentage
     })
     
     // 7. Lock stock (deduct from inventory)

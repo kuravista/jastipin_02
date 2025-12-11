@@ -214,13 +214,20 @@ export async function processCheckoutDP(
       addressId = newAddress.id
     }
     
-    // 6. Calculate subtotal and DP amount
+    // 6. Calculate subtotal and payment amount based on payment type
     const subtotal = products.reduce((sum, product, i) => {
       return sum + (product!.price * request.items[i].quantity)
     }, 0)
     
-    // Use trip's specific DP percentage, default to 20 if not set (fallback)
-    const dpAmount = await calculateDPAmount(subtotal, trip.dpPercentage || 20)
+    // Calculate payment amount based on trip's paymentType
+    let dpAmount: number
+    if (trip.paymentType === 'full') {
+      // Full payment: charge entire subtotal
+      dpAmount = subtotal
+    } else {
+      // DP payment: calculate DP percentage
+      dpAmount = await calculateDPAmount(subtotal, trip.dpPercentage || 20)
+    }
     
     // 7. Create order with items (transaction)
     const order = await db.$transaction(async (tx) => {

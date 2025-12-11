@@ -37,7 +37,8 @@ export class AuthService {
     }
 
     const hashedPassword = await hashPassword(password)
-    const slug = generateSlugFromName(fullName)
+    const baseSlug = generateSlugFromName(fullName)
+    const slug = await this.generateUniqueSlug(baseSlug)
     const avatar = getRandomAvatar()
 
     const user = await this.db.user.create({
