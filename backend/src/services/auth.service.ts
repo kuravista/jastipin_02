@@ -31,7 +31,7 @@ export class AuthService {
     if (existingUser) {
       const error: ApiError = {
         status: 409,
-        message: 'Email already registered',
+        message: 'Authentication failed',
       }
       throw error
     }
@@ -92,7 +92,7 @@ export class AuthService {
 
     if (!user) {
       const error: ApiError = {
-        status: 401,
+        status: 400,
         message: 'Invalid credentials',
       }
       throw error
@@ -101,7 +101,7 @@ export class AuthService {
     const isPasswordValid = await verifyPassword(password, user.password || '')
     if (!isPasswordValid) {
       const error: ApiError = {
-        status: 401,
+        status: 400,
         message: 'Invalid credentials',
       }
       throw error
@@ -147,7 +147,7 @@ export class AuthService {
     if (!user) {
       const error: ApiError = {
         status: 404,
-        message: 'User not found',
+        message: 'Authentication failed',
       }
       throw error
     }
@@ -489,7 +489,7 @@ export class AuthService {
     if (!user) {
       const error: ApiError = {
         status: 404,
-        message: 'User not found',
+        message: 'Authentication failed',
       }
       throw error
     }

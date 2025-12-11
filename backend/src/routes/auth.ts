@@ -11,6 +11,7 @@ import db from '../lib/prisma.js'
 import { AuthService } from '../services/auth.service.js'
 import { generateAccessToken } from '../utils/jwt.js'
 import { validate } from '../middleware/validate.js'
+import { createRateLimiter } from '../middleware/rateLimiter.js'
 import {
   registerSchema,
   loginSchema,
@@ -20,11 +21,36 @@ import { AuthRequest } from '../types/index.js'
 const router: ExpressRouter = Router()
 const authService = new AuthService(db)
 
+// Rate limiters for authentication endpoints
+const loginLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5,
+  message: 'Too many login attempts, please try again later',
+})
+
+const registerLimiter = createRateLimiter({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3,
+  message: 'Too many registration attempts, please try again later',
+})
+
+const refreshLimiter = createRateLimiter({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 10,
+  message: 'Too many token refresh attempts, please try again later',
+})
+
+const usernameLimiter = createRateLimiter({
+  windowMs: 60 * 1000, // 1 minute
+  max: 20,
+  message: 'Too many username checks, please try again later',
+})
+
 /**
  * POST /register
  * Register new user with email and password
  */
-router.post('/register', validate(registerSchema), async (req: AuthRequest, res: Response) => {
+router.post('/register', registerLimiter, validate(registerSchema), async (req: AuthRequest, res: Response) => {
   try {
     const { email, password, fullName } = req.body
     const result = await authService.register(email, password, fullName)
@@ -52,7 +78,7 @@ router.post('/register', validate(registerSchema), async (req: AuthRequest, res:
  * POST /login
  * Authenticate user with email and password
  */
-router.post('/login', validate(loginSchema), async (req: AuthRequest, res: Response) => {
+router.post('/login', loginLimiter, validate(loginSchema), async (req: AuthRequest, res: Response) => {
   try {
     const { email, password } = req.body
     const result = await authService.login(email, password)
@@ -79,7 +105,7 @@ router.post('/login', validate(loginSchema), async (req: AuthRequest, res: Respo
  * POST /refresh
  * Get new access token using refresh token from cookie
  */
-router.post('/refresh', async (req: AuthRequest, res: Response) => {
+router.post('/refresh', refreshLimiter, async (req: AuthRequest, res: Response) => {
   try {
     const refreshToken =
       req.body.refreshToken || req.cookies.refreshToken
@@ -154,7 +180,7 @@ router.post('/sync-user', async (req: AuthRequest, res: Response) => {
  * GET /check-username/:username
  * Check if username is available
  */
-router.get('/check-username/:username', async (req: AuthRequest, res: Response) => {
+router.get('/check-username/:username', usernameLimiter, async (req: AuthRequest, res: Response) => {
   try {
     const { username } = req.params
 
