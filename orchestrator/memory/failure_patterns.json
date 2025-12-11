@@ -122,6 +122,28 @@
         "TS2322 Type assignability errors",
         "New features implemented without schema updates"
       ]
+    },
+    {
+      "id": "database-unique-constraint-generation-2025-12",
+      "name": "Unique Constraint Violation on Generated Values",
+      "description": "Database unique constraint failure when generating values (slug, username, etc.) without verifying uniqueness in database",
+      "category": "backend",
+      "failure_rate": 0.75,
+      "common_issues": [
+        "HTTP 500: Unique constraint failed on field X",
+        "Registration fails when input produces duplicate generated values",
+        "Issue appears when multiple users have similar input (e.g., same name)"
+      ],
+      "symptoms": [
+        "Prisma create/update throws 'Unique constraint failed on the fields' error",
+        "Works fine for unique inputs but fails for common ones",
+        "Multiple users with same first name/slug cause collision"
+      ],
+      "root_cause": "Generating unique values (slug, username) from user input without checking database for existing values first",
+      "solution": "Before creating record, check if generated value already exists and append counter/suffix if needed. Implement helper function that loops until unique value found",
+      "technologies": ["Prisma", "PostgreSQL", "Node.js", "Express.js"],
+      "prevention": "Always validate uniqueness against database when generating derived values from user input",
+      "code_example": "async function generateUniqueSlug(baseSlug: string) { let slug = baseSlug; let counter = 1; while(await db.user.findUnique({where: {slug}})) { slug = `${baseSlug}${counter}`; counter++; } return slug; }"
     }
   ],
   "insights": {

@@ -1,6 +1,6 @@
 {
-  "version": "1.2.0",
-  "last_updated": "2025-11-13",
+  "version": "1.2.2",
+  "last_updated": "2025-12-11",
   "patterns": [
     {
       "id": "react-component-pattern",
@@ -272,6 +272,185 @@
         "trip_data": "7 days after trip ends",
         "audit_logs": "90 days"
       }
+    },
+    {
+      "id": "react-modal-dialog-tabs-2025-12",
+      "name": "React Modal Dialog with Tabs",
+      "category": "frontend",
+      "description": "Reusable modal dialog component with tab navigation for displaying multi-section content",
+      "success_rate": 0.98,
+      "projects": ["jastipin-2025-12"],
+      "use_case": "Display terms & conditions and privacy policy in modal dialog with easy tab switching",
+      "key_elements": [
+        "Modal overlay with fixed positioning and semi-transparent backdrop",
+        "Tab navigation at top to switch between sections",
+        "Scrollable content area with styled sections",
+        "Close button (X icon) in header",
+        "Footer with action buttons",
+        "Smooth transitions and hover effects",
+        "Responsive design (max-width constraint with padding)"
+      ],
+      "common_tools": ["React", "TypeScript", "Tailwind CSS", "lucide-react"],
+      "implementation": [
+        "Create component with isOpen and onClose props",
+        "Use useState for activeTab (string) to track current section",
+        "Return null if not isOpen (no DOM rendering)",
+        "Create fixed overlay: bg-black/50 with z-50",
+        "Main dialog card with max-width and max-height constraints",
+        "Tab buttons with conditional orange color/border on active",
+        "Content area with overflow-y-auto for scrolling",
+        "Conditional rendering based on activeTab state",
+        "Close button with onClick handler"
+      ],
+      "structure": {
+        "header": "Title + Close button with border-bottom",
+        "tabs": "Flex button group with active indicator (orange border)",
+        "content": "Scrollable div with sections containing headings and paragraphs",
+        "footer": "Action buttons (usually Close/Confirm)"
+      },
+      "styling_details": {
+        "overlay": "fixed inset-0 bg-black/50 flex items-center justify-center z-50",
+        "dialog": "bg-white rounded-2xl shadow-2xl max-w-2xl max-h-[90vh] flex flex-col",
+        "tabs": {
+          "inactive": "text-gray-600 border-transparent hover:text-gray-900",
+          "active": "text-orange-600 border-orange-600",
+          "container": "flex gap-0 border-b transition-colors"
+        },
+        "content": "flex-1 overflow-y-auto p-6 text-sm leading-relaxed"
+      },
+      "benefits": [
+        "Reusable component for any multi-tab content",
+        "Clean separation of concerns (tab state management)",
+        "Good UX with tab switching and scrollable content",
+        "Accessible with proper semantic HTML",
+        "Works with any content/sections"
+      ],
+      "props_interface": {
+        "isOpen": "boolean - controls visibility",
+        "onClose": "() => void - callback for close button",
+        "activeTab": "state managed inside component (can be extracted to parent)"
+      },
+      "integration": "Call component with state: <Dialog isOpen={isOpen} onClose={() => setIsOpen(false)} />"
+    },
+    {
+      "id": "react-terms-checkbox-validation-2025-12",
+      "name": "React Terms & Conditions Checkbox Validation",
+      "category": "frontend",
+      "description": "Validate checkbox acceptance and display user-friendly error messages with visual feedback",
+      "success_rate": 0.97,
+      "projects": ["jastipin-2025-12"],
+      "use_case": "Require users to accept terms and conditions before submitting registration form",
+      "key_elements": [
+        "Separate state for checkbox (checked) and error (message)",
+        "Validate checkbox in form validation function",
+        "Auto-clear error when user checks the checkbox",
+        "Visual error states (red background, border, text color)",
+        "Error message displayed below checkbox",
+        "Clear error when user switches tabs/forms",
+        "Hover effect for better UX when no error"
+      ],
+      "common_tools": ["React", "TypeScript", "Tailwind CSS", "lucide-react"],
+      "implementation": [
+        "Add state: termsAccepted (boolean) and termsError (string | null)",
+        "Add validation in validateAllFields() that checks termsAccepted only for registration",
+        "Connect input onChange to update both termsAccepted and auto-clear error",
+        "Conditionally apply red styling: 'bg-red-50 border border-red-200' when termsError",
+        "Display error banner with AlertCircle icon below checkbox",
+        "Clear termsError when switching tabs or starting new form submission"
+      ],
+      "validation_logic": {
+        "rule": "Only for registration (!isLogin) form",
+        "condition": "termsAccepted must be true",
+        "error_message": "Anda harus menyetujui Syarat & Ketentuan dan Kebijakan Privasi"
+      },
+      "styling": {
+        "no_error": "hover:bg-orange-50 / text-gray-600",
+        "with_error": "bg-red-50 border border-red-200 / text-red-800",
+        "checkbox_error": "border-red-300",
+        "container": "flex items-start gap-2 p-3 rounded-lg transition-colors"
+      },
+      "user_flow": [
+        "1. User sees checkbox with hover effect",
+        "2. User tries to submit without checking → error appears",
+        "3. Error shows in red banner with AlertCircle icon",
+        "4. User checks checkbox → error auto-clears",
+        "5. User can submit form"
+      ],
+      "benefits": [
+        "Legal compliance (requires explicit consent)",
+        "Clear user feedback on validation error",
+        "Auto-clear error on user action (improves UX)",
+        "Visual distinction between form states",
+        "Prevents accidental submissions"
+      ],
+      "edge_cases": [
+        "Don't validate terms on login form (only registration)",
+        "Clear terms error when switching between login/register",
+        "Auto-clear error immediately when checkbox is checked"
+      ]
+    },
+    {
+      "id": "react-form-error-handling-2025-12",
+      "name": "React Form Error Handling with API Response Mapping",
+      "category": "frontend",
+      "description": "Display API errors (both field-level and general) with proper mapping to form fields and UI notifications",
+      "success_rate": 0.96,
+      "projects": ["jastipin-2025-12"],
+      "use_case": "Handle API errors when form submission fails and display them appropriately in the UI",
+      "key_elements": [
+        "Parse API error response (both simple errors and validation arrays)",
+        "Map error codes to specific form fields (email, password, etc.)",
+        "Separate field-level errors from general errors",
+        "Display field errors below inputs with red border styling",
+        "Display general errors in error banner at top of form",
+        "Clear errors when user switches form sections or tabs",
+        "Clear previous errors before new submission"
+      ],
+      "common_tools": ["React", "TypeScript", "Tailwind CSS", "lucide-react"],
+      "implementation": [
+        "Create error parsing function that handles multiple error formats",
+        "Return both fieldErrors (mapped to specific inputs) and generalError (banner display)",
+        "Map error codes to field paths (email_exists -> email field, invalid_credentials -> general)",
+        "Store general error in separate state from field errors",
+        "Display red error banner with AlertCircle icon for general errors",
+        "Add field error display below each input with red border on error state",
+        "Clear generalError state when user clicks tab switch or resets form"
+      ],
+      "error_handling_patterns": {
+        "field_errors": "Shown directly below input with red styling, cleared on focus",
+        "general_errors": "Shown in banner at top of form, cleared on new submission",
+        "api_response_formats": [
+          "Simple: { error: 'Email already registered' }",
+          "Validation array: { details: [{ path: 'email', message: 'Email exists' }] }",
+          "Full error: { fullError: { details: [...], error: '...' } }"
+        ]
+      },
+      "code_structure": {
+        "error_parsing": "parseAuthError() handles multiple error message formats and codes",
+        "field_mapping": "Error codes mapped to fields via regex on error message content",
+        "ui_elements": "Error banner component with icon + field error paragraphs below inputs",
+        "state_management": "Separate fieldErrors dict and generalError string state"
+      },
+      "benefits": [
+        "Users see specific field errors (email field gets email errors)",
+        "General errors (network, auth failures) display in prominent banner",
+        "Errors cleared when context changes (tab switch, new submission)",
+        "Works with both validation errors and API business logic errors",
+        "Consistent error messaging in Indonesian for better UX"
+      ],
+      "tradeoffs": [
+        "Requires error parsing function maintenance if API error format changes",
+        "Must keep field mapping logic in sync with API error types",
+        "Cannot distinguish between certain errors (e.g., network vs auth) at first glance"
+      ],
+      "error_code_mapping": {
+        "EMAIL_EXISTS": "email field error",
+        "INVALID_EMAIL": "email field error",
+        "INVALID_CREDENTIALS": "general error banner",
+        "USER_NOT_FOUND": "general error banner",
+        "INVALID_PASSWORD": "password field error",
+        "NETWORK_ERROR": "general error banner"
+      }
     }
   ],
   "insights": {
@@ -306,6 +485,11 @@
     ],
     "frontend_patterns_added_2025_11": [
       "react-form-validation-notifications-2025-11"
+    ],
+    "frontend_patterns_added_2025_12": [
+      "react-form-error-handling-2025-12",
+      "react-terms-checkbox-validation-2025-12",
+      "react-modal-dialog-tabs-2025-12"
     ]
   }
 }
