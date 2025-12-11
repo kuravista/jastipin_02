@@ -36,6 +36,7 @@ interface DPCheckoutFormProps {
   onCancel?: () => void
   jastiperSlug?: string // NEW: For redirect after upload
   dpPercentage?: number // DP percentage from trip (default: 20)
+  paymentType?: 'full' | 'dp' // Payment type (default: 'dp')
 }
 
 const GUEST_PROFILE_KEY = 'jastipin_guest_profile'
@@ -74,7 +75,8 @@ export default function DPCheckoutForm({
   onSuccess,
   onCancel,
   jastiperSlug,
-  dpPercentage = 20
+  dpPercentage = 20,
+  paymentType = 'dp'
 }: DPCheckoutFormProps) {
   const [participantName, setParticipantName] = useState('')
   const [participantPhone, setParticipantPhone] = useState('')
@@ -103,6 +105,7 @@ export default function DPCheckoutForm({
     } | null
     participantPhone?: string
     jastiperSlug?: string
+    paymentType?: 'full' | 'dp'
   } | null>(null)
 
   useEffect(() => {
@@ -213,8 +216,15 @@ export default function DPCheckoutForm({
     return sum + (product?.price || 0) * item.quantity
   }, 0)
 
-  // Calculate DP amount (use trip's dpPercentage, default 20%, min 10k)
-  const dpAmount = Math.max(Math.ceil(subtotal * (dpPercentage / 100) / 1000) * 1000, 10000)
+  // Calculate payment amount based on payment type
+  const paymentAmount = paymentType === 'full' 
+    ? subtotal 
+    : Math.max(Math.ceil(subtotal * (dpPercentage / 100) / 1000) * 1000, 10000)
+  
+  // Keep dpAmount for backward compatibility with dialog
+  const dpAmount = paymentAmount
+  
+  const isFullPayment = paymentType === 'full'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -307,7 +317,8 @@ export default function DPCheckoutForm({
         dpAmount: data.dpAmount,
         bankAccount: data.bankAccount,
         participantPhone: participantPhone, // Pass phone for auto-verify
-        jastiperSlug: jastiperSlug // Pass jastiper slug for redirect
+        jastiperSlug: jastiperSlug, // Pass jastiper slug for redirect
+        paymentType: paymentType // Pass payment type for label adaptation
       })
       setShowUploadDialog(true)
 
@@ -502,22 +513,26 @@ export default function DPCheckoutForm({
           })}
 
           <div className="border-t pt-3 space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Subtotal</span>
-              <span>Rp {subtotal.toLocaleString('id-ID')}</span>
-            </div>
+            {!isFullPayment && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Subtotal</span>
+                <span>Rp {subtotal.toLocaleString('id-ID')}</span>
+              </div>
+            )}
             <div className="flex justify-between font-bold text-lg">
-              <span>DP yang harus dibayar ({dpPercentage}%)</span>
+              <span>{isFullPayment ? 'Total yang harus dibayar' : `DP yang harus dibayar (${dpPercentage}%)`}</span>
               <span className="text-blue-600">
                 Rp {dpAmount.toLocaleString('id-ID')}
               </span>
             </div>
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
-            <p className="text-blue-800">
-              <strong>Catatan:</strong> Anda hanya perlu membayar DP sebesar {dpPercentage}% terlebih dahulu.
-              Sisa pembayaran akan diinformasikan setelah jastiper memvalidasi pesanan Anda.
+          <div className={`border rounded-lg p-3 text-sm ${isFullPayment ? 'bg-blue-50 border-blue-200' : 'bg-blue-50 border-blue-200'}`}>
+            <p className={isFullPayment ? 'text-blue-800' : 'text-blue-800'}>
+              <strong>Catatan:</strong> {isFullPayment 
+                ? 'Anda harus membayar seluruh jumlah pesanan. Pesanan akan diproses setelah pembayaran diverifikasi.'
+                : `Anda hanya perlu membayar DP sebesar ${dpPercentage}% terlebih dahulu. Sisa pembayaran akan diinformasikan setelah jastiper memvalidasi pesanan Anda.`
+              }
             </p>
           </div>
         </CardContent>
@@ -550,7 +565,7 @@ export default function DPCheckoutForm({
               Memproses...
             </>
           ) : (
-            <>Bayar DP Rp {dpAmount.toLocaleString('id-ID')}</>
+            <>{isFullPayment ? 'Bayar ' : 'Bayar DP '} Rp {dpAmount.toLocaleString('id-ID')}</>
           )}
         </Button>
       </div>
@@ -581,6 +596,10 @@ export default function DPCheckoutForm({
             orderId={uploadDialogData.orderId}
             uploadLink={uploadDialogData.uploadLink}
             dpAmount={uploadDialogData.dpAmount}
+            bankAccount={uploadDialogData.bankAccount}
+            participantPhone={uploadDialogData.participantPhone}
+            jastiperSlug={uploadDialogData.jastiperSlug}
+            paymentType={uploadDialogData.paymentType}
           />
         )}
       </>
@@ -604,6 +623,7 @@ export default function DPCheckoutForm({
           bankAccount={uploadDialogData.bankAccount}
           participantPhone={uploadDialogData.participantPhone}
           jastiperSlug={uploadDialogData.jastiperSlug}
+          paymentType={uploadDialogData.paymentType}
         />
       )}
     </>

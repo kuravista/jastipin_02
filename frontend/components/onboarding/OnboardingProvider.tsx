@@ -9,6 +9,7 @@ import React, { createContext, useState, useContext, useCallback, useMemo } from
 import { ProfileCompletionData, OnboardingStep } from './types'
 import { apiPatch } from '@/lib/api-client'
 import { useAuth } from '@/lib/auth-context'
+import { parseOnboardingError } from '@/lib/parse-onboarding-errors'
 
 interface OnboardingContextType {
   isModalOpen: boolean
@@ -19,6 +20,8 @@ interface OnboardingContextType {
   updateFormData: (data: Partial<ProfileCompletionData>) => void
   errors: Record<string, string>
   setErrors: (errors: Record<string, string>) => void
+  generalError: string
+  setGeneralError: (error: string) => void
   isSubmitting: boolean
   submitProfile: () => Promise<void>
   canGoNext: boolean
@@ -38,6 +41,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const [currentStep, setCurrentStep] = useState<OnboardingStep>(1)
   const [formData, setFormData] = useState<Partial<ProfileCompletionData>>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [generalError, setGeneralError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const updateFormData = useCallback(
@@ -119,6 +123,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     if (currentStep < 3) {
       setCurrentStep((prev) => (prev + 1) as OnboardingStep)
       setErrors({})
+      setGeneralError('')
     }
   }
 
@@ -126,12 +131,16 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     if (canGoBack) {
       setCurrentStep((prev) => (prev - 1) as OnboardingStep)
       setErrors({})
+      setGeneralError('')
     }
   }
 
   const submitProfile = async () => {
     try {
       setIsSubmitting(true)
+      // Clear previous errors before submission
+      setErrors({})
+      setGeneralError('')
 
       // Validate step 3 before submission
       const validationErrors = getValidationErrors(3)
@@ -152,11 +161,19 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         // Reset form
         setFormData({})
         setErrors({})
+        setGeneralError('')
         setCurrentStep(1)
       }
     } catch (error: any) {
-      const message = error.message || 'Gagal menyimpan profil'
-      setErrors({ submit: message })
+      // Parse API error response
+      const { fieldErrors, generalError } = parseOnboardingError(error)
+      
+      if (Object.keys(fieldErrors).length > 0) {
+        setErrors(fieldErrors)
+      }
+      if (generalError) {
+        setGeneralError(generalError)
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -171,6 +188,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     updateFormData,
     errors,
     setErrors,
+    generalError,
+    setGeneralError,
     isSubmitting,
     submitProfile,
     canGoNext,

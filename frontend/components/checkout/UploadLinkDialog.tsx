@@ -39,6 +39,7 @@ interface UploadLinkDialogProps {
   bankAccount?: BankAccount | null
   participantPhone?: string // NEW: For auto-verify
   jastiperSlug?: string // NEW: For redirect after upload
+  paymentType?: 'full' | 'dp' // NEW: For adaptive labels
 }
 
 export default function UploadLinkDialog({
@@ -49,7 +50,8 @@ export default function UploadLinkDialog({
   dpAmount,
   bankAccount,
   participantPhone,
-  jastiperSlug
+  jastiperSlug,
+  paymentType = 'dp'
 }: UploadLinkDialogProps) {
   const router = useRouter()
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
@@ -267,9 +269,11 @@ export default function UploadLinkDialog({
 
           {/* Content */}
           <div className="px-4 sm:px-6 py-4 space-y-3 sm:space-y-4">
-            {/* DP Amount */}
+            {/* Payment Amount */}
             <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 sm:p-4 text-center">
-              <p className="text-xs sm:text-sm text-emerald-800 mb-1">Total DP:</p>
+              <p className="text-xs sm:text-sm text-emerald-800 mb-1">
+                {paymentType === 'full' ? 'Total yang harus dibayar:' : 'Total DP:'}
+              </p>
               <p className="text-xl sm:text-2xl md:text-3xl font-bold text-emerald-700">
                 Rp {dpAmount.toLocaleString('id-ID')}
               </p>

@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Step1PersonalInfo } from './steps/Step1PersonalInfo'
 import { Step2OriginAddress } from './steps/Step2OriginAddress'
 import { Step3BankAccount } from './steps/Step3BankAccount'
-import { Loader2 } from 'lucide-react'
+import { Loader2, AlertCircle } from 'lucide-react'
 
 export function ProfileCompletionModal() {
   const {
@@ -24,6 +24,8 @@ export function ProfileCompletionModal() {
     goBack,
     submitProfile,
     isSubmitting,
+    generalError,
+    setGeneralError,
   } = useOnboarding()
 
   return (
@@ -55,6 +57,14 @@ export function ProfileCompletionModal() {
               ))}
             </div>
           </div>
+
+          {/* Error Banner */}
+          {generalError && (
+            <div className="mx-6 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex gap-2">
+              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-700">{generalError}</p>
+            </div>
+          )}
 
           {/* Step Content */}
           <div className="px-6 py-4 min-h-96">

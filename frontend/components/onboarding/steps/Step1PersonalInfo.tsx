@@ -53,11 +53,11 @@ export function Step1PersonalInfo() {
               }
               updateFormData({ whatsappNumber: value ? `62${value}` : '' })
             }}
-            placeholder="812345678901"
+            placeholder="8 diikuti 9-12 digit (mis: 81234567890)"
             className="rounded-l-none border-gray-300 focus:border-[#FB923C] focus:ring-[#FB923C]"
           />
         </div>
-        <p className="text-xs text-gray-500 mt-1">Isi tanpa +62, contoh: 812345678901</p>
+        <p className="text-xs text-gray-500 mt-1">Mulai dengan angka 8, contoh: 81234567890</p>
         {errors.whatsappNumber && (
           <p className="text-sm text-red-500 mt-1">{errors.whatsappNumber}</p>
         )}
