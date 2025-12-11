@@ -63,7 +63,8 @@ export function parseAuthError(error: any): AuthError {
   const lowerMessage = errorMessage.toLowerCase()
 
   // Check for specific error patterns
-  if (lowerMessage.includes('invalid credentials') || lowerMessage.includes('unauthorized')) {
+  // Matches: "Authentication failed", "Invalid credentials", "Unauthorized"
+  if (lowerMessage.includes('authentication failed') || lowerMessage.includes('invalid credentials') || lowerMessage.includes('unauthorized')) {
     return {
       code: 'INVALID_CREDENTIALS',
       message: 'Email atau password salah. Silakan coba lagi.',

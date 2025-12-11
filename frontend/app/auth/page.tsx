@@ -37,6 +37,7 @@ function getFieldErrorsFromAPI(error: any): { fieldErrors: FieldErrors; generalE
   // Check fullError property (from api-client)
   const errorObj = error?.fullError || error
   const details = errorObj?.details || []
+  const statusCode = error?.status || errorObj?.status
 
   if (Array.isArray(details) && details.length > 0) {
     details.forEach((err: any) => {
@@ -59,22 +60,27 @@ function getFieldErrorsFromAPI(error: any): { fieldErrors: FieldErrors; generalE
     // Handle simple error message from API
     const errorMessage = errorObj?.error || errorObj?.message || String(error)
     
-    // Parse the error message to determine type
-    const parsed = parseAuthError({ message: errorMessage })
-    
-    // Map specific errors to fields
-    if (parsed.code === 'EMAIL_EXISTS') {
-      fieldErrors.email = parsed.message
-    } else if (parsed.code === 'INVALID_CREDENTIALS' || parsed.code === 'USER_NOT_FOUND') {
-      // For login errors, show as general error
-      generalError = parsed.message
-    } else if (parsed.code === 'INVALID_EMAIL') {
-      fieldErrors.email = parsed.message
-    } else if (parsed.code === 'INVALID_PASSWORD') {
-      fieldErrors.password = parsed.message
+    // Check status code first - 409 always means email exists
+    if (statusCode === 409) {
+      fieldErrors.email = 'Email ini sudah terdaftar. Silakan login atau gunakan email lain.'
     } else {
-      // Other errors show as general error
-      generalError = parsed.message
+      // Parse the error message to determine type
+      const parsed = parseAuthError({ message: errorMessage })
+      
+      // Map specific errors to fields
+      if (parsed.code === 'EMAIL_EXISTS') {
+        fieldErrors.email = parsed.message
+      } else if (parsed.code === 'INVALID_CREDENTIALS' || parsed.code === 'USER_NOT_FOUND') {
+        // For login errors, show as general error
+        generalError = parsed.message
+      } else if (parsed.code === 'INVALID_EMAIL') {
+        fieldErrors.email = parsed.message
+      } else if (parsed.code === 'INVALID_PASSWORD') {
+        fieldErrors.password = parsed.message
+      } else {
+        // Other errors show as general error
+        generalError = parsed.message
+      }
     }
   }
 
@@ -370,8 +376,8 @@ export default function AuthPage() {
                 onClick={() => {
                   setIsLogin(true)
                   setFieldErrors({})
-                  setGeneralError(null)
                   setTermsError(null)
+                  // Keep generalError so user sees why login failed
                 }}
                 className={`text-sm font-medium py-2.5 rounded-lg transition-all duration-200 ${
                   isLogin
@@ -385,8 +391,8 @@ export default function AuthPage() {
                 onClick={() => {
                   setIsLogin(false)
                   setFieldErrors({})
-                  setGeneralError(null)
                   setTermsError(null)
+                  // Keep generalError so user sees why registration failed
                 }}
                 className={`text-sm font-medium py-2.5 rounded-lg transition-all duration-200 ${
                   !isLogin
@@ -415,6 +421,13 @@ export default function AuthPage() {
               <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
                 <p className="text-red-800 text-sm font-medium">{generalError}</p>
+                <button
+                  onClick={() => setGeneralError(null)}
+                  className="text-red-600 hover:text-red-800 ml-auto"
+                  aria-label="Close error"
+                >
+                  ✕
+                </button>
               </div>
             )}
 
