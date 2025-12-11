@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Eye, EyeOff, AlertCircle, CheckCircle2, XCircle, Loader2 } from "lucide-react"
 import { GoogleLoginButton } from "@/components/auth/google-login-button"
+import { TermsPrivacyDialog } from "@/components/auth/TermsPrivacyDialog"
 
 interface FieldErrors {
   email?: string
@@ -28,14 +29,15 @@ interface FieldErrors {
 /**
  * Extract field-level errors from API error response and parse to user-friendly messages
  */
-function getFieldErrorsFromAPI(error: any): FieldErrors {
-  const errors: FieldErrors = {}
+function getFieldErrorsFromAPI(error: any): { fieldErrors: FieldErrors; generalError?: string } {
+  const fieldErrors: FieldErrors = {}
+  let generalError: string | undefined
 
   // Check fullError property (from api-client)
   const errorObj = error?.fullError || error
   const details = errorObj?.details || []
 
-  if (Array.isArray(details)) {
+  if (Array.isArray(details) && details.length > 0) {
     details.forEach((err: any) => {
       const path = String(err?.path || "").toLowerCase()
       const fieldError = { path: err?.path, message: err?.message }
@@ -44,17 +46,38 @@ function getFieldErrorsFromAPI(error: any): FieldErrors {
       const parsed = parseAuthError(fieldError)
 
       if (path.includes("email")) {
-        errors.email = parsed.message
+        fieldErrors.email = parsed.message
       } else if (path.includes("password")) {
-        errors.password = parsed.message
+        fieldErrors.password = parsed.message
       } else if (path.includes("fullname") || path.includes("full_name") || path.includes("name") || path.includes("slug")) {
         // Map slug errors to fullName field
-        errors.fullName = parsed.message
+        fieldErrors.fullName = parsed.message
       }
     })
+  } else {
+    // Handle simple error message from API
+    const errorMessage = errorObj?.error || errorObj?.message || String(error)
+    
+    // Parse the error message to determine type
+    const parsed = parseAuthError({ message: errorMessage })
+    
+    // Map specific errors to fields
+    if (parsed.code === 'EMAIL_EXISTS') {
+      fieldErrors.email = parsed.message
+    } else if (parsed.code === 'INVALID_CREDENTIALS' || parsed.code === 'USER_NOT_FOUND') {
+      // For login errors, show as general error
+      generalError = parsed.message
+    } else if (parsed.code === 'INVALID_EMAIL') {
+      fieldErrors.email = parsed.message
+    } else if (parsed.code === 'INVALID_PASSWORD') {
+      fieldErrors.password = parsed.message
+    } else {
+      // Other errors show as general error
+      generalError = parsed.message
+    }
   }
 
-  return errors
+  return { fieldErrors, generalError }
 }
 
 interface UsernameCheckResult {
@@ -71,6 +94,10 @@ export default function AuthPage() {
   const [password, setPassword] = useState("")
   const [fullName, setFullName] = useState("")
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
+  const [generalError, setGeneralError] = useState<string | null>(null)
+  const [termsAccepted, setTermsAccepted] = useState(false)
+  const [termsError, setTermsError] = useState<string | null>(null)
+  const [isTermsDialogOpen, setIsTermsDialogOpen] = useState(false)
   const [usernameCheck, setUsernameCheck] = useState<UsernameCheckResult | null>(null)
   const [checkingUsername, setCheckingUsername] = useState(false)
   const [editingUsername, setEditingUsername] = useState("")
@@ -190,6 +217,7 @@ export default function AuthPage() {
    */
   const validateAllFields = (): boolean => {
     const errors: FieldErrors = {}
+    let isValid = true
 
     const emailError = validateField("email", email)
     if (emailError) errors.email = emailError
@@ -200,10 +228,18 @@ export default function AuthPage() {
     if (!isLogin) {
       const nameError = validateField("fullName", fullName)
       if (nameError) errors.fullName = nameError
+
+      // Validate terms acceptance
+      if (!termsAccepted) {
+        setTermsError("Anda harus menyetujui Syarat & Ketentuan dan Kebijakan Privasi")
+        isValid = false
+      } else {
+        setTermsError(null)
+      }
     }
 
     setFieldErrors(errors)
-    return Object.keys(errors).length === 0
+    return Object.keys(errors).length === 0 && isValid
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -213,6 +249,9 @@ export default function AuthPage() {
     if (!validateAllFields()) {
       return
     }
+
+    // Clear previous errors
+    setGeneralError(null)
 
     try {
       if (isLogin) {
@@ -226,9 +265,14 @@ export default function AuthPage() {
       }, 500)
     } catch (err: any) {
       // Extract field errors from API response
-      const apiErrors = getFieldErrorsFromAPI(err)
+      const { fieldErrors: apiErrors, generalError: apiGeneralError } = getFieldErrorsFromAPI(err)
+      
       if (Object.keys(apiErrors).length > 0) {
         setFieldErrors(apiErrors)
+      }
+      
+      if (apiGeneralError) {
+        setGeneralError(apiGeneralError)
       }
     }
   }
@@ -324,6 +368,8 @@ export default function AuthPage() {
                 onClick={() => {
                   setIsLogin(true)
                   setFieldErrors({})
+                  setGeneralError(null)
+                  setTermsError(null)
                 }}
                 className={`text-sm font-medium py-2.5 rounded-lg transition-all duration-200 ${
                   isLogin
@@ -337,6 +383,8 @@ export default function AuthPage() {
                 onClick={() => {
                   setIsLogin(false)
                   setFieldErrors({})
+                  setGeneralError(null)
+                  setTermsError(null)
                 }}
                 className={`text-sm font-medium py-2.5 rounded-lg transition-all duration-200 ${
                   !isLogin
@@ -360,6 +408,13 @@ export default function AuthPage() {
                 </div>
               </div>
             </div>
+
+            {generalError && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
+                <p className="text-red-800 text-sm font-medium">{generalError}</p>
+              </div>
+            )}
 
             <form className="space-y-5" onSubmit={handleSubmit}>
               {!isLogin && (
@@ -435,18 +490,50 @@ export default function AuthPage() {
               </div>
 
               {!isLogin && (
-                <div className="flex items-start gap-2 text-sm">
-                  <input type="checkbox" id="terms" className="w-4 h-4 mt-0.5 rounded border-gray-300 accent-orange-500" />
-                  <label htmlFor="terms" className="text-gray-600 text-xs leading-relaxed">
-                    Saya setuju dengan{" "}
-                    <Link href="#" className="text-orange-600 hover:underline font-medium">
-                      Syarat & Ketentuan
-                    </Link>{" "}
-                    dan{" "}
-                    <Link href="#" className="text-orange-600 hover:underline font-medium">
-                      Kebijakan Privasi
-                    </Link>
-                  </label>
+                <div className="space-y-1.5">
+                  <div className={`flex items-start gap-2 text-sm p-3 rounded-lg transition-colors ${
+                    termsError ? 'bg-red-50 border border-red-200' : 'hover:bg-orange-50'
+                  }`}>
+                    <input 
+                      type="checkbox" 
+                      id="terms" 
+                      checked={termsAccepted}
+                      onChange={(e) => {
+                        setTermsAccepted(e.target.checked)
+                        if (e.target.checked) {
+                          setTermsError(null)
+                        }
+                      }}
+                      className={`w-4 h-4 mt-0.5 rounded accent-orange-500 cursor-pointer ${
+                        termsError ? 'border-red-300' : 'border-gray-300'
+                      }`}
+                    />
+                    <label htmlFor="terms" className={`text-xs leading-relaxed cursor-pointer ${
+                      termsError ? 'text-red-800' : 'text-gray-600'
+                    }`}>
+                      Saya setuju dengan{" "}
+                      <button
+                        type="button"
+                        onClick={() => setIsTermsDialogOpen(true)}
+                        className="text-orange-600 hover:underline font-medium focus:outline-none"
+                      >
+                        Syarat & Ketentuan
+                      </button>{" "}
+                      dan{" "}
+                      <button
+                        type="button"
+                        onClick={() => setIsTermsDialogOpen(true)}
+                        className="text-orange-600 hover:underline font-medium focus:outline-none"
+                      >
+                        Kebijakan Privasi
+                      </button>
+                    </label>
+                  </div>
+                  {termsError && (
+                    <p className="text-red-600 text-xs flex items-center gap-1 mt-1">
+                      <AlertCircle className="w-3 h-3" /> {termsError}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -473,6 +560,8 @@ export default function AuthPage() {
                 onClick={() => {
                   setIsLogin(!isLogin)
                   setFieldErrors({})
+                  setGeneralError(null)
+                  setTermsError(null)
                 }} 
                 className="text-orange-600 font-bold hover:text-orange-700 hover:underline"
               >
@@ -488,6 +577,11 @@ export default function AuthPage() {
           </Link>
         </div>
       </div>
+
+      <TermsPrivacyDialog 
+        isOpen={isTermsDialogOpen}
+        onClose={() => setIsTermsDialogOpen(false)}
+      />
     </div>
   )
 }

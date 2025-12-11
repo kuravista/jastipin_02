@@ -53,13 +53,6 @@ export default function DPCheckoutPage() {
       // Fetch trip details (PUBLIC endpoint - no auth required)
       const tripData = await apiGet(`/trips/${tripId}/public`)
 
-      // Check if trip supports DP payment
-      if (tripData.paymentType !== "dp") {
-        // Redirect to regular checkout if trip doesn't support DP
-        router.push(`/${tripData.jastiper?.slug || ""}`)
-        return
-      }
-
       setTrip(tripData)
 
       // Parse items from URL params OR localStorage
@@ -155,7 +148,9 @@ export default function DPCheckoutPage() {
             ← Kembali
           </button>
           <h1 className="text-2xl font-bold text-gray-900">{trip.title}</h1>
-          <p className="text-sm text-gray-600">Checkout dengan sistem DP</p>
+          <p className="text-sm text-gray-600">
+            Checkout {trip.paymentType === 'full' ? 'pembayaran penuh' : 'dengan sistem DP'}
+          </p>
         </div>
 
         {/* DP Checkout Form */}
@@ -165,6 +160,7 @@ export default function DPCheckoutPage() {
           items={cartItems}
           jastiperSlug={trip.jastiper?.slug}
           dpPercentage={trip.dpPercentage}
+          paymentType={trip.paymentType}
         />
       </div>
     </div>
